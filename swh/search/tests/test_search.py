@@ -11,14 +11,13 @@ from swh.model.model import Origin
 from swh.search.elasticsearch import ElasticSearch
 
 
-def test_origin_url_unique_substring(elasticsearch_host):
+def test_origin_url_unique_word_prefix(elasticsearch_host):
     search = ElasticSearch([elasticsearch_host])
     search.initialize()
     search.origin_add([
         Origin(url='http://foobar.baz', type=None),
         Origin(url='http://barbaz.qux', type=None),
     ])
-    search.origin_dump()
 
     results = search.origin_search('foobar')
     assert results == {'cursor': None, 'results': [{'url': 'http://foobar.baz'}]}
@@ -31,6 +30,9 @@ def test_origin_url_unique_substring(elasticsearch_host):
     assert results == {'cursor': None, 'results': [{'url': 'http://barbaz.qux'}]}
 
     results = search.origin_search('barbaz')
+    assert results == {'cursor': None, 'results': [{'url': 'http://barbaz.qux'}]}
+
+    results = search.origin_search('qu')
     assert results == {'cursor': None, 'results': [{'url': 'http://barbaz.qux'}]}
 
     results = search.origin_search('qux')
