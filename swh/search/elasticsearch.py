@@ -15,12 +15,26 @@ from swh.model import model
 from swh.model.identifiers import origin_identifier
 
 
+def _sanitize_origin(origin):
+    origin = origin.copy()
+    res = {
+        'url': origin.pop('url')
+    }
+    for field_name in ('type', 'intrinsic_metadata'):
+        if field_name in origin:
+            res[field_name] = origin.pop(field_name)
+    return res
+
+
 class ElasticSearch:
     def __init__(self, hosts: List[str]):
         self._backend = Elasticsearch(hosts=hosts)
 
     def check(self):
         self._backend.ping()
+
+    def deinitialize(self) -> None:
+        self._backend.indices.delete(index='*')
 
     def initialize(self) -> None:
         self._backend.indices.create(
@@ -43,30 +57,33 @@ class ElasticSearch:
                                     'analyzer': 'simple',
                                 }
                             }
-                        }
+                        },
+                        'intrinsic_metadata': {
+                            'type': 'nested',
+                            'properties': {
+                                '@context': {
+                                    # don't bother indexing substrings
+                                    'type': 'keyword',
+                                }
+                            },
+                        },
                     }
                 }
             }
         )
 
-    def origin_add(self, origins: Iterable[model.Origin]) -> None:
-        origins = (origin.to_dict() for origin in origins)
-        '''
-        for origin in origins:
-            self._backend.index(
-                index='origin',
-                id=origin_identifier(origin),
-                body=origin,
-            )
-        self._backend.indices.refresh(index='origin')
-        '''
+
+    def origin_update(self, documents: Iterable[dict]) -> None:
+        documents = map(_sanitize_origin, documents)
         actions = [
             {
-                '_id': origin_identifier(origin),
+                '_op_type': 'update',
+                '_id': origin_identifier(document),
                 '_index': 'origin',
-                '_source': origin,
+                'doc': document,
+                'doc_as_upsert': True,
             }
-            for origin in origins
+            for document in documents
         ]
         res = bulk(self._backend, actions, index='origin', refresh='wait_for')
 
@@ -75,11 +92,12 @@ class ElasticSearch:
         for hit in results:
             yield self._backend.termvectors(
                 index='origin', id=hit['_id'],
-                fields=['url', 'url.as_you_type', 'url.as_you_type._2gram'
-                        'url.as_you_type._3gram', 'url._2gram', 'url._3gram'])
+                fields=['*'])
 
     def origin_search(
-            self, url_substring: str, cursor: str = None, count: int = 50
+            self, *,
+            url_substring: str = None, metadata_substring: str = None,
+            cursor: str = None, count: int = 50
             ) -> Dict[str, object]:
         """Searches for origins matching the `url_substring`.
 
@@ -97,8 +115,10 @@ class ElasticSearch:
               list of dictionaries with key:
               * `url`: URL of a matching origin
         """
-        body = {
-            'query': {
+        query_clauses = []
+
+        if url_substring:
+            query_clauses.append({
                 'multi_match': {
                     'query': url_substring,
                     'type': 'bool_prefix',
@@ -108,16 +128,41 @@ class ElasticSearch:
                         'url.as_you_type._3gram',
                     ]
                 }
+            })
+
+        if metadata_substring:
+            query_clauses.append({
+                'nested': {
+                    'path': 'intrinsic_metadata',
+                    'query': {
+                        'multi_match': {
+                            'query': metadata_substring,
+                            'fields': ['intrinsic_metadata.*']
+                        }
+                    },
+                }
+            })
+
+        if not query_clauses:
+            raise ValueError(
+                'At least one of url_substring and metadata_substring '
+                'must be provided.')
+
+        body = {
+            'query': {
+                'bool': {
+                    'should': query_clauses,
+                }
             },
             'size': count,
             'sort': [
                 {'_score': 'desc'},
-                {'url': 'asc'},
+                {'_id': 'asc'},
             ]
         }
         if cursor:
-            cursor = msgpack.decode(base64.b64decode(cursor))
-            body['search_after'] = [cursor['_score'], cursor['url']]
+            cursor = msgpack.loads(base64.b64decode(cursor))
+            body['search_after'] = [cursor[b'score'], cursor[b'id']]
 
         res = self._backend.search(
             index='origin',
@@ -130,8 +175,8 @@ class ElasticSearch:
         if len(hits) == count:
             last_hit = hits[-1]
             next_cursor = {
-                'score': last_hit['_score'],
-                'url': last_hit['_source']['url'],
+                b'score': last_hit['_score'],
+                b'id': last_hit['_id'],
             }
             next_cursor = base64.b64encode(msgpack.dumps(next_cursor))
         else:
@@ -140,6 +185,7 @@ class ElasticSearch:
         return {
             'cursor': next_cursor,
             'results': [
-                {'url': hit['_source']['url'] for hit in hits}
+                {'url': hit['_source']['url']}
+                for hit in hits
             ]
         }
