@@ -11,6 +11,7 @@ from elasticsearch.client import IndicesClient
 from elasticsearch.helpers import bulk, scan
 import msgpack
 
+from swh.core.api import remote_api_endpoint
 from swh.model import model
 from swh.model.identifiers import origin_identifier
 
@@ -72,7 +73,7 @@ class ElasticSearch:
             }
         )
 
-
+    @remote_api_endpoint('origin/update')
     def origin_update(self, documents: Iterable[dict]) -> None:
         documents = map(_sanitize_origin, documents)
         actions = [
@@ -94,6 +95,7 @@ class ElasticSearch:
                 index='origin', id=hit['_id'],
                 fields=['*'])
 
+    @remote_api_endpoint('origin/search')
     def origin_search(
             self, *,
             url_substring: str = None, metadata_substring: str = None,

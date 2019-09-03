@@ -1,0 +1,40 @@
+# Copyright (C) 2019  The Software Heritage developers
+# See the AUTHORS file at the top-level directory of this distribution
+# License: GNU General Public License version 3, or any later version
+# See top-level LICENSE file for more information
+
+import unittest
+
+import pytest
+
+from swh.core.api.tests.server_testing import ServerTestFixture
+
+from swh.search.elasticsearch import ElasticSearch
+from swh.search.api.server import app
+from swh.search.api.client import RemoteSearch
+from .test_search import CommonSearchTest
+
+
+class TestRemoteSearch(CommonSearchTest, ServerTestFixture, unittest.TestCase):
+    @pytest.fixture(autouse=True)
+    def _instantiate_search(self, elasticsearch_host):
+        self._elasticsearch_host = elasticsearch_host
+
+    def setUp(self):
+        self.config = {
+            'search': {
+                'cls': 'elasticsearch',
+                'args': {
+                    'hosts': [self._elasticsearch_host],
+                }
+            }
+        }
+        self.app = app
+        super().setUp()
+        self.reset()
+        self.search = RemoteSearch(self.url())
+
+    def reset(self):
+        search = ElasticSearch([self._elasticsearch_host])
+        search.deinitialize()
+        search.initialize()
