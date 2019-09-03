@@ -3,13 +3,13 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
-import os
 import socket
 import subprocess
 import time
 
 import elasticsearch
 import pytest
+
 
 def free_port():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -40,7 +40,9 @@ http.port: {http_port}
 transport.port: {transport_port}
 '''
 
-def _run_elasticsearch(conf_dir, data_dir, logs_dir, http_port, transport_port):
+
+def _run_elasticsearch(
+        conf_dir, data_dir, logs_dir, http_port, transport_port):
     es_home = '/usr/share/elasticsearch'
 
     with open(conf_dir + '/elasticsearch.yml', 'w') as fd:
@@ -66,7 +68,7 @@ def _run_elasticsearch(conf_dir, data_dir, logs_dir, http_port, transport_port):
     host = '127.0.0.1:{}'.format(http_port)
 
     with open(logs_dir + '/output.txt', 'w') as fd:
-        p = subprocess.Popen(cmd) #, stdout=fd, stderr=fd)
+        p = subprocess.Popen(cmd)
 
     wait_for_peer('127.0.0.1', http_port)
 
@@ -74,6 +76,7 @@ def _run_elasticsearch(conf_dir, data_dir, logs_dir, http_port, transport_port):
     assert client.ping()
 
     return p
+
 
 @pytest.fixture(scope='session')
 def elasticsearch_session(tmpdir_factory):
@@ -101,8 +104,6 @@ def elasticsearch_session(tmpdir_factory):
     p.wait()
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope='class')
 def elasticsearch_host(elasticsearch_session):
-    client = elasticsearch.Elasticsearch([elasticsearch_session])
-    client.indices.delete(index='*')
     yield elasticsearch_session
