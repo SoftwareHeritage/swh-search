@@ -3,11 +3,15 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+import os
+
+from swh.core import config
 from swh.core.api import (RPCServerApp, error_handler,
                           encode_data_server as encode_data)
 
 from .. import get_search
 from ..elasticsearch import ElasticSearch
+
 
 def _get_search():
     global search

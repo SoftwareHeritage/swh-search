@@ -22,5 +22,3 @@ def get_search(cls, args):
         raise ValueError('Unknown indexer search class `%s`' % cls)
 
     return Search(**args)
-
-

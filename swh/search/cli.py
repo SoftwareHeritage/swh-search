@@ -10,6 +10,6 @@ from swh.core.cli import CONTEXT_SETTINGS
 
 @click.group(name='search', context_settings=CONTEXT_SETTINGS)
 @click.pass_context
-def search(ctx):
+def cli(ctx):
     '''Software Heritage Search tools.'''
     pass

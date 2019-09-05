@@ -7,7 +7,6 @@ import base64
 from typing import Iterable, Dict, List, Iterator
 
 from elasticsearch import Elasticsearch
-from elasticsearch.client import IndicesClient
 from elasticsearch.helpers import bulk, scan
 import msgpack
 
@@ -86,7 +85,7 @@ class ElasticSearch:
             }
             for document in documents
         ]
-        res = bulk(self._backend, actions, index='origin', refresh='wait_for')
+        bulk(self._backend, actions, index='origin', refresh='wait_for')
 
     def origin_dump(self) -> Iterator[model.Origin]:
         results = list(scan(self._backend, index='*'))

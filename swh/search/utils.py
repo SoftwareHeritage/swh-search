@@ -3,9 +3,10 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+
 def stream_results(f, *args, **kwargs):
     if 'cursor' in kwargs:
-        raise ArgumentError('stream_results has no argument "cursor".')
+        raise TypeError('stream_results has no argument "cursor".')
     cursor = None
     while True:
         results = f(*args, cursor=cursor, **kwargs)
