@@ -163,7 +163,8 @@ class ElasticSearch:
         }
         if cursor:
             cursor = msgpack.loads(base64.b64decode(cursor))
-            body['search_after'] = [cursor[b'score'], cursor[b'id']]
+            body['search_after'] = \
+                [cursor[b'score'], cursor[b'id'].decode('ascii')]
 
         res = self._backend.search(
             index='origin',
