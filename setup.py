@@ -48,7 +48,7 @@ setup(
     tests_require=parse_requirements('test'),
     entry_points='''
         [swh.cli.subcommands]
-        search=swh.search.cli:search
+        search=swh.search.cli:cli
     ''',
     setup_requires=['vcversioner'],
     extras_require={'testing': parse_requirements('test')},
