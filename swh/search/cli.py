@@ -29,6 +29,16 @@ def cli(ctx, config_file):
     ctx.obj['config'] = conf
 
 
+@cli.command('initialize')
+@click.pass_context
+def initialize(ctx):
+    """Creates Elasticsearch indices."""
+    search = get_search(**ctx.obj['config']['search'])
+    search.initialize()
+    print('Done.')
+
+
+
 @cli.group('journal-client')
 @click.pass_context
 def journal_client(ctx):
