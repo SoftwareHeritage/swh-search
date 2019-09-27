@@ -30,8 +30,9 @@ class ElasticSearch:
     def __init__(self, hosts: List[str]):
         self._backend = Elasticsearch(hosts=hosts)
 
+    @remote_api_endpoint('check')
     def check(self):
-        self._backend.ping()
+        return self._backend.ping()
 
     def deinitialize(self) -> None:
         self._backend.indices.delete(index='*')
