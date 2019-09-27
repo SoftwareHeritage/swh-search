@@ -3,6 +3,7 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+import logging
 import os
 
 from swh.core import config
@@ -39,6 +40,9 @@ def index():
     return 'SWH Search API server'
 
 
+api_cfg = None
+
+
 def load_and_check_config(config_file, type='elasticsearch'):
     """Check the minimal configuration is set to run the api or raise an
        error explanation.
@@ -67,3 +71,21 @@ def load_and_check_config(config_file, type='elasticsearch'):
         raise KeyError("Missing 'search' configuration")
 
     return cfg
+
+
+def make_app_from_configfile():
+    """Run the WSGI app from the webserver, loading the configuration from
+       a configuration file.
+
+       SWH_CONFIG_FILENAME environment variable defines the
+       configuration path to load.
+
+    """
+    global api_cfg
+    if not api_cfg:
+        config_file = os.environ.get('SWH_CONFIG_FILENAME')
+        api_cfg = load_and_check_config(config_file)
+        app.config.update(api_cfg)
+    handler = logging.StreamHandler()
+    app.logger.addHandler(handler)
+    return app
