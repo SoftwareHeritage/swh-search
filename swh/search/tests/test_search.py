@@ -115,7 +115,41 @@ class CommonSearchTest:
 
     @settings(deadline=None)
     @given(strategies.integers(min_value=1, max_value=4))
-    def test_origin_paging(self, count):
+    def test_origin_url_paging(self, count):
+        self.reset()
+        self.search.origin_update([
+            {'url': 'http://origin1/foo'},
+            {'url': 'http://origin2/foo/bar'},
+            {'url': 'http://origin3/foo/bar/baz'},
+        ])
+
+        results = list(stream_results(
+            self.search.origin_search,
+            url_substring='foo bar baz', count=count))
+        expected_results = [
+            {'url': 'http://origin3/foo/bar/baz'}]
+        self.assertEqual(results, expected_results)
+
+        results = list(stream_results(
+            self.search.origin_search,
+            url_substring='foo bar', count=count))
+        expected_results = [
+            {'url': 'http://origin2/foo/bar'},
+            {'url': 'http://origin3/foo/bar/baz'}]
+        self.assertEqual(results, expected_results)
+
+        results = list(stream_results(
+            self.search.origin_search,
+            url_substring='foo', count=count))
+        expected_results = [
+            {'url': 'http://origin1/foo'},
+            {'url': 'http://origin2/foo/bar'},
+            {'url': 'http://origin3/foo/bar/baz'}]
+        self.assertEqual(results, expected_results)
+
+    @settings(deadline=None)
+    @given(strategies.integers(min_value=1, max_value=4))
+    def test_origin_intrinsic_metadata_paging(self, count):
         self.reset()
         self.search.origin_update([
             {
