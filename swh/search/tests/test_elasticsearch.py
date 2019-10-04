@@ -24,5 +24,6 @@ class BaseElasticsearchTest(unittest.TestCase):
         self.search.deinitialize()
         self.search.initialize()
 
+
 class TestElasticsearchSearch(CommonSearchTest, BaseElasticsearchTest):
     pass

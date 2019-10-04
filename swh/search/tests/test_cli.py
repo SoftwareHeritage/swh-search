@@ -3,9 +3,7 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
-from collections import namedtuple
 import tempfile
-import unittest
 from unittest.mock import patch, MagicMock
 
 from click.testing import CliRunner
@@ -13,7 +11,6 @@ from click.testing import CliRunner
 from swh.journal.serializers import value_to_kafka
 
 from swh.search.cli import cli
-from swh.search.elasticsearch import ElasticSearch
 from .test_elasticsearch import BaseElasticsearchTest
 
 

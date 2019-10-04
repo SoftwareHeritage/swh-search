@@ -38,7 +38,6 @@ def initialize(ctx):
     print('Done.')
 
 
-
 @cli.group('journal-client')
 @click.pass_context
 def journal_client(ctx):
