@@ -16,30 +16,30 @@ class CommonSearchTest:
             {'url': 'http://qux.quux'},
         ])
 
-        results = self.search.origin_search(url_substring='foobar')
+        results = self.search.origin_search(url_pattern='foobar')
         self.assertEqual(results, {'cursor': None, 'results': [
             {'url': 'http://foobar.baz'}]})
 
-        results = self.search.origin_search(url_substring='barb')
+        results = self.search.origin_search(url_pattern='barb')
         self.assertEqual(results, {'cursor': None, 'results': [
             {'url': 'http://barbaz.qux'}]})
 
         # 'bar' is part of 'foobar', but is not the beginning of it
-        results = self.search.origin_search(url_substring='bar')
+        results = self.search.origin_search(url_pattern='bar')
         self.assertEqual(results, {'cursor': None, 'results': [
             {'url': 'http://barbaz.qux'}]})
 
-        results = self.search.origin_search(url_substring='barbaz')
+        results = self.search.origin_search(url_pattern='barbaz')
         self.assertEqual(results, {'cursor': None, 'results': [
             {'url': 'http://barbaz.qux'}]})
 
-        results = self.search.origin_search(url_substring='qu')
+        results = self.search.origin_search(url_pattern='qu')
         self.assertIsNone(results['cursor'])
         self.assertEqual(
             sorted(res['url'] for res in results['results']),
             ['http://barbaz.qux', 'http://qux.quux'])
 
-        results = self.search.origin_search(url_substring='qux')
+        results = self.search.origin_search(url_pattern='qux')
         self.assertIsNone(results['cursor'])
         self.assertEqual(
             sorted(res['url'] for res in results['results']),
@@ -67,15 +67,15 @@ class CommonSearchTest:
             },
         ])
 
-        results = self.search.origin_search(metadata_substring='foo')
+        results = self.search.origin_search(metadata_pattern='foo')
         self.assertEqual(results, {'cursor': None, 'results': [
             {'url': 'http://origin2'}]})
 
-        results = self.search.origin_search(metadata_substring='foo bar')
+        results = self.search.origin_search(metadata_pattern='foo bar')
         self.assertEqual(results, {'cursor': None, 'results': [
             {'url': 'http://origin2'}, {'url': 'http://origin3'}]})
 
-        results = self.search.origin_search(metadata_substring='bar baz')
+        results = self.search.origin_search(metadata_pattern='bar baz')
         self.assertEqual(results, {'cursor': None, 'results': [
             {'url': 'http://origin3'}, {'url': 'http://origin2'}]})
 
@@ -101,15 +101,15 @@ class CommonSearchTest:
             },
         ])
 
-        results = self.search.origin_search(metadata_substring='foo')
+        results = self.search.origin_search(metadata_pattern='foo')
         self.assertEqual(results, {'cursor': None, 'results': [
             {'url': 'http://origin2'}]})
 
-        results = self.search.origin_search(metadata_substring='foo bar')
+        results = self.search.origin_search(metadata_pattern='foo bar')
         self.assertEqual(results, {'cursor': None, 'results': [
             {'url': 'http://origin2'}, {'url': 'http://origin3'}]})
 
-        results = self.search.origin_search(metadata_substring='bar baz')
+        results = self.search.origin_search(metadata_pattern='bar baz')
         self.assertEqual(results, {'cursor': None, 'results': [
             {'url': 'http://origin3'}, {'url': 'http://origin2'}]})
 
@@ -125,14 +125,14 @@ class CommonSearchTest:
 
         results = list(stream_results(
             self.search.origin_search,
-            url_substring='foo bar baz', count=count))
+            url_pattern='foo bar baz', count=count))
         expected_results = [
             {'url': 'http://origin3/foo/bar/baz'}]
         self.assertEqual(results, expected_results)
 
         results = list(stream_results(
             self.search.origin_search,
-            url_substring='foo bar', count=count))
+            url_pattern='foo bar', count=count))
         expected_results = [
             {'url': 'http://origin2/foo/bar'},
             {'url': 'http://origin3/foo/bar/baz'}]
@@ -140,7 +140,7 @@ class CommonSearchTest:
 
         results = list(stream_results(
             self.search.origin_search,
-            url_substring='foo', count=count))
+            url_pattern='foo', count=count))
         expected_results = [
             {'url': 'http://origin1/foo'},
             {'url': 'http://origin2/foo/bar'},
@@ -177,7 +177,7 @@ class CommonSearchTest:
 
         results = stream_results(
             self.search.origin_search,
-            metadata_substring='foo bar baz', count=count)
+            metadata_pattern='foo bar baz', count=count)
         self.assertEqual(list(results), [
             {'url': 'http://origin3'},
             {'url': 'http://origin2'},
@@ -185,7 +185,7 @@ class CommonSearchTest:
 
         results = stream_results(
             self.search.origin_search,
-            metadata_substring='foo bar', count=count)
+            metadata_pattern='foo bar', count=count)
         self.assertEqual(list(results), [
             {'url': 'http://origin2'},
             {'url': 'http://origin3'},
@@ -193,7 +193,7 @@ class CommonSearchTest:
 
         results = stream_results(
             self.search.origin_search,
-            metadata_substring='foo', count=count)
+            metadata_pattern='foo', count=count)
         self.assertEqual(list(results), [
             {'url': 'http://origin1'},
             {'url': 'http://origin2'},

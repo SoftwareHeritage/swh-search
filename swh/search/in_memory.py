@@ -60,13 +60,13 @@ class InMemorySearch:
     @remote_api_endpoint('origin/search')
     def origin_search(
             self, *,
-            url_substring: str = None, metadata_substring: str = None,
+            url_pattern: str = None, metadata_pattern: str = None,
             cursor: str = None, count: int = 50
             ) -> Dict[str, object]:
         matches = (self._origins[id_] for id_ in self._origin_ids)
 
-        if url_substring:
-            tokens = set(self._url_splitter.split(url_substring))
+        if url_pattern:
+            tokens = set(self._url_splitter.split(url_pattern))
 
             def predicate(match):
                 missing_tokens = tokens - match['_url_tokens']
@@ -82,13 +82,13 @@ class InMemorySearch:
 
             matches = filter(predicate, matches)
 
-        if metadata_substring:
+        if metadata_pattern:
             raise NotImplementedError(
                 'Metadata search is not implemented in the in-memory backend.')
 
-        if not url_substring and not metadata_substring:
+        if not url_pattern and not metadata_pattern:
             raise ValueError(
-                'At least one of url_substring and metadata_substring '
+                'At least one of url_pattern and metadata_pattern '
                 'must be provided.')
 
         if cursor:

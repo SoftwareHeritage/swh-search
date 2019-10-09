@@ -63,7 +63,7 @@ class ElasticSearch:
                             'type': 'nested',
                             'properties': {
                                 '@context': {
-                                    # don't bother indexing substrings
+                                    # don't bother indexing patterns
                                     'type': 'keyword',
                                 }
                             },
@@ -98,13 +98,13 @@ class ElasticSearch:
     @remote_api_endpoint('origin/search')
     def origin_search(
             self, *,
-            url_substring: str = None, metadata_substring: str = None,
+            url_pattern: str = None, metadata_pattern: str = None,
             cursor: str = None, count: int = 50
             ) -> Dict[str, object]:
-        """Searches for origins matching the `url_substring`.
+        """Searches for origins matching the `url_pattern`.
 
         Args:
-            url_substring (str): Part of thr URL to search for
+            url_pattern (str): Part of thr URL to search for
             cursor (str): `cursor` is opaque value used for pagination.
             count (int): number of results to return.
 
@@ -119,10 +119,10 @@ class ElasticSearch:
         """
         query_clauses = []
 
-        if url_substring:
+        if url_pattern:
             query_clauses.append({
                 'multi_match': {
-                    'query': url_substring,
+                    'query': url_pattern,
                     'type': 'bool_prefix',
                     'fields': [
                         'url.as_you_type',
@@ -132,13 +132,13 @@ class ElasticSearch:
                 }
             })
 
-        if metadata_substring:
+        if metadata_pattern:
             query_clauses.append({
                 'nested': {
                     'path': 'intrinsic_metadata',
                     'query': {
                         'multi_match': {
-                            'query': metadata_substring,
+                            'query': metadata_pattern,
                             'fields': ['intrinsic_metadata.*']
                         }
                     },
@@ -147,7 +147,7 @@ class ElasticSearch:
 
         if not query_clauses:
             raise ValueError(
-                'At least one of url_substring and metadata_substring '
+                'At least one of url_pattern and metadata_pattern '
                 'must be provided.')
 
         body = {
