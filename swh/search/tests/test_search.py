@@ -123,9 +123,14 @@ class CommonSearchTest:
         assert results == {'cursor': None, 'results': [
             {'url': 'http://origin3'}, {'url': 'http://origin2'}]}
 
+    # TODO: add more tests with more codemeta terms
+
+    # TODO: add more tests with edge cases
+
     @settings(deadline=None)
     @given(strategies.integers(min_value=1, max_value=4))
     def test_origin_url_paging(self, count):
+        # TODO: no hypothesis
         self.reset()
         self.search.origin_update([
             {'url': 'http://origin1/foo'},
@@ -169,6 +174,7 @@ class CommonSearchTest:
     @settings(deadline=None)
     @given(strategies.integers(min_value=1, max_value=4))
     def test_origin_intrinsic_metadata_paging(self, count):
+        # TODO: no hypothesis
         self.reset()
         self.search.origin_update([
             {

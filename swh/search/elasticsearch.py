@@ -90,12 +90,14 @@ class ElasticSearch:
             }
             for document in documents
         ]
+        # TODO: make refresh='wait_for' configurable (we don't need it
+        # in production, it will probably be a performance issue)
         bulk(self._backend, actions, index='origin', refresh='wait_for')
 
     def origin_dump(self) -> Iterator[model.Origin]:
         """Returns all content in Elasticsearch's index. Not exposed
         publicly; but useful for tests."""
-        results = list(scan(self._backend, index='*'))
+        results = scan(self._backend, index='*')
         for hit in results:
             yield self._backend.termvectors(
                 index='origin', id=hit['_id'],
@@ -123,6 +125,7 @@ class ElasticSearch:
               list of dictionaries with key:
               * `url`: URL of a matching origin
         """
+        # TODO: find a better name for "cursor"
         query_clauses = []
 
         if url_pattern:
@@ -159,7 +162,7 @@ class ElasticSearch:
         body = {
             'query': {
                 'bool': {
-                    'should': query_clauses,
+                    'should': query_clauses,  # TODO: must?
                 }
             },
             'size': count,
@@ -169,6 +172,7 @@ class ElasticSearch:
             ]
         }
         if cursor:
+            # TODO: use ElasticSearch's scroll API?
             cursor = msgpack.loads(base64.b64decode(cursor))
             body['search_after'] = \
                 [cursor[b'score'], cursor[b'id'].decode('ascii')]
@@ -194,7 +198,10 @@ class ElasticSearch:
         return {
             'cursor': next_cursor,
             'results': [
-                {'url': hit['_source']['url']}
+                {
+                    # TODO: also add 'id'?
+                    'url': hit['_source']['url'],
+                }
                 for hit in hits
             ]
         }
