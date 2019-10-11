@@ -35,9 +35,11 @@ class ElasticSearch:
         return self._backend.ping()
 
     def deinitialize(self) -> None:
+        """Removes all indices from the Elasticsearch backend"""
         self._backend.indices.delete(index='*')
 
     def initialize(self) -> None:
+        """Declare Elasticsearch indices and mappings"""
         self._backend.indices.create(
             index='origin',
             body={
@@ -51,6 +53,8 @@ class ElasticSearch:
                             # memory. See:
                             # https://www.elastic.co/guide/en/elasticsearch/reference/current/fielddata.html#before-enabling-fielddata
                             'fielddata': True,
+                            # To split URLs into token on any character
+                            # that is not alphanumerical
                             'analyzer': 'simple',
                             'fields': {
                                 'as_you_type': {
@@ -63,7 +67,7 @@ class ElasticSearch:
                             'type': 'nested',
                             'properties': {
                                 '@context': {
-                                    # don't bother indexing patterns
+                                    # don't bother indexing tokens
                                     'type': 'keyword',
                                 }
                             },
@@ -89,6 +93,8 @@ class ElasticSearch:
         bulk(self._backend, actions, index='origin', refresh='wait_for')
 
     def origin_dump(self) -> Iterator[model.Origin]:
+        """Returns all content in Elasticsearch's index. Not exposed
+        publicly; but useful for tests."""
         results = list(scan(self._backend, index='*'))
         for hit in results:
             yield self._backend.termvectors(
