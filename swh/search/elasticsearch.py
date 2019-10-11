@@ -20,7 +20,7 @@ def _sanitize_origin(origin):
     res = {
         'url': origin.pop('url')
     }
-    for field_name in ('type', 'intrinsic_metadata'):
+    for field_name in ('intrinsic_metadata',):
         if field_name in origin:
             res[field_name] = origin.pop(field_name)
     return res
