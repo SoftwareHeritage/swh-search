@@ -133,29 +133,38 @@ class CommonSearchTest:
             {'url': 'http://origin3/foo/bar/baz'},
         ])
 
-        results = list(stream_results(
+        results = stream_results(
             self.search.origin_search,
-            url_pattern='foo bar baz', count=count))
+            url_pattern='foo bar baz', count=count)
+        results = [res['url'] for res in results]
         expected_results = [
-            {'url': 'http://origin3/foo/bar/baz'}]
-        assert results == expected_results
+            'http://origin3/foo/bar/baz',
+        ]
+        assert sorted(results[0:len(expected_results)]) == \
+            sorted(expected_results)
 
-        results = list(stream_results(
+        results = stream_results(
             self.search.origin_search,
-            url_pattern='foo bar', count=count))
+            url_pattern='foo bar', count=count)
         expected_results = [
-            {'url': 'http://origin2/foo/bar'},
-            {'url': 'http://origin3/foo/bar/baz'}]
-        assert results == expected_results
+            'http://origin2/foo/bar',
+            'http://origin3/foo/bar/baz',
+        ]
+        results = [res['url'] for res in results]
+        assert sorted(results[0:len(expected_results)]) == \
+            sorted(expected_results)
 
-        results = list(stream_results(
+        results = stream_results(
             self.search.origin_search,
-            url_pattern='foo', count=count))
+            url_pattern='foo', count=count)
         expected_results = [
-            {'url': 'http://origin1/foo'},
-            {'url': 'http://origin2/foo/bar'},
-            {'url': 'http://origin3/foo/bar/baz'}]
-        assert results == expected_results
+            'http://origin1/foo',
+            'http://origin2/foo/bar',
+            'http://origin3/foo/bar/baz',
+        ]
+        results = [res['url'] for res in results]
+        assert sorted(results[0:len(expected_results)]) == \
+            sorted(expected_results)
 
     @settings(deadline=None)
     @given(strategies.integers(min_value=1, max_value=4))
