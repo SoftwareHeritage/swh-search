@@ -17,33 +17,42 @@ class CommonSearchTest:
         ])
 
         results = self.search.origin_search(url_pattern='foobar')
-        self.assertEqual(results, {'cursor': None, 'results': [
-            {'url': 'http://foobar.baz'}]})
+        assert results == {'cursor': None, 'results': [
+            {'url': 'http://foobar.baz'}]}
 
         results = self.search.origin_search(url_pattern='barb')
-        self.assertEqual(results, {'cursor': None, 'results': [
-            {'url': 'http://barbaz.qux'}]})
+        assert results == {'cursor': None, 'results': [
+            {'url': 'http://barbaz.qux'}]}
 
         # 'bar' is part of 'foobar', but is not the beginning of it
         results = self.search.origin_search(url_pattern='bar')
-        self.assertEqual(results, {'cursor': None, 'results': [
-            {'url': 'http://barbaz.qux'}]})
+        assert results == {'cursor': None, 'results': [
+            {'url': 'http://barbaz.qux'}]}
 
         results = self.search.origin_search(url_pattern='barbaz')
-        self.assertEqual(results, {'cursor': None, 'results': [
-            {'url': 'http://barbaz.qux'}]})
+        assert results == {'cursor': None, 'results': [
+            {'url': 'http://barbaz.qux'}]}
+
+    def test_origin_url_unique_word_prefix_multiple_results(self):
+        self.search.origin_update([
+            {'url': 'http://foobar.baz'},
+            {'url': 'http://barbaz.qux'},
+            {'url': 'http://qux.quux'},
+        ])
 
         results = self.search.origin_search(url_pattern='qu')
-        self.assertIsNone(results['cursor'])
-        self.assertEqual(
-            sorted(res['url'] for res in results['results']),
-            ['http://barbaz.qux', 'http://qux.quux'])
+        assert results['cursor'] is None
+
+        results = [res['url'] for res in results['results']]
+        expected_results = ['http://qux.quux', 'http://barbaz.qux']
+        assert sorted(results) == sorted(expected_results)
 
         results = self.search.origin_search(url_pattern='qux')
-        self.assertIsNone(results['cursor'])
-        self.assertEqual(
-            sorted(res['url'] for res in results['results']),
-            ['http://barbaz.qux', 'http://qux.quux'])
+        assert results['cursor'] is None
+
+        results = [res['url'] for res in results['results']]
+        expected_results = ['http://barbaz.qux', 'http://qux.quux']
+        assert sorted(results) == sorted(expected_results)
 
     def test_origin_intrinsic_metadata_description(self):
         self.search.origin_update([
@@ -68,18 +77,19 @@ class CommonSearchTest:
         ])
 
         results = self.search.origin_search(metadata_pattern='foo')
-        self.assertEqual(results, {'cursor': None, 'results': [
-            {'url': 'http://origin2'}]})
+        assert results == {'cursor': None, 'results': [
+            {'url': 'http://origin2'}]}
 
+        # ES returns both results, because blahblah
         results = self.search.origin_search(metadata_pattern='foo bar')
-        self.assertEqual(results, {'cursor': None, 'results': [
-            {'url': 'http://origin2'}, {'url': 'http://origin3'}]})
+        assert results == {'cursor': None, 'results': [
+            {'url': 'http://origin2'}, {'url': 'http://origin3'}]}
 
         results = self.search.origin_search(metadata_pattern='bar baz')
-        self.assertEqual(results, {'cursor': None, 'results': [
-            {'url': 'http://origin3'}, {'url': 'http://origin2'}]})
+        assert results == {'cursor': None, 'results': [
+            {'url': 'http://origin3'}, {'url': 'http://origin2'}]}
 
-    def test_origin_intrinsic_metadata_keywords(self):
+    def test_origin_intrinsic_metadata_nested(self):
         self.search.origin_update([
             {
                 'url': 'http://origin1',
@@ -102,16 +112,16 @@ class CommonSearchTest:
         ])
 
         results = self.search.origin_search(metadata_pattern='foo')
-        self.assertEqual(results, {'cursor': None, 'results': [
-            {'url': 'http://origin2'}]})
+        assert results == {'cursor': None, 'results': [
+            {'url': 'http://origin2'}]}
 
         results = self.search.origin_search(metadata_pattern='foo bar')
-        self.assertEqual(results, {'cursor': None, 'results': [
-            {'url': 'http://origin2'}, {'url': 'http://origin3'}]})
+        assert results == {'cursor': None, 'results': [
+            {'url': 'http://origin2'}, {'url': 'http://origin3'}]}
 
         results = self.search.origin_search(metadata_pattern='bar baz')
-        self.assertEqual(results, {'cursor': None, 'results': [
-            {'url': 'http://origin3'}, {'url': 'http://origin2'}]})
+        assert results == {'cursor': None, 'results': [
+            {'url': 'http://origin3'}, {'url': 'http://origin2'}]}
 
     @settings(deadline=None)
     @given(strategies.integers(min_value=1, max_value=4))
@@ -128,7 +138,7 @@ class CommonSearchTest:
             url_pattern='foo bar baz', count=count))
         expected_results = [
             {'url': 'http://origin3/foo/bar/baz'}]
-        self.assertEqual(results, expected_results)
+        assert results == expected_results
 
         results = list(stream_results(
             self.search.origin_search,
@@ -136,7 +146,7 @@ class CommonSearchTest:
         expected_results = [
             {'url': 'http://origin2/foo/bar'},
             {'url': 'http://origin3/foo/bar/baz'}]
-        self.assertEqual(results, expected_results)
+        assert results == expected_results
 
         results = list(stream_results(
             self.search.origin_search,
@@ -145,7 +155,7 @@ class CommonSearchTest:
             {'url': 'http://origin1/foo'},
             {'url': 'http://origin2/foo/bar'},
             {'url': 'http://origin3/foo/bar/baz'}]
-        self.assertEqual(results, expected_results)
+        assert results == expected_results
 
     @settings(deadline=None)
     @given(strategies.integers(min_value=1, max_value=4))
@@ -178,23 +188,23 @@ class CommonSearchTest:
         results = stream_results(
             self.search.origin_search,
             metadata_pattern='foo bar baz', count=count)
-        self.assertEqual(list(results), [
+        assert list(results) == [
             {'url': 'http://origin3'},
             {'url': 'http://origin2'},
-            {'url': 'http://origin1'}])
+            {'url': 'http://origin1'}]
 
         results = stream_results(
             self.search.origin_search,
             metadata_pattern='foo bar', count=count)
-        self.assertEqual(list(results), [
+        assert list(results) == [
             {'url': 'http://origin2'},
             {'url': 'http://origin3'},
-            {'url': 'http://origin1'}])
+            {'url': 'http://origin1'}]
 
         results = stream_results(
             self.search.origin_search,
             metadata_pattern='foo', count=count)
-        self.assertEqual(list(results), [
+        assert list(results) == [
             {'url': 'http://origin1'},
             {'url': 'http://origin2'},
-            {'url': 'http://origin3'}])
+            {'url': 'http://origin3'}]

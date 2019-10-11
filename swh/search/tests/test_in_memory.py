@@ -28,7 +28,7 @@ class InmemorySearchTest(unittest.TestCase, CommonSearchTest):
         pass
 
     @pytest.mark.skip('Not implemented in the in-memory search')
-    def test_origin_intrinsic_metadata_keywords(self):
+    def test_origin_intrinsic_metadata_nested(self):
         pass
 
     @pytest.mark.skip('Not implemented in the in-memory search')
