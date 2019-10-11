@@ -84,7 +84,6 @@ def elasticsearch_session(tmpdir_factory):
     es_conf = tmpdir.mkdir('conf')
 
     http_port = free_port()
-    http_port = 9200
     transport_port = free_port()
 
     p = _run_elasticsearch(
