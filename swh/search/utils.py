@@ -5,12 +5,12 @@
 
 
 def stream_results(f, *args, **kwargs):
-    if 'cursor' in kwargs:
-        raise TypeError('stream_results has no argument "cursor".')
-    cursor = None
+    if 'scroll_token' in kwargs:
+        raise TypeError('stream_results has no argument "scroll_token".')
+    scroll_token = None
     while True:
-        results = f(*args, cursor=cursor, **kwargs)
+        results = f(*args, scroll_token=scroll_token, **kwargs)
         yield from results['results']
-        cursor = results['cursor']
-        if cursor is None:
+        scroll_token = results['scroll_token']
+        if scroll_token is None:
             break

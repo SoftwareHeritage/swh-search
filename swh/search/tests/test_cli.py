@@ -82,5 +82,5 @@ class CliTestCase(BaseElasticsearchTest):
         assert result.output == expected_output
 
         results = self.search.origin_search(url_pattern='foobar')
-        assert results == {'cursor': None, 'results': [
+        assert results == {'scroll_token': None, 'results': [
             {'url': 'http://foobar.baz'}]}

@@ -107,25 +107,25 @@ class ElasticSearch:
     def origin_search(
             self, *,
             url_pattern: str = None, metadata_pattern: str = None,
-            cursor: str = None, count: int = 50
+            scroll_token: str = None, count: int = 50
             ) -> Dict[str, object]:
         """Searches for origins matching the `url_pattern`.
 
         Args:
             url_pattern (str): Part of thr URL to search for
-            cursor (str): `cursor` is opaque value used for pagination.
+            scroll_token (str): `scroll_token` is an opaque value used for
+                                pagination.
             count (int): number of results to return.
 
         Returns:
             a dictionary with keys:
-            * `cursor`:
+            * `scroll_token`:
               opaque value used for fetching more results. `None` if there
               are no more result.
             * `results`:
               list of dictionaries with key:
               * `url`: URL of a matching origin
         """
-        # TODO: find a better name for "cursor"
         query_clauses = []
 
         if url_pattern:
@@ -171,11 +171,11 @@ class ElasticSearch:
                 {'_id': 'asc'},
             ]
         }
-        if cursor:
+        if scroll_token:
             # TODO: use ElasticSearch's scroll API?
-            cursor = msgpack.loads(base64.b64decode(cursor))
+            scroll_token = msgpack.loads(base64.b64decode(scroll_token))
             body['search_after'] = \
-                [cursor[b'score'], cursor[b'id'].decode('ascii')]
+                [scroll_token[b'score'], scroll_token[b'id'].decode('ascii')]
 
         res = self._backend.search(
             index='origin',
@@ -187,16 +187,17 @@ class ElasticSearch:
 
         if len(hits) == count:
             last_hit = hits[-1]
-            next_cursor = {
+            next_scroll_token = {
                 b'score': last_hit['_score'],
                 b'id': last_hit['_id'],
             }
-            next_cursor = base64.b64encode(msgpack.dumps(next_cursor))
+            next_scroll_token = base64.b64encode(msgpack.dumps(
+                next_scroll_token))
         else:
-            next_cursor = None
+            next_scroll_token = None
 
         return {
-            'cursor': next_cursor,
+            'scroll_token': next_scroll_token,
             'results': [
                 {
                     # TODO: also add 'id'?

@@ -61,7 +61,7 @@ class InMemorySearch:
     def origin_search(
             self, *,
             url_pattern: str = None, metadata_pattern: str = None,
-            cursor: str = None, count: int = 50
+            scroll_token: str = None, count: int = 50
             ) -> Dict[str, object]:
         matches = (self._origins[id_] for id_ in self._origin_ids)
 
@@ -91,9 +91,9 @@ class InMemorySearch:
                 'At least one of url_pattern and metadata_pattern '
                 'must be provided.')
 
-        if cursor:
-            cursor = msgpack.loads(base64.b64decode(cursor))
-            start_at_index = cursor[b'start_at_index']
+        if scroll_token:
+            scroll_token = msgpack.loads(base64.b64decode(scroll_token))
+            start_at_index = scroll_token[b'start_at_index']
         else:
             start_at_index = 0
 
@@ -101,15 +101,16 @@ class InMemorySearch:
             matches, start_at_index, start_at_index+count))
 
         if len(hits) == count:
-            next_cursor = {
+            next_scroll_token = {
                 b'start_at_index': start_at_index+count,
             }
-            next_cursor = base64.b64encode(msgpack.dumps(next_cursor))
+            next_scroll_token = base64.b64encode(msgpack.dumps(
+                next_scroll_token))
         else:
-            next_cursor = None
+            next_scroll_token = None
 
         return {
-            'cursor': next_cursor,
+            'scroll_token': next_scroll_token,
             'results': [
                 {'url': hit['url']}
                 for hit in hits
