@@ -37,6 +37,23 @@ class SearchJournalClientTest(unittest.TestCase):
             {'url': 'http://barbaz.qux'},
         ])
 
+    def test_origin_visit_from_journal(self):
+        search_mock = MagicMock()
+
+        worker_fn = functools.partial(
+            process_journal_objects,
+            search=search_mock,
+        )
+
+        worker_fn({'origin_visit': [
+            {
+                'origin': {'url': 'http://foobar.baz'},
+            }
+        ]})
+        search_mock.origin_update.assert_called_once_with([
+            {'url': 'http://foobar.baz', 'has_visits': True},
+        ])
+
     def test_origin_metadata_from_journal(self):
         search_mock = MagicMock()
 

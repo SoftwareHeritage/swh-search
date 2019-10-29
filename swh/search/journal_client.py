@@ -6,9 +6,9 @@
 import logging
 
 
-MAX_ORIGINS_PER_TASK = 100
-
-EXPECTED_MESSAGE_TYPES = {'origin', 'origin_intrinsic_metadata'}
+EXPECTED_MESSAGE_TYPES = {
+    'origin', 'origin_visit', 'origin_intrinsic_metadata',
+}
 
 
 def process_journal_objects(messages, *, search):
@@ -19,6 +19,9 @@ def process_journal_objects(messages, *, search):
     if 'origin' in messages:
         process_origins(messages['origin'], search)
 
+    if 'origin_visit' in messages:
+        process_origin_visits(messages['origin_visit'], search)
+
     if 'origin_intrinsic_metadata' in messages:
         process_origin_intrinsic_metadata(
             messages['origin_intrinsic_metadata'], search)
@@ -28,6 +31,18 @@ def process_origins(origins, search):
     logging.debug('processing origins %r', origins)
 
     search.origin_update(origins)
+
+
+def process_origin_visits(visits, search):
+    logging.debug('processing origin visits %r', visits)
+
+    search.origin_update([
+        {
+            'url': visit['origin']['url'],
+            'has_visits': True
+        }
+        for visit in visits
+    ])
 
 
 def process_origin_intrinsic_metadata(origin_metadata, search):
