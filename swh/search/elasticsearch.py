@@ -20,7 +20,7 @@ def _sanitize_origin(origin):
     res = {
         'url': origin.pop('url')
     }
-    for field_name in ('intrinsic_metadata',):
+    for field_name in ('intrinsic_metadata', 'has_visits'):
         if field_name in origin:
             res[field_name] = origin.pop(field_name)
     return res
@@ -62,6 +62,9 @@ class ElasticSearch:
                                     'analyzer': 'simple',
                                 }
                             }
+                        },
+                        'has_visits': {
+                            'type': 'boolean',
                         },
                         'intrinsic_metadata': {
                             'type': 'nested',
@@ -107,14 +110,16 @@ class ElasticSearch:
     def origin_search(
             self, *,
             url_pattern: str = None, metadata_pattern: str = None,
+            with_visit: bool = False,
             scroll_token: str = None, count: int = 50
             ) -> Dict[str, object]:
         """Searches for origins matching the `url_pattern`.
 
         Args:
             url_pattern (str): Part of thr URL to search for
-            scroll_token (str): `scroll_token` is an opaque value used for
-                                pagination.
+            with_visit (bool): Whether origins with no visit are to be
+                               filtered out
+            scroll_token (str): Opaque value used for pagination.
             count (int): number of results to return.
 
         Returns:
@@ -159,10 +164,17 @@ class ElasticSearch:
                 'At least one of url_pattern and metadata_pattern '
                 'must be provided.')
 
+        if with_visit:
+            query_clauses.append({
+                'term': {
+                    'has_visits': True,
+                }
+            })
+
         body = {
             'query': {
                 'bool': {
-                    'should': query_clauses,  # TODO: must?
+                    'must': query_clauses,
                 }
             },
             'size': count,

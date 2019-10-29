@@ -54,6 +54,34 @@ class CommonSearchTest:
         expected_results = ['http://barbaz.qux', 'http://qux.quux']
         assert sorted(results) == sorted(expected_results)
 
+    def test_origin_with_visit(self):
+        self.search.origin_update([
+            {'url': 'http://foobar.baz', 'has_visits': True},
+        ])
+
+        results = self.search.origin_search(
+            url_pattern='foobar', with_visit=True)
+        assert results == {'scroll_token': None, 'results': [
+            {'url': 'http://foobar.baz'}]}
+
+    def test_origin_with_visit_added(self):
+        self.search.origin_update([
+            {'url': 'http://foobar.baz'},
+        ])
+
+        results = self.search.origin_search(
+            url_pattern='foobar', with_visit=True)
+        assert results == {'scroll_token': None, 'results': []}
+
+        self.search.origin_update([
+            {'url': 'http://foobar.baz', 'has_visits': True},
+        ])
+
+        results = self.search.origin_search(
+            url_pattern='foobar', with_visit=True)
+        assert results == {'scroll_token': None, 'results': [
+            {'url': 'http://foobar.baz'}]}
+
     def test_origin_intrinsic_metadata_description(self):
         self.search.origin_update([
             {

@@ -61,6 +61,7 @@ class InMemorySearch:
     def origin_search(
             self, *,
             url_pattern: str = None, metadata_pattern: str = None,
+            with_visit: bool = False,
             scroll_token: str = None, count: int = 50
             ) -> Dict[str, object]:
         matches = (self._origins[id_] for id_ in self._origin_ids)
@@ -90,6 +91,9 @@ class InMemorySearch:
             raise ValueError(
                 'At least one of url_pattern and metadata_pattern '
                 'must be provided.')
+
+        if with_visit:
+            matches = filter(lambda o: o.get('has_visits'), matches)
 
         if scroll_token:
             scroll_token = msgpack.loads(base64.b64decode(scroll_token))
