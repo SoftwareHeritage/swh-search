@@ -7,7 +7,7 @@ import unittest
 
 import pytest
 
-from swh.search.elasticsearch import ElasticSearch
+from swh.search import get_search
 from .test_search import CommonSearchTest
 
 
@@ -15,7 +15,9 @@ class BaseElasticsearchTest(unittest.TestCase):
     @pytest.fixture(autouse=True)
     def _instantiate_search(self, elasticsearch_host):
         self._elasticsearch_host = elasticsearch_host
-        self.search = ElasticSearch([elasticsearch_host])
+        self.search = get_search('elasticsearch', {
+            'hosts': [elasticsearch_host],
+        })
 
     def setUp(self):
         self.reset()

@@ -25,7 +25,7 @@ def get_search(cls, args):
     elif cls == 'elasticsearch':
         from .elasticsearch import ElasticSearch as Search
     elif cls == 'memory':
-        from .in_memory import InmemorySearchTest as Search
+        from .in_memory import InMemorySearch as Search
     else:
         raise ValueError('Unknown indexer search class `%s`' % cls)
 

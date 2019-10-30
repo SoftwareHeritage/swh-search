@@ -9,9 +9,8 @@ import pytest
 
 from swh.core.api.tests.server_testing import ServerTestFixture
 
-from swh.search.elasticsearch import ElasticSearch
+from swh.search import get_search
 from swh.search.api.server import app
-from swh.search.api.client import RemoteSearch
 from .test_search import CommonSearchTest
 
 
@@ -32,10 +31,14 @@ class TestRemoteSearch(CommonSearchTest, ServerTestFixture, unittest.TestCase):
         self.app = app
         super().setUp()
         self.reset()
-        self.search = RemoteSearch(self.url())
+        self.search = get_search('remote', {
+            'url': self.url(),
+        })
 
     def reset(self):
-        search = ElasticSearch([self._elasticsearch_host])
+        search = get_search('elasticsearch', {
+            'hosts': [self._elasticsearch_host],
+        })
         search.deinitialize()
         search.initialize()
 

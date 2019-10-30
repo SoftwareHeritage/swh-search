@@ -7,14 +7,14 @@ import unittest
 
 import pytest
 
-from swh.search.in_memory import InMemorySearch
+from swh.search import get_search
 from .test_search import CommonSearchTest
 
 
 class InmemorySearchTest(unittest.TestCase, CommonSearchTest):
     @pytest.fixture(autouse=True)
     def _instantiate_search(self):
-        self.search = InMemorySearch()
+        self.search = get_search('memory', {})
 
     def setUp(self):
         self.reset()
