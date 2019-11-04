@@ -1,5 +1,6 @@
-swh-py-template
-===============
+swh-search
+==========
 
-Python module template, used as skeleton to create new modules.
+Search service for the Software Heritage archive.
 
+Currently uses ElasticSearch, and provides only origin search (by URL and metadata)
