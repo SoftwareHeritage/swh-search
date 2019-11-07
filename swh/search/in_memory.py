@@ -64,7 +64,9 @@ class InMemorySearch:
             with_visit: bool = False,
             scroll_token: str = None, count: int = 50
             ) -> Dict[str, object]:
-        matches = (self._origins[id_] for id_ in self._origin_ids)  # type: Iterator[Dict[str, Any]]
+        matches = \
+            (self._origins[id_]
+             for id_ in self._origin_ids)  # type: Iterator[Dict[str, Any]]
 
         if url_pattern:
             tokens = set(self._url_splitter.split(url_pattern))
