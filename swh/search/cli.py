@@ -73,7 +73,7 @@ def journal_client_objects(ctx, max_messages):
 
 
 @cli.command('rpc-serve')
-@click.argument('config-path', required=1)
+@click.argument('config-path', required=True)
 @click.option('--host', default='0.0.0.0', help="Host to run the server")
 @click.option('--port', default=5010, type=click.INT,
               help="Binding port of the server")

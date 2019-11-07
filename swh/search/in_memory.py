@@ -7,7 +7,7 @@ import base64
 from collections import defaultdict
 import itertools
 import re
-from typing import Iterable, Dict
+from typing import Any, Dict, Iterable, Iterator, List, Optional
 
 import msgpack
 
@@ -40,8 +40,8 @@ class InMemorySearch:
             del self._origin_ids
 
     def initialize(self) -> None:
-        self._origins = defaultdict(dict)
-        self._origin_ids = []
+        self._origins = defaultdict(dict)  # type: Dict[str, Dict[str, Any]]
+        self._origin_ids = []  # type: List[str]
 
     _url_splitter = re.compile(r'\W')
 
@@ -64,7 +64,7 @@ class InMemorySearch:
             with_visit: bool = False,
             scroll_token: str = None, count: int = 50
             ) -> Dict[str, object]:
-        matches = (self._origins[id_] for id_ in self._origin_ids)
+        matches = (self._origins[id_] for id_ in self._origin_ids)  # type: Iterator[Dict[str, Any]]
 
         if url_pattern:
             tokens = set(self._url_splitter.split(url_pattern))
@@ -96,8 +96,9 @@ class InMemorySearch:
             matches = filter(lambda o: o.get('has_visits'), matches)
 
         if scroll_token:
-            scroll_token = msgpack.loads(base64.b64decode(scroll_token))
-            start_at_index = scroll_token[b'start_at_index']
+            scroll_token_content = msgpack.loads(
+                base64.b64decode(scroll_token))
+            start_at_index = scroll_token_content[b'start_at_index']
         else:
             start_at_index = 0
 
@@ -105,11 +106,11 @@ class InMemorySearch:
             matches, start_at_index, start_at_index+count))
 
         if len(hits) == count:
-            next_scroll_token = {
+            next_scroll_token_content = {
                 b'start_at_index': start_at_index+count,
             }
             next_scroll_token = base64.b64encode(msgpack.dumps(
-                next_scroll_token))
+                next_scroll_token_content))  # type: Optional[bytes]
         else:
             next_scroll_token = None
 

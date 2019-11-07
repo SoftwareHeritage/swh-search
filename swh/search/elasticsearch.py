@@ -4,7 +4,7 @@
 # See top-level LICENSE file for more information
 
 import base64
-from typing import Iterable, Dict, List, Iterator
+from typing import Any, Iterable, Dict, List, Iterator, Optional
 
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk, scan
@@ -131,7 +131,7 @@ class ElasticSearch:
               list of dictionaries with key:
               * `url`: URL of a matching origin
         """
-        query_clauses = []
+        query_clauses = []  # type: List[Dict[str, Any]]
 
         if url_pattern:
             query_clauses.append({
@@ -185,9 +185,11 @@ class ElasticSearch:
         }
         if scroll_token:
             # TODO: use ElasticSearch's scroll API?
-            scroll_token = msgpack.loads(base64.b64decode(scroll_token))
+            scroll_token_content = msgpack.loads(
+                base64.b64decode(scroll_token))
             body['search_after'] = \
-                [scroll_token[b'score'], scroll_token[b'id'].decode('ascii')]
+                [scroll_token_content[b'score'],
+                 scroll_token_content[b'id'].decode('ascii')]
 
         res = self._backend.search(
             index='origin',
@@ -199,12 +201,12 @@ class ElasticSearch:
 
         if len(hits) == count:
             last_hit = hits[-1]
-            next_scroll_token = {
+            next_scroll_token_content = {
                 b'score': last_hit['_score'],
                 b'id': last_hit['_id'],
             }
             next_scroll_token = base64.b64encode(msgpack.dumps(
-                next_scroll_token))
+                next_scroll_token_content))  # type: Optional[bytes]
         else:
             next_scroll_token = None
 
