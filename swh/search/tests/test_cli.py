@@ -9,6 +9,7 @@ from unittest.mock import patch, MagicMock
 from click.testing import CliRunner
 
 from swh.journal.serializers import value_to_kafka
+from swh.journal.tests.utils import MockedKafkaConsumer
 
 from swh.search.cli import cli
 from .test_elasticsearch import BaseElasticsearchTest
@@ -49,8 +50,6 @@ class CliTestCase(BaseElasticsearchTest):
     def test__journal_client__origin(self):
         """Tests the re-indexing when origin_batch_size*task_batch_size is a
         divisor of nb_origins."""
-        mock_consumer = MagicMock()
-
         topic = 'swh.journal.objects.origin'
         value = value_to_kafka({
             'url': 'http://foobar.baz',
@@ -59,7 +58,8 @@ class CliTestCase(BaseElasticsearchTest):
         message.error.return_value = None
         message.topic.return_value = topic
         message.value.return_value = value
-        mock_consumer.poll.return_value = message
+
+        mock_consumer = MockedKafkaConsumer([message])
 
         with patch('swh.journal.client.Consumer',
                    return_value=mock_consumer):
@@ -68,10 +68,6 @@ class CliTestCase(BaseElasticsearchTest):
                     '--max-messages', '1',
                 ], JOURNAL_OBJECTS_CONFIG,
                 elasticsearch_host=self._elasticsearch_host)
-
-        mock_consumer.subscribe.assert_called_once_with(topics=[topic])
-        mock_consumer.poll.assert_called_once_with(timeout=1.0)
-        mock_consumer.commit.assert_called_once_with()
 
         # Check the output
         expected_output = (

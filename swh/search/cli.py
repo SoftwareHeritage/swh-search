@@ -54,7 +54,8 @@ def journal_client_objects(ctx, max_messages):
     """Listens for new objects from the SWH Journal, and schedules tasks
     to run relevant indexers (currently, only origin)
     on these new objects."""
-    client = get_journal_client(ctx, object_types=['origin'])
+    client = get_journal_client(
+        ctx, object_types=['origin'], max_messages=max_messages)
     search = get_search(**ctx.obj['config']['search'])
 
     worker_fn = functools.partial(
