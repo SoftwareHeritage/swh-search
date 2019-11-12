@@ -55,7 +55,8 @@ def journal_client_objects(ctx, max_messages):
     to run relevant indexers (currently, only origin)
     on these new objects."""
     client = get_journal_client(
-        ctx, object_types=['origin'], max_messages=max_messages)
+        ctx, object_types=['origin', 'origin_visit'],
+        max_messages=max_messages)
     search = get_search(**ctx.obj['config']['search'])
 
     worker_fn = functools.partial(

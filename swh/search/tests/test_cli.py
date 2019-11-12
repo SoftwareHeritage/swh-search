@@ -32,6 +32,14 @@ journal:
 '''
 
 
+class MockedKafkaConsumerWithTopics(MockedKafkaConsumer):
+    def list_topics(self, timeout=None):
+        return {
+            'swh.journal.objects.origin',
+            'swh.journal.objects.origin_visit',
+        }
+
+
 def invoke(catch_exceptions, args, config='', *, elasticsearch_host):
     runner = CliRunner()
     with tempfile.NamedTemporaryFile('a', suffix='.yml') as config_fd:
@@ -59,7 +67,7 @@ class CliTestCase(BaseElasticsearchTest):
         message.topic.return_value = topic
         message.value.return_value = value
 
-        mock_consumer = MockedKafkaConsumer([message])
+        mock_consumer = MockedKafkaConsumerWithTopics([message])
 
         with patch('swh.journal.client.Consumer',
                    return_value=mock_consumer):
@@ -78,5 +86,44 @@ class CliTestCase(BaseElasticsearchTest):
         assert result.output == expected_output
 
         results = self.search.origin_search(url_pattern='foobar')
+        assert results == {'scroll_token': None, 'results': [
+            {'url': 'http://foobar.baz'}]}
+
+        results = self.search.origin_search(url_pattern='foobar',
+                                            with_visit=True)
+        assert results == {'scroll_token': None, 'results': []}
+
+    def test__journal_client__origin_visit(self):
+        """Tests the re-indexing when origin_batch_size*task_batch_size is a
+        divisor of nb_origins."""
+        topic = 'swh.journal.objects.origin_visit'
+        value = value_to_kafka({
+            'origin': 'http://foobar.baz',
+        })
+        message = MagicMock()
+        message.error.return_value = None
+        message.topic.return_value = topic
+        message.value.return_value = value
+
+        mock_consumer = MockedKafkaConsumerWithTopics([message])
+
+        with patch('swh.journal.client.Consumer',
+                   return_value=mock_consumer):
+            result = invoke(False, [
+                    'journal-client', 'objects',
+                    '--max-messages', '1',
+                ], JOURNAL_OBJECTS_CONFIG,
+                elasticsearch_host=self._elasticsearch_host)
+
+        # Check the output
+        expected_output = (
+            'Processed 1 messages.\n'
+            'Done.\n'
+        )
+        assert result.exit_code == 0, result.output
+        assert result.output == expected_output
+
+        results = self.search.origin_search(url_pattern='foobar',
+                                            with_visit=True)
         assert results == {'scroll_token': None, 'results': [
             {'url': 'http://foobar.baz'}]}
