@@ -18,7 +18,6 @@ def _get_search():
     global search
     if not search:
         search = get_search(**app.config['search'])
-        print('got search', repr(search.__class__))
 
     return search
 
