@@ -38,7 +38,8 @@ def process_origin_visits(visits, search):
 
     search.origin_update([
         {
-            'url': visit['origin']['url'],
+            'url': (visit['origin'] if isinstance(visit['origin'], str)
+                    else visit['origin']['url']),
             'has_visits': True
         }
         for visit in visits
