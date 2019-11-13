@@ -40,42 +40,42 @@ class ElasticSearch:
 
     def initialize(self) -> None:
         """Declare Elasticsearch indices and mappings"""
-        self._backend.indices.create(
+        if not self._backend.indices.exists(index='origin'):
+            self._backend.indices.create(index='origin')
+        self._backend.indices.put_mapping(
             index='origin',
             body={
-                'mappings': {
-                    'properties': {
-                        'url': {
-                            'type': 'text',
-                            # TODO: consider removing fielddata when
-                            # swh-storage allows querying by hash, so the
-                            # full URL does not have to be stored in ES'
-                            # memory. See:
-                            # https://www.elastic.co/guide/en/elasticsearch/reference/current/fielddata.html#before-enabling-fielddata
-                            'fielddata': True,
-                            # To split URLs into token on any character
-                            # that is not alphanumerical
-                            'analyzer': 'simple',
-                            'fields': {
-                                'as_you_type': {
-                                    'type': 'search_as_you_type',
-                                    'analyzer': 'simple',
-                                }
+                'properties': {
+                    'url': {
+                        'type': 'text',
+                        # TODO: consider removing fielddata when
+                        # swh-storage allows querying by hash, so the
+                        # full URL does not have to be stored in ES'
+                        # memory. See:
+                        # https://www.elastic.co/guide/en/elasticsearch/reference/current/fielddata.html#before-enabling-fielddata
+                        'fielddata': True,
+                        # To split URLs into token on any character
+                        # that is not alphanumerical
+                        'analyzer': 'simple',
+                        'fields': {
+                            'as_you_type': {
+                                'type': 'search_as_you_type',
+                                'analyzer': 'simple',
+                            }
+                        }
+                    },
+                    'has_visits': {
+                        'type': 'boolean',
+                    },
+                    'intrinsic_metadata': {
+                        'type': 'nested',
+                        'properties': {
+                            '@context': {
+                                # don't bother indexing tokens
+                                'type': 'keyword',
                             }
                         },
-                        'has_visits': {
-                            'type': 'boolean',
-                        },
-                        'intrinsic_metadata': {
-                            'type': 'nested',
-                            'properties': {
-                                '@context': {
-                                    # don't bother indexing tokens
-                                    'type': 'keyword',
-                                }
-                            },
-                        },
-                    }
+                    },
                 }
             }
         )
