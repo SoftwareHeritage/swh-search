@@ -5,12 +5,12 @@
 
 
 def stream_results(f, *args, **kwargs):
-    if 'scroll_token' in kwargs:
-        raise TypeError('stream_results has no argument "scroll_token".')
-    scroll_token = None
+    if 'page_token' in kwargs:
+        raise TypeError('stream_results has no argument "page_token".')
+    page_token = None
     while True:
-        results = f(*args, scroll_token=scroll_token, **kwargs)
+        results = f(*args, page_token=page_token, **kwargs)
         yield from results['results']
-        scroll_token = results['scroll_token']
-        if scroll_token is None:
+        page_token = results['next_page_token']
+        if page_token is None:
             break

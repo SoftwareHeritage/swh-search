@@ -62,7 +62,7 @@ class InMemorySearch:
             self, *,
             url_pattern: str = None, metadata_pattern: str = None,
             with_visit: bool = False,
-            scroll_token: str = None, count: int = 50
+            page_token: str = None, count: int = 50
             ) -> Dict[str, object]:
         matches = \
             (self._origins[id_]
@@ -97,10 +97,10 @@ class InMemorySearch:
         if with_visit:
             matches = filter(lambda o: o.get('has_visits'), matches)
 
-        if scroll_token:
-            scroll_token_content = msgpack.loads(
-                base64.b64decode(scroll_token))
-            start_at_index = scroll_token_content[b'start_at_index']
+        if page_token:
+            page_token_content = msgpack.loads(
+                base64.b64decode(page_token))
+            start_at_index = page_token_content[b'start_at_index']
         else:
             start_at_index = 0
 
@@ -108,16 +108,16 @@ class InMemorySearch:
             matches, start_at_index, start_at_index+count))
 
         if len(hits) == count:
-            next_scroll_token_content = {
+            next_page_token_content = {
                 b'start_at_index': start_at_index+count,
             }
-            next_scroll_token = base64.b64encode(msgpack.dumps(
-                next_scroll_token_content))  # type: Optional[bytes]
+            next_page_token = base64.b64encode(msgpack.dumps(
+                next_page_token_content))  # type: Optional[bytes]
         else:
-            next_scroll_token = None
+            next_page_token = None
 
         return {
-            'scroll_token': next_scroll_token,
+            'next_page_token': next_page_token,
             'results': [
                 {'url': hit['url']}
                 for hit in hits

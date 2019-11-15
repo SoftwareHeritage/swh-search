@@ -17,20 +17,20 @@ class CommonSearchTest:
         ])
 
         results = self.search.origin_search(url_pattern='foobar')
-        assert results == {'scroll_token': None, 'results': [
+        assert results == {'next_page_token': None, 'results': [
             {'url': 'http://foobar.baz'}]}
 
         results = self.search.origin_search(url_pattern='barb')
-        assert results == {'scroll_token': None, 'results': [
+        assert results == {'next_page_token': None, 'results': [
             {'url': 'http://barbaz.qux'}]}
 
         # 'bar' is part of 'foobar', but is not the beginning of it
         results = self.search.origin_search(url_pattern='bar')
-        assert results == {'scroll_token': None, 'results': [
+        assert results == {'next_page_token': None, 'results': [
             {'url': 'http://barbaz.qux'}]}
 
         results = self.search.origin_search(url_pattern='barbaz')
-        assert results == {'scroll_token': None, 'results': [
+        assert results == {'next_page_token': None, 'results': [
             {'url': 'http://barbaz.qux'}]}
 
     def test_origin_url_unique_word_prefix_multiple_results(self):
@@ -41,14 +41,14 @@ class CommonSearchTest:
         ])
 
         results = self.search.origin_search(url_pattern='qu')
-        assert results['scroll_token'] is None
+        assert results['next_page_token'] is None
 
         results = [res['url'] for res in results['results']]
         expected_results = ['http://qux.quux', 'http://barbaz.qux']
         assert sorted(results) == sorted(expected_results)
 
         results = self.search.origin_search(url_pattern='qux')
-        assert results['scroll_token'] is None
+        assert results['next_page_token'] is None
 
         results = [res['url'] for res in results['results']]
         expected_results = ['http://barbaz.qux', 'http://qux.quux']
@@ -61,7 +61,7 @@ class CommonSearchTest:
 
         results = self.search.origin_search(
             url_pattern='foobar', with_visit=True)
-        assert results == {'scroll_token': None, 'results': [
+        assert results == {'next_page_token': None, 'results': [
             {'url': 'http://foobar.baz'}]}
 
     def test_origin_with_visit_added(self):
@@ -71,7 +71,7 @@ class CommonSearchTest:
 
         results = self.search.origin_search(
             url_pattern='foobar', with_visit=True)
-        assert results == {'scroll_token': None, 'results': []}
+        assert results == {'next_page_token': None, 'results': []}
 
         self.search.origin_update([
             {'url': 'http://foobar.baz', 'has_visits': True},
@@ -79,7 +79,7 @@ class CommonSearchTest:
 
         results = self.search.origin_search(
             url_pattern='foobar', with_visit=True)
-        assert results == {'scroll_token': None, 'results': [
+        assert results == {'next_page_token': None, 'results': [
             {'url': 'http://foobar.baz'}]}
 
     def test_origin_intrinsic_metadata_description(self):
@@ -105,16 +105,16 @@ class CommonSearchTest:
         ])
 
         results = self.search.origin_search(metadata_pattern='foo')
-        assert results == {'scroll_token': None, 'results': [
+        assert results == {'next_page_token': None, 'results': [
             {'url': 'http://origin2'}]}
 
         # ES returns both results, because blahblah
         results = self.search.origin_search(metadata_pattern='foo bar')
-        assert results == {'scroll_token': None, 'results': [
+        assert results == {'next_page_token': None, 'results': [
             {'url': 'http://origin2'}, {'url': 'http://origin3'}]}
 
         results = self.search.origin_search(metadata_pattern='bar baz')
-        assert results == {'scroll_token': None, 'results': [
+        assert results == {'next_page_token': None, 'results': [
             {'url': 'http://origin3'}, {'url': 'http://origin2'}]}
 
     def test_origin_intrinsic_metadata_nested(self):
@@ -140,15 +140,15 @@ class CommonSearchTest:
         ])
 
         results = self.search.origin_search(metadata_pattern='foo')
-        assert results == {'scroll_token': None, 'results': [
+        assert results == {'next_page_token': None, 'results': [
             {'url': 'http://origin2'}]}
 
         results = self.search.origin_search(metadata_pattern='foo bar')
-        assert results == {'scroll_token': None, 'results': [
+        assert results == {'next_page_token': None, 'results': [
             {'url': 'http://origin2'}, {'url': 'http://origin3'}]}
 
         results = self.search.origin_search(metadata_pattern='bar baz')
-        assert results == {'scroll_token': None, 'results': [
+        assert results == {'next_page_token': None, 'results': [
             {'url': 'http://origin3'}, {'url': 'http://origin2'}]}
 
     # TODO: add more tests with more codemeta terms

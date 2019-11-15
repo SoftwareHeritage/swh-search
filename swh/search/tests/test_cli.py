@@ -86,12 +86,12 @@ class CliTestCase(BaseElasticsearchTest):
         assert result.output == expected_output
 
         results = self.search.origin_search(url_pattern='foobar')
-        assert results == {'scroll_token': None, 'results': [
+        assert results == {'next_page_token': None, 'results': [
             {'url': 'http://foobar.baz'}]}
 
         results = self.search.origin_search(url_pattern='foobar',
                                             with_visit=True)
-        assert results == {'scroll_token': None, 'results': []}
+        assert results == {'next_page_token': None, 'results': []}
 
     def test__journal_client__origin_visit(self):
         """Tests the re-indexing when origin_batch_size*task_batch_size is a
@@ -125,5 +125,5 @@ class CliTestCase(BaseElasticsearchTest):
 
         results = self.search.origin_search(url_pattern='foobar',
                                             with_visit=True)
-        assert results == {'scroll_token': None, 'results': [
+        assert results == {'next_page_token': None, 'results': [
             {'url': 'http://foobar.baz'}]}
