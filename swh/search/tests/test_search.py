@@ -15,6 +15,7 @@ class CommonSearchTest:
             {'url': 'http://barbaz.qux'},
             {'url': 'http://qux.quux'},
         ])
+        self.search.flush()
 
         results = self.search.origin_search(url_pattern='foobar')
         assert results == {'next_page_token': None, 'results': [
@@ -39,6 +40,7 @@ class CommonSearchTest:
             {'url': 'http://barbaz.qux'},
             {'url': 'http://qux.quux'},
         ])
+        self.search.flush()
 
         results = self.search.origin_search(url_pattern='qu')
         assert results['next_page_token'] is None
@@ -58,6 +60,7 @@ class CommonSearchTest:
         self.search.origin_update([
             {'url': 'http://foobar.baz', 'has_visits': True},
         ])
+        self.search.flush()
 
         results = self.search.origin_search(
             url_pattern='foobar', with_visit=True)
@@ -68,6 +71,7 @@ class CommonSearchTest:
         self.search.origin_update([
             {'url': 'http://foobar.baz'},
         ])
+        self.search.flush()
 
         results = self.search.origin_search(
             url_pattern='foobar', with_visit=True)
@@ -76,6 +80,7 @@ class CommonSearchTest:
         self.search.origin_update([
             {'url': 'http://foobar.baz', 'has_visits': True},
         ])
+        self.search.flush()
 
         results = self.search.origin_search(
             url_pattern='foobar', with_visit=True)
@@ -103,6 +108,7 @@ class CommonSearchTest:
                 }
             },
         ])
+        self.search.flush()
 
         results = self.search.origin_search(metadata_pattern='foo')
         assert results == {'next_page_token': None, 'results': [
@@ -138,6 +144,7 @@ class CommonSearchTest:
                 }
             },
         ])
+        self.search.flush()
 
         results = self.search.origin_search(metadata_pattern='foo')
         assert results == {'next_page_token': None, 'results': [
@@ -165,6 +172,7 @@ class CommonSearchTest:
             {'url': 'http://origin2/foo/bar'},
             {'url': 'http://origin3/foo/bar/baz'},
         ])
+        self.search.flush()
 
         results = stream_results(
             self.search.origin_search,
@@ -227,6 +235,7 @@ class CommonSearchTest:
                 }
             },
         ])
+        self.search.flush()
 
         results = stream_results(
             self.search.origin_search,

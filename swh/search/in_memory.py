@@ -43,6 +43,9 @@ class InMemorySearch:
         self._origins = defaultdict(dict)  # type: Dict[str, Dict[str, Any]]
         self._origin_ids = []  # type: List[str]
 
+    def flush(self) -> None:
+        pass
+
     _url_splitter = re.compile(r'\W')
 
     @remote_api_endpoint('origin/update')

@@ -78,6 +78,12 @@ class ElasticSearch:
             }
         )
 
+    @remote_api_endpoint('flush')
+    def flush(self) -> None:
+        """Blocks until all previous calls to _update() are completely
+        applied."""
+        self._backend.indices.refresh(index='_all')
+
     @remote_api_endpoint('origin/update')
     def origin_update(self, documents: Iterable[dict]) -> None:
         documents = map(_sanitize_origin, documents)
@@ -96,9 +102,7 @@ class ElasticSearch:
             }
             for (sha1, document) in documents_with_sha1
         ]
-        # TODO: make refresh='wait_for' configurable (we don't need it
-        # in production, it will probably be a performance issue)
-        bulk(self._backend, actions, index='origin', refresh='wait_for')
+        bulk(self._backend, actions, index='origin')
 
     def origin_dump(self) -> Iterator[model.Origin]:
         """Returns all content in Elasticsearch's index. Not exposed
