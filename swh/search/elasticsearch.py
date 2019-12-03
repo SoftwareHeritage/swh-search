@@ -46,14 +46,12 @@ class ElasticSearch:
             index='origin',
             body={
                 'properties': {
+                    'sha1': {
+                        'type': 'keyword',
+                        'doc_values': True,
+                    },
                     'url': {
                         'type': 'text',
-                        # TODO: consider removing fielddata when
-                        # swh-storage allows querying by hash, so the
-                        # full URL does not have to be stored in ES'
-                        # memory. See:
-                        # https://www.elastic.co/guide/en/elasticsearch/reference/current/fielddata.html#before-enabling-fielddata
-                        'fielddata': True,
                         # To split URLs into token on any character
                         # that is not alphanumerical
                         'analyzer': 'simple',
@@ -83,15 +81,20 @@ class ElasticSearch:
     @remote_api_endpoint('origin/update')
     def origin_update(self, documents: Iterable[dict]) -> None:
         documents = map(_sanitize_origin, documents)
+        documents_with_sha1 = ((origin_identifier(document), document)
+                               for document in documents)
         actions = [
             {
                 '_op_type': 'update',
-                '_id': origin_identifier(document),
+                '_id': sha1,
                 '_index': 'origin',
-                'doc': document,
+                'doc': {
+                    **document,
+                    'sha1': sha1,
+                },
                 'doc_as_upsert': True,
             }
-            for document in documents
+            for (sha1, document) in documents_with_sha1
         ]
         # TODO: make refresh='wait_for' configurable (we don't need it
         # in production, it will probably be a performance issue)
@@ -180,7 +183,7 @@ class ElasticSearch:
             'size': count,
             'sort': [
                 {'_score': 'desc'},
-                {'_id': 'asc'},
+                {'sha1': 'asc'},
             ]
         }
         if page_token:
@@ -189,7 +192,7 @@ class ElasticSearch:
                 base64.b64decode(page_token))
             body['search_after'] = \
                 [page_token_content[b'score'],
-                 page_token_content[b'id'].decode('ascii')]
+                 page_token_content[b'sha1'].decode('ascii')]
 
         res = self._backend.search(
             index='origin',
@@ -203,7 +206,7 @@ class ElasticSearch:
             last_hit = hits[-1]
             next_page_token_content = {
                 b'score': last_hit['_score'],
-                b'id': last_hit['_id'],
+                b'sha1': last_hit['_source']['sha1'],
             }
             next_page_token = base64.b64encode(msgpack.dumps(
                 next_page_token_content))  # type: Optional[bytes]
