@@ -145,6 +145,7 @@ class ElasticSearch:
                 'multi_match': {
                     'query': url_pattern,
                     'type': 'bool_prefix',
+                    'operator': 'and',
                     'fields': [
                         'url.as_you_type',
                         'url.as_you_type._2gram',
@@ -160,6 +161,7 @@ class ElasticSearch:
                     'query': {
                         'multi_match': {
                             'query': metadata_pattern,
+                            'operator': 'and',
                             'fields': ['intrinsic_metadata.*']
                         }
                     },
