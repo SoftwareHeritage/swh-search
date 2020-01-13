@@ -1,0 +1,22 @@
+Source: swh-search
+Maintainer: Software Heritage developers <swh-devel@inria.fr>
+Section: python
+Priority: optional
+Build-Depends: debhelper (>= 9),
+               dh-python (>= 2),
+               python3-all,
+               python3-click,
+               python3-elasticsearch,
+               python3-pytest,
+               python3-swh.core,
+               python3-swh.journal,
+               python3-swh.model,
+               python3-vcversioner,
+               elasticsearch
+Standards-Version: 3.9.6
+Homepage: https://forge.softwareheritage.org/source/swh-search/
+
+Package: python3-swh.search
+Architecture: all
+Depends: ${misc:Depends}, ${python3:Depends}
+Description: Software Heritage search infrastructure

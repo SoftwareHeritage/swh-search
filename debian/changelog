@@ -1,0 +1,5 @@
+swh-search (0.0.3-1~swh1) unstable-swh; urgency=medium
+
+  * Initial packaging
+
+ -- Nicolas Dandrimont <olasd@debian.org>  Mon, 13 Jan 2020 16:59:11 +0100
