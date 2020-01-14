@@ -1,8 +1,8 @@
-swh-search (0.0.3-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-search (0.0.3-1~swh2) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * Filter out swh/__init__.py from package
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 14 Jan 2020 13:58:20 +0000
+ -- Nicolas Dandrimont <olasd@debian.org>  Tue, 14 Jan 2020 16:38:23 +0100
 
 swh-search (0.0.3-1~swh1) unstable-swh; urgency=medium
 
