@@ -1,3 +1,9 @@
+swh-search (0.0.3-1~swh2) unstable-swh; urgency=medium
+
+  * Filter out swh/__init__.py from package
+
+ -- Nicolas Dandrimont <olasd@debian.org>  Tue, 14 Jan 2020 16:38:23 +0100
+
 swh-search (0.0.3-1~swh1) unstable-swh; urgency=medium
 
   * Initial packaging
