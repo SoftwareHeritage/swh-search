@@ -1,5 +1,3 @@
-.. _swh-py-template:
-
 Software Heritage - Python module template
 ==========================================
 
