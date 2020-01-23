@@ -85,6 +85,8 @@ class CliTestCase(BaseElasticsearchTest):
         assert result.exit_code == 0, result.output
         assert result.output == expected_output
 
+        self.search.flush()
+
         results = self.search.origin_search(url_pattern='foobar')
         assert results == {'next_page_token': None, 'results': [
             {'url': 'http://foobar.baz'}]}
@@ -122,6 +124,8 @@ class CliTestCase(BaseElasticsearchTest):
         )
         assert result.exit_code == 0, result.output
         assert result.output == expected_output
+
+        self.search.flush()
 
         results = self.search.origin_search(url_pattern='foobar',
                                             with_visit=True)
