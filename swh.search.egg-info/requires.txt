@@ -1,9 +1,9 @@
+vcversioner
 click
 elasticsearch<8.0.0,>=7.0.0
 swh.core[http]
 swh.journal
 swh.model
-vcversioner
 
 [testing]
 pytest
