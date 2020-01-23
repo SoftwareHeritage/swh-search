@@ -15,6 +15,7 @@ class CommonSearchTest:
             {'url': 'http://barbaz.qux'},
             {'url': 'http://qux.quux'},
         ])
+        self.search.flush()
 
         results = self.search.origin_search(url_pattern='foobar')
         assert results == {'next_page_token': None, 'results': [
@@ -39,6 +40,7 @@ class CommonSearchTest:
             {'url': 'http://barbaz.qux'},
             {'url': 'http://qux.quux'},
         ])
+        self.search.flush()
 
         results = self.search.origin_search(url_pattern='qu')
         assert results['next_page_token'] is None
@@ -54,10 +56,24 @@ class CommonSearchTest:
         expected_results = ['http://barbaz.qux', 'http://qux.quux']
         assert sorted(results) == sorted(expected_results)
 
+    def test_origin_url_all_terms(self):
+        self.search.origin_update([
+            {'url': 'http://foo.bar/baz'},
+            {'url': 'http://foo.bar/foo.bar'},
+        ])
+        self.search.flush()
+
+        # Only results containing all terms should be returned.
+        results = self.search.origin_search(url_pattern='foo bar baz')
+        assert results == {'next_page_token': None, 'results': [
+            {'url': 'http://foo.bar/baz'},
+        ]}
+
     def test_origin_with_visit(self):
         self.search.origin_update([
             {'url': 'http://foobar.baz', 'has_visits': True},
         ])
+        self.search.flush()
 
         results = self.search.origin_search(
             url_pattern='foobar', with_visit=True)
@@ -68,6 +84,7 @@ class CommonSearchTest:
         self.search.origin_update([
             {'url': 'http://foobar.baz'},
         ])
+        self.search.flush()
 
         results = self.search.origin_search(
             url_pattern='foobar', with_visit=True)
@@ -76,6 +93,7 @@ class CommonSearchTest:
         self.search.origin_update([
             {'url': 'http://foobar.baz', 'has_visits': True},
         ])
+        self.search.flush()
 
         results = self.search.origin_search(
             url_pattern='foobar', with_visit=True)
@@ -103,19 +121,42 @@ class CommonSearchTest:
                 }
             },
         ])
+        self.search.flush()
 
         results = self.search.origin_search(metadata_pattern='foo')
         assert results == {'next_page_token': None, 'results': [
             {'url': 'http://origin2'}]}
 
-        # ES returns both results, because blahblah
         results = self.search.origin_search(metadata_pattern='foo bar')
         assert results == {'next_page_token': None, 'results': [
-            {'url': 'http://origin2'}, {'url': 'http://origin3'}]}
+            {'url': 'http://origin2'}]}
 
         results = self.search.origin_search(metadata_pattern='bar baz')
         assert results == {'next_page_token': None, 'results': [
-            {'url': 'http://origin3'}, {'url': 'http://origin2'}]}
+            {'url': 'http://origin3'}]}
+
+    def test_origin_intrinsic_metadata_all_terms(self):
+        self.search.origin_update([
+            {
+                'url': 'http://origin1',
+                'intrinsic_metadata': {
+                    '@context': 'https://doi.org/10.5063/schema/codemeta-2.0',
+                    'description': 'foo bar foo bar',
+                },
+            },
+            {
+                'url': 'http://origin3',
+                'intrinsic_metadata': {
+                    '@context': 'https://doi.org/10.5063/schema/codemeta-2.0',
+                    'description': 'foo bar baz',
+                }
+            },
+        ])
+        self.search.flush()
+
+        results = self.search.origin_search(metadata_pattern='foo bar baz')
+        assert results == {'next_page_token': None, 'results': [
+            {'url': 'http://origin3'}]}
 
     def test_origin_intrinsic_metadata_nested(self):
         self.search.origin_update([
@@ -138,6 +179,7 @@ class CommonSearchTest:
                 }
             },
         ])
+        self.search.flush()
 
         results = self.search.origin_search(metadata_pattern='foo')
         assert results == {'next_page_token': None, 'results': [
@@ -145,11 +187,11 @@ class CommonSearchTest:
 
         results = self.search.origin_search(metadata_pattern='foo bar')
         assert results == {'next_page_token': None, 'results': [
-            {'url': 'http://origin2'}, {'url': 'http://origin3'}]}
+            {'url': 'http://origin2'}]}
 
         results = self.search.origin_search(metadata_pattern='bar baz')
         assert results == {'next_page_token': None, 'results': [
-            {'url': 'http://origin3'}, {'url': 'http://origin2'}]}
+            {'url': 'http://origin3'}]}
 
     # TODO: add more tests with more codemeta terms
 
@@ -165,6 +207,7 @@ class CommonSearchTest:
             {'url': 'http://origin2/foo/bar'},
             {'url': 'http://origin3/foo/bar/baz'},
         ])
+        self.search.flush()
 
         results = stream_results(
             self.search.origin_search,
@@ -227,22 +270,20 @@ class CommonSearchTest:
                 }
             },
         ])
+        self.search.flush()
 
         results = stream_results(
             self.search.origin_search,
             metadata_pattern='foo bar baz', count=count)
         assert list(results) == [
-            {'url': 'http://origin3'},
-            {'url': 'http://origin2'},
-            {'url': 'http://origin1'}]
+            {'url': 'http://origin3'}]
 
         results = stream_results(
             self.search.origin_search,
             metadata_pattern='foo bar', count=count)
         assert list(results) == [
             {'url': 'http://origin2'},
-            {'url': 'http://origin3'},
-            {'url': 'http://origin1'}]
+            {'url': 'http://origin3'}]
 
         results = stream_results(
             self.search.origin_search,

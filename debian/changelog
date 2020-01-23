@@ -1,8 +1,16 @@
-swh-search (0.0.3-1~swh2~bpo10+1) buster-swh; urgency=medium
+swh-search (0.0.4-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.0.4     - (tagged by Antoine R. Dumont
+    (@ardumont) <antoine.romain.dumont@gmail.com> on 2020-01-23 15:00:50
+    +0100)
+  * Upstream changes:     - v0.0.4 docs: Remove swh-py-template label -
+    Only return results where all terms match. - Don't use
+    refresh='wait_for' when updating origins. - Add a 'sha1' field to
+    origin documents, used for sorting. - Add a pre-commit config file -
+    Migrate tox.ini to extras = xxx instead of deps = .[testing] - De-
+    specify testenv:py3 - Include all requirements in MANIFEST.in
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 14 Jan 2020 15:48:20 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 23 Jan 2020 14:04:17 +0000
 
 swh-search (0.0.3-1~swh2) unstable-swh; urgency=medium
 
