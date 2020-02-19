@@ -195,7 +195,7 @@ class ElasticSearch:
         if page_token:
             # TODO: use ElasticSearch's scroll API?
             page_token_content = msgpack.loads(
-                base64.b64decode(page_token))
+                base64.b64decode(page_token), raw=True)
             body['search_after'] = \
                 [page_token_content[b'score'],
                  page_token_content[b'sha1'].decode('ascii')]
