@@ -1,4 +1,4 @@
-# Copyright (C) 2019  The Software Heritage developers
+# Copyright (C) 2019-2020  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -46,17 +46,17 @@ def journal_client(ctx):
 
 
 @journal_client.command('objects')
-@click.option('--max-messages', '-m', default=None, type=int,
+@click.option('--stop-after-objects', '-s', default=None, type=int,
               help='Maximum number of objects to replay. Default is to '
                    'run forever.')
 @click.pass_context
-def journal_client_objects(ctx, max_messages):
+def journal_client_objects(ctx, stop_after_objects):
     """Listens for new objects from the SWH Journal, and schedules tasks
     to run relevant indexers (currently, only origin)
     on these new objects."""
     client = get_journal_client(
         ctx, object_types=['origin', 'origin_visit'],
-        max_messages=max_messages)
+        stop_after_objects=stop_after_objects)
     search = get_search(**ctx.obj['config']['search'])
 
     worker_fn = functools.partial(
@@ -65,13 +65,14 @@ def journal_client_objects(ctx, max_messages):
     )
     nb_messages = 0
     try:
-        while not max_messages or nb_messages < max_messages:
-            nb_messages += client.process(worker_fn)
-            print('Processed %d messages.' % nb_messages)
+        nb_messages = client.process(worker_fn)
+        print('Processed %d messages.' % nb_messages)
     except KeyboardInterrupt:
         ctx.exit(0)
     else:
         print('Done.')
+    finally:
+        client.close()
 
 
 @cli.command('rpc-serve')
