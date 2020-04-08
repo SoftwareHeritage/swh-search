@@ -21,28 +21,23 @@ class TestRemoteSearch(CommonSearchTest, ServerTestFixture, unittest.TestCase):
 
     def setUp(self):
         self.config = {
-            'search': {
-                'cls': 'elasticsearch',
-                'args': {
-                    'hosts': [self._elasticsearch_host],
-                }
+            "search": {
+                "cls": "elasticsearch",
+                "args": {"hosts": [self._elasticsearch_host],},
             }
         }
         self.app = app
         super().setUp()
         self.reset()
-        self.search = get_search('remote', {
-            'url': self.url(),
-        })
+        self.search = get_search("remote", {"url": self.url(),})
 
     def reset(self):
-        search = get_search('elasticsearch', {
-            'hosts': [self._elasticsearch_host],
-        })
+        search = get_search("elasticsearch", {"hosts": [self._elasticsearch_host],})
         search.deinitialize()
         search.initialize()
 
-    @pytest.mark.skip('Elasticsearch also returns close matches, '
-                      'so this test would fail')
+    @pytest.mark.skip(
+        "Elasticsearch also returns close matches, " "so this test would fail"
+    )
     def test_origin_url_paging(self, count):
         pass

@@ -13,7 +13,7 @@ import pytest
 
 def free_port():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(('127.0.0.1', 0))
+    sock.bind(("127.0.0.1", 0))
     port = sock.getsockname()[1]
     sock.close()
     return port
@@ -31,46 +31,49 @@ def wait_for_peer(addr, port):
             break
 
 
-CONFIG_TEMPLATE = '''
+CONFIG_TEMPLATE = """
 node.name: node-1
 path.data: {data}
 path.logs: {logs}
 network.host: 127.0.0.1
 http.port: {http_port}
 transport.port: {transport_port}
-'''
+"""
 
 
-def _run_elasticsearch(
-        conf_dir, data_dir, logs_dir, http_port, transport_port):
-    es_home = '/usr/share/elasticsearch'
+def _run_elasticsearch(conf_dir, data_dir, logs_dir, http_port, transport_port):
+    es_home = "/usr/share/elasticsearch"
 
-    with open(conf_dir + '/elasticsearch.yml', 'w') as fd:
-        fd.write(CONFIG_TEMPLATE.format(
-            data=data_dir,
-            logs=logs_dir,
-            http_port=http_port,
-            transport_port=transport_port))
+    with open(conf_dir + "/elasticsearch.yml", "w") as fd:
+        fd.write(
+            CONFIG_TEMPLATE.format(
+                data=data_dir,
+                logs=logs_dir,
+                http_port=http_port,
+                transport_port=transport_port,
+            )
+        )
 
-    with open(conf_dir + '/log4j2.properties', 'w') as fd:
+    with open(conf_dir + "/log4j2.properties", "w") as fd:
         pass
 
     cmd = [
-        '/usr/share/elasticsearch/jdk/bin/java',
-        '-Des.path.home={}'.format(es_home),
-        '-Des.path.conf={}'.format(conf_dir),
-        '-Des.bundled_jdk=true',
-        '-Dlog4j2.disable.jmx=true',
-        '-cp', '{}/lib/*'.format(es_home),
-        'org.elasticsearch.bootstrap.Elasticsearch',
+        "/usr/share/elasticsearch/jdk/bin/java",
+        "-Des.path.home={}".format(es_home),
+        "-Des.path.conf={}".format(conf_dir),
+        "-Des.bundled_jdk=true",
+        "-Dlog4j2.disable.jmx=true",
+        "-cp",
+        "{}/lib/*".format(es_home),
+        "org.elasticsearch.bootstrap.Elasticsearch",
     ]
 
-    host = '127.0.0.1:{}'.format(http_port)
+    host = "127.0.0.1:{}".format(http_port)
 
-    with open(logs_dir + '/output.txt', 'w') as fd:
+    with open(logs_dir + "/output.txt", "w") as fd:
         p = subprocess.Popen(cmd)
 
-    wait_for_peer('127.0.0.1', http_port)
+    wait_for_peer("127.0.0.1", http_port)
 
     client = elasticsearch.Elasticsearch([host])
     assert client.ping()
@@ -78,23 +81,23 @@ def _run_elasticsearch(
     return p
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def elasticsearch_session(tmpdir_factory):
-    tmpdir = tmpdir_factory.mktemp('elasticsearch')
-    es_conf = tmpdir.mkdir('conf')
+    tmpdir = tmpdir_factory.mktemp("elasticsearch")
+    es_conf = tmpdir.mkdir("conf")
 
     http_port = free_port()
     transport_port = free_port()
 
     p = _run_elasticsearch(
         conf_dir=str(es_conf),
-        data_dir=str(tmpdir.mkdir('data')),
-        logs_dir=str(tmpdir.mkdir('logs')),
+        data_dir=str(tmpdir.mkdir("data")),
+        logs_dir=str(tmpdir.mkdir("logs")),
         http_port=http_port,
         transport_port=transport_port,
     )
 
-    yield '127.0.0.1:{}'.format(http_port)
+    yield "127.0.0.1:{}".format(http_port)
 
     # Check ES didn't stop
     assert p.returncode is None, p.returncode
@@ -103,6 +106,6 @@ def elasticsearch_session(tmpdir_factory):
     p.wait()
 
 
-@pytest.fixture(scope='class')
+@pytest.fixture(scope="class")
 def elasticsearch_host(elasticsearch_session):
     yield elasticsearch_session

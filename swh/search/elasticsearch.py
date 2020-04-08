@@ -17,10 +17,8 @@ from swh.model.identifiers import origin_identifier
 
 def _sanitize_origin(origin):
     origin = origin.copy()
-    res = {
-        'url': origin.pop('url')
-    }
-    for field_name in ('intrinsic_metadata', 'has_visits'):
+    res = {"url": origin.pop("url")}
+    for field_name in ("intrinsic_metadata", "has_visits"):
         if field_name in origin:
             res[field_name] = origin.pop(field_name)
     return res
@@ -30,96 +28,90 @@ class ElasticSearch:
     def __init__(self, hosts: List[str]):
         self._backend = Elasticsearch(hosts=hosts)
 
-    @remote_api_endpoint('check')
+    @remote_api_endpoint("check")
     def check(self):
         return self._backend.ping()
 
     def deinitialize(self) -> None:
         """Removes all indices from the Elasticsearch backend"""
-        self._backend.indices.delete(index='*')
+        self._backend.indices.delete(index="*")
 
     def initialize(self) -> None:
         """Declare Elasticsearch indices and mappings"""
-        if not self._backend.indices.exists(index='origin'):
-            self._backend.indices.create(index='origin')
+        if not self._backend.indices.exists(index="origin"):
+            self._backend.indices.create(index="origin")
         self._backend.indices.put_mapping(
-            index='origin',
+            index="origin",
             body={
-                'properties': {
-                    'sha1': {
-                        'type': 'keyword',
-                        'doc_values': True,
-                    },
-                    'url': {
-                        'type': 'text',
+                "properties": {
+                    "sha1": {"type": "keyword", "doc_values": True,},
+                    "url": {
+                        "type": "text",
                         # To split URLs into token on any character
                         # that is not alphanumerical
-                        'analyzer': 'simple',
-                        'fields': {
-                            'as_you_type': {
-                                'type': 'search_as_you_type',
-                                'analyzer': 'simple',
+                        "analyzer": "simple",
+                        "fields": {
+                            "as_you_type": {
+                                "type": "search_as_you_type",
+                                "analyzer": "simple",
                             }
-                        }
+                        },
                     },
-                    'has_visits': {
-                        'type': 'boolean',
-                    },
-                    'intrinsic_metadata': {
-                        'type': 'nested',
-                        'properties': {
-                            '@context': {
+                    "has_visits": {"type": "boolean",},
+                    "intrinsic_metadata": {
+                        "type": "nested",
+                        "properties": {
+                            "@context": {
                                 # don't bother indexing tokens
-                                'type': 'keyword',
+                                "type": "keyword",
                             }
                         },
                     },
                 }
-            }
+            },
         )
 
-    @remote_api_endpoint('flush')
+    @remote_api_endpoint("flush")
     def flush(self) -> None:
         """Blocks until all previous calls to _update() are completely
         applied."""
-        self._backend.indices.refresh(index='_all')
+        self._backend.indices.refresh(index="_all")
 
-    @remote_api_endpoint('origin/update')
+    @remote_api_endpoint("origin/update")
     def origin_update(self, documents: Iterable[dict]) -> None:
         documents = map(_sanitize_origin, documents)
-        documents_with_sha1 = ((origin_identifier(document), document)
-                               for document in documents)
+        documents_with_sha1 = (
+            (origin_identifier(document), document) for document in documents
+        )
         actions = [
             {
-                '_op_type': 'update',
-                '_id': sha1,
-                '_index': 'origin',
-                'doc': {
-                    **document,
-                    'sha1': sha1,
-                },
-                'doc_as_upsert': True,
+                "_op_type": "update",
+                "_id": sha1,
+                "_index": "origin",
+                "doc": {**document, "sha1": sha1,},
+                "doc_as_upsert": True,
             }
             for (sha1, document) in documents_with_sha1
         ]
-        bulk(self._backend, actions, index='origin')
+        bulk(self._backend, actions, index="origin")
 
     def origin_dump(self) -> Iterator[model.Origin]:
         """Returns all content in Elasticsearch's index. Not exposed
         publicly; but useful for tests."""
-        results = scan(self._backend, index='*')
+        results = scan(self._backend, index="*")
         for hit in results:
-            yield self._backend.termvectors(
-                index='origin', id=hit['_id'],
-                fields=['*'])
+            yield self._backend.termvectors(index="origin", id=hit["_id"], fields=["*"])
 
-    @remote_api_endpoint('origin/search')
+    @remote_api_endpoint("origin/search")
     def origin_search(
-            self, *,
-            url_pattern: str = None, metadata_pattern: str = None,
-            with_visit: bool = False,
-            page_token: str = None, count: int = 50
-            ) -> Dict[str, object]:
+        self,
+        *,
+        url_pattern: str = None,
+        metadata_pattern: str = None,
+        with_visit: bool = False,
+        page_token: str = None,
+        count: int = 50
+    ) -> Dict[str, object]:
         """Searches for origins matching the `url_pattern`.
 
         Args:
@@ -141,91 +133,81 @@ class ElasticSearch:
         query_clauses = []  # type: List[Dict[str, Any]]
 
         if url_pattern:
-            query_clauses.append({
-                'multi_match': {
-                    'query': url_pattern,
-                    'type': 'bool_prefix',
-                    'operator': 'and',
-                    'fields': [
-                        'url.as_you_type',
-                        'url.as_you_type._2gram',
-                        'url.as_you_type._3gram',
-                    ]
+            query_clauses.append(
+                {
+                    "multi_match": {
+                        "query": url_pattern,
+                        "type": "bool_prefix",
+                        "operator": "and",
+                        "fields": [
+                            "url.as_you_type",
+                            "url.as_you_type._2gram",
+                            "url.as_you_type._3gram",
+                        ],
+                    }
                 }
-            })
+            )
 
         if metadata_pattern:
-            query_clauses.append({
-                'nested': {
-                    'path': 'intrinsic_metadata',
-                    'query': {
-                        'multi_match': {
-                            'query': metadata_pattern,
-                            'operator': 'and',
-                            'fields': ['intrinsic_metadata.*']
-                        }
-                    },
+            query_clauses.append(
+                {
+                    "nested": {
+                        "path": "intrinsic_metadata",
+                        "query": {
+                            "multi_match": {
+                                "query": metadata_pattern,
+                                "operator": "and",
+                                "fields": ["intrinsic_metadata.*"],
+                            }
+                        },
+                    }
                 }
-            })
+            )
 
         if not query_clauses:
             raise ValueError(
-                'At least one of url_pattern and metadata_pattern '
-                'must be provided.')
+                "At least one of url_pattern and metadata_pattern " "must be provided."
+            )
 
         if with_visit:
-            query_clauses.append({
-                'term': {
-                    'has_visits': True,
-                }
-            })
+            query_clauses.append({"term": {"has_visits": True,}})
 
         body = {
-            'query': {
-                'bool': {
-                    'must': query_clauses,
-                }
-            },
-            'size': count,
-            'sort': [
-                {'_score': 'desc'},
-                {'sha1': 'asc'},
-            ]
+            "query": {"bool": {"must": query_clauses,}},
+            "size": count,
+            "sort": [{"_score": "desc"}, {"sha1": "asc"},],
         }
         if page_token:
             # TODO: use ElasticSearch's scroll API?
-            page_token_content = msgpack.loads(
-                base64.b64decode(page_token), raw=True)
-            body['search_after'] = \
-                [page_token_content[b'score'],
-                 page_token_content[b'sha1'].decode('ascii')]
+            page_token_content = msgpack.loads(base64.b64decode(page_token), raw=True)
+            body["search_after"] = [
+                page_token_content[b"score"],
+                page_token_content[b"sha1"].decode("ascii"),
+            ]
 
-        res = self._backend.search(
-            index='origin',
-            body=body,
-            size=count,
-        )
+        res = self._backend.search(index="origin", body=body, size=count,)
 
-        hits = res['hits']['hits']
+        hits = res["hits"]["hits"]
 
         if len(hits) == count:
             last_hit = hits[-1]
             next_page_token_content = {
-                b'score': last_hit['_score'],
-                b'sha1': last_hit['_source']['sha1'],
+                b"score": last_hit["_score"],
+                b"sha1": last_hit["_source"]["sha1"],
             }
-            next_page_token = base64.b64encode(msgpack.dumps(
-                next_page_token_content))  # type: Optional[bytes]
+            next_page_token = base64.b64encode(
+                msgpack.dumps(next_page_token_content)
+            )  # type: Optional[bytes]
         else:
             next_page_token = None
 
         return {
-            'next_page_token': next_page_token,
-            'results': [
+            "next_page_token": next_page_token,
+            "results": [
                 {
                     # TODO: also add 'id'?
-                    'url': hit['_source']['url'],
+                    "url": hit["_source"]["url"],
                 }
                 for hit in hits
-            ]
+            ],
         }

@@ -20,13 +20,13 @@ def get_search(cls, args):
         ValueError if passed an unknown search class.
 
     """
-    if cls == 'remote':
+    if cls == "remote":
         from .api.client import RemoteSearch as Search
-    elif cls == 'elasticsearch':
+    elif cls == "elasticsearch":
         from .elasticsearch import ElasticSearch as Search
-    elif cls == 'memory':
+    elif cls == "memory":
         from .in_memory import InMemorySearch as Search
     else:
-        raise ValueError('Unknown indexer search class `%s`' % cls)
+        raise ValueError("Unknown indexer search class `%s`" % cls)
 
     return Search(**args)

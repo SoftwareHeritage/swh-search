@@ -5,12 +5,12 @@
 
 
 def stream_results(f, *args, **kwargs):
-    if 'page_token' in kwargs:
+    if "page_token" in kwargs:
         raise TypeError('stream_results has no argument "page_token".')
     page_token = None
     while True:
         results = f(*args, page_token=page_token, **kwargs)
-        yield from results['results']
-        page_token = results['next_page_token']
+        yield from results["results"]
+        page_token = results["next_page_token"]
         if page_token is None:
             break

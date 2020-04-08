@@ -15,9 +15,7 @@ class BaseElasticsearchTest(unittest.TestCase):
     @pytest.fixture(autouse=True)
     def _instantiate_search(self, elasticsearch_host):
         self._elasticsearch_host = elasticsearch_host
-        self.search = get_search('elasticsearch', {
-            'hosts': [elasticsearch_host],
-        })
+        self.search = get_search("elasticsearch", {"hosts": [elasticsearch_host],})
 
     def setUp(self):
         self.reset()
