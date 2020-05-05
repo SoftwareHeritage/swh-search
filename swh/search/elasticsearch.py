@@ -110,7 +110,7 @@ class ElasticSearch:
         metadata_pattern: str = None,
         with_visit: bool = False,
         page_token: str = None,
-        count: int = 50
+        count: int = 50,
     ) -> Dict[str, object]:
         """Searches for origins matching the `url_pattern`.
 
@@ -166,7 +166,7 @@ class ElasticSearch:
 
         if not query_clauses:
             raise ValueError(
-                "At least one of url_pattern and metadata_pattern " "must be provided."
+                "At least one of url_pattern and metadata_pattern must be provided."
             )
 
         if with_visit:

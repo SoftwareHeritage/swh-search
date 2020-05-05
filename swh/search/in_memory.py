@@ -65,7 +65,7 @@ class InMemorySearch:
         metadata_pattern: str = None,
         with_visit: bool = False,
         page_token: str = None,
-        count: int = 50
+        count: int = 50,
     ) -> Dict[str, object]:
         matches = (
             self._origins[id_] for id_ in self._origin_ids
@@ -97,7 +97,7 @@ class InMemorySearch:
 
         if not url_pattern and not metadata_pattern:
             raise ValueError(
-                "At least one of url_pattern and metadata_pattern " "must be provided."
+                "At least one of url_pattern and metadata_pattern must be provided."
             )
 
         if with_visit:

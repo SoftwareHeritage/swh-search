@@ -76,7 +76,7 @@ class CliTestCase(BaseElasticsearchTest):
             )
 
         # Check the output
-        expected_output = "Processed 1 messages.\n" "Done.\n"
+        expected_output = "Processed 1 messages.\nDone.\n"
         assert result.exit_code == 0, result.output
         assert result.output == expected_output
 
@@ -112,7 +112,7 @@ class CliTestCase(BaseElasticsearchTest):
             )
 
         # Check the output
-        expected_output = "Processed 1 messages.\n" "Done.\n"
+        expected_output = "Processed 1 messages.\nDone.\n"
         assert result.exit_code == 0, result.output
         assert result.output == expected_output
 
