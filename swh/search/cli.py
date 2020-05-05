@@ -52,7 +52,7 @@ def journal_client(ctx):
 @journal_client.command("objects")
 @click.option(
     "--stop-after-objects",
-    "-s",
+    "-m",
     default=None,
     type=int,
     help="Maximum number of objects to replay. Default is to " "run forever.",
