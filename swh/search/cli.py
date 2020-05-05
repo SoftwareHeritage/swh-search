@@ -9,7 +9,7 @@ import click
 
 from swh.core import config
 from swh.core.cli import CONTEXT_SETTINGS
-from swh.journal.cli import get_journal_client
+from swh.journal.client import get_journal_client
 
 from . import get_search
 from .journal_client import process_journal_objects
@@ -55,19 +55,23 @@ def journal_client(ctx):
     "-m",
     default=None,
     type=int,
-    help="Maximum number of objects to replay. Default is to " "run forever.",
+    help="Maximum number of objects to replay. Default is to run forever.",
 )
 @click.pass_context
 def journal_client_objects(ctx, stop_after_objects):
     """Listens for new objects from the SWH Journal, and schedules tasks
     to run relevant indexers (currently, only origin)
     on these new objects."""
+    config = ctx.obj["config"]
+    journal_cfg = config["journal"]
+
     client = get_journal_client(
-        ctx,
+        cls="kafka",
         object_types=["origin", "origin_visit"],
         stop_after_objects=stop_after_objects,
+        **journal_cfg,
     )
-    search = get_search(**ctx.obj["config"]["search"])
+    search = get_search(**config["search"])
 
     worker_fn = functools.partial(process_journal_objects, search=search,)
     nb_messages = 0

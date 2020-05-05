@@ -3,9 +3,13 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+import copy
 import tempfile
-from unittest.mock import patch, MagicMock
+import yaml
 
+import pytest
+
+from unittest.mock import patch, MagicMock
 from click.testing import CliRunner
 
 from swh.journal.serializers import value_to_kafka
@@ -123,3 +127,34 @@ class CliTestCase(BaseElasticsearchTest):
             "next_page_token": None,
             "results": [{"url": "http://foobar.baz"}],
         }
+
+    def test__journal_client__missing_main_journal_config_key(self):
+        """Missing configuration on journal should raise"""
+        with pytest.raises(KeyError, match="journal"):
+            invoke(
+                catch_exceptions=False,
+                args=["journal-client", "objects", "--stop-after-objects", "1",],
+                config="",  # missing config will make it raise
+                elasticsearch_host=self._elasticsearch_host,
+            )
+
+    def test__journal_client__missing_journal_config_keys(self):
+        """Missing configuration on mandatory journal keys should raise"""
+        journal_config = yaml.safe_load(
+            JOURNAL_OBJECTS_CONFIG
+        )  # default configuration which is fine
+
+        for key in journal_config["journal"].keys():
+            if key == "prefix":  # optional
+                continue
+            cfg = copy.deepcopy(journal_config)
+            del cfg["journal"][key]  # make config incomplete
+            yaml_cfg = yaml.dump(cfg)
+
+            with pytest.raises(TypeError, match=f"{key}"):
+                invoke(
+                    catch_exceptions=False,
+                    args=["journal-client", "objects", "--stop-after-objects", "1",],
+                    config=yaml_cfg,  # incomplete config will make the cli raise
+                    elasticsearch_host=self._elasticsearch_host,
+                )
