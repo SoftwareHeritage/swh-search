@@ -1,14 +1,20 @@
-# Copyright (C) 2019  The Software Heritage developers
+# Copyright (C) 2019-2020  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+import logging
 import socket
 import subprocess
 import time
 
 import elasticsearch
 import pytest
+
+from swh.search import get_search
+
+
+logger = logging.getLogger(__name__)
 
 
 def free_port():
@@ -109,3 +115,16 @@ def elasticsearch_session(tmpdir_factory):
 @pytest.fixture(scope="class")
 def elasticsearch_host(elasticsearch_session):
     yield elasticsearch_session
+
+
+@pytest.fixture
+def swh_search(elasticsearch_host):
+    """Instantiate a search client, initialize the elasticsearch instance,
+    and returns it
+
+    """
+    logger.debug("swh_search: elasticsearch_host: %s", elasticsearch_host)
+    search = get_search("elasticsearch", {"hosts": [elasticsearch_host],})
+    search.deinitialize()  # To reset internal state from previous runs
+    search.initialize()  # install required index
+    yield search
