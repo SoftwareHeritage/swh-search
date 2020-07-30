@@ -60,7 +60,10 @@ def test__journal_client__origin(
             "acks": "all",
         }
     )
-    value = value_to_kafka({"url": "http://foobar.baz",})
+    origin_foobar_baz = {
+        "url": "http://foobar.baz",
+    }
+    value = value_to_kafka(origin_foobar_baz)
     topic = f"{kafka_prefix}.origin"
     producer.produce(topic=topic, key=b"bogus-origin", value=value)
 
@@ -82,17 +85,16 @@ def test__journal_client__origin(
     swh_search.flush()
 
     # searching origin without visit as requirement
-    results = swh_search.origin_search(url_pattern="foobar")
+    actual_page = swh_search.origin_search(url_pattern="foobar")
     # We find it
-    assert results == {
-        "next_page_token": None,
-        "results": [{"url": "http://foobar.baz"}],
-    }
+    assert actual_page.next_page_token is None
+    assert actual_page.results == [origin_foobar_baz]
 
     # It's an origin with no visit, searching for it with visit
-    results = swh_search.origin_search(url_pattern="foobar", with_visit=True)
+    actual_page = swh_search.origin_search(url_pattern="foobar", with_visit=True)
     # returns nothing
-    assert results == {"next_page_token": None, "results": []}
+    assert actual_page.next_page_token is None
+    assert actual_page.results == []
 
 
 def test__journal_client__origin_visit(
@@ -100,6 +102,7 @@ def test__journal_client__origin_visit(
 ):
     """Tests the re-indexing when origin_batch_size*task_batch_size is a
     divisor of nb_origins."""
+    origin_foobar = {"url": "http://baz.foobar"}
     producer = Producer(
         {
             "bootstrap.servers": kafka_server,
@@ -108,7 +111,7 @@ def test__journal_client__origin_visit(
         }
     )
     topic = f"{kafka_prefix}.origin_visit"
-    value = value_to_kafka({"origin": "http://baz.foobar",})
+    value = value_to_kafka({"origin": origin_foobar["url"]})
     producer.produce(topic=topic, key=b"bogus-origin-visit", value=value)
 
     journal_objects_config = JOURNAL_OBJECTS_CONFIG_TEMPLATE.format(
@@ -128,15 +131,14 @@ def test__journal_client__origin_visit(
 
     swh_search.flush()
 
-    expected_result = {
-        "next_page_token": None,
-        "results": [{"url": "http://baz.foobar"}],
-    }
     # Both search returns the visit
-    results = swh_search.origin_search(url_pattern="foobar", with_visit=False)
-    assert results == expected_result
-    results = swh_search.origin_search(url_pattern="foobar", with_visit=True)
-    assert results == expected_result
+    actual_page = swh_search.origin_search(url_pattern="foobar", with_visit=False)
+    assert actual_page.next_page_token is None
+    assert actual_page.results == [origin_foobar]
+
+    actual_page = swh_search.origin_search(url_pattern="foobar", with_visit=True)
+    assert actual_page.next_page_token is None
+    assert actual_page.results == [origin_foobar]
 
 
 def test__journal_client__missing_main_journal_config_key(elasticsearch_host):

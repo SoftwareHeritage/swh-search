@@ -1,18 +1,21 @@
-# Copyright (C) 2019  The Software Heritage developers
+# Copyright (C) 2019-2020  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
 import base64
+import msgpack
+
 from typing import Any, Iterable, Dict, List, Iterator, Optional
 
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk, scan
-import msgpack
 
 from swh.core.api import remote_api_endpoint
-from swh.model import model
 from swh.model.identifiers import origin_identifier
+from swh.model import model
+
+from swh.search.interface import PagedResult
 
 
 def _sanitize_origin(origin):
@@ -22,6 +25,21 @@ def _sanitize_origin(origin):
         if field_name in origin:
             res[field_name] = origin.pop(field_name)
     return res
+
+
+def token_encode(index_to_tokenize: Dict[bytes, Any]) -> str:
+    """Tokenize as string an index page result from a search
+
+    """
+    page_token = base64.b64encode(msgpack.dumps(index_to_tokenize))
+    return page_token.decode()
+
+
+def token_decode(page_token: str) -> Dict[bytes, Any]:
+    """Read the page_token
+
+    """
+    return msgpack.loads(base64.b64decode(page_token.encode()), raw=True)
 
 
 class ElasticSearch:
@@ -106,31 +124,27 @@ class ElasticSearch:
     def origin_search(
         self,
         *,
-        url_pattern: str = None,
+        url_pattern: Optional[str] = None,
         metadata_pattern: str = None,
         with_visit: bool = False,
-        page_token: str = None,
-        count: int = 50,
-    ) -> Dict[str, object]:
+        page_token: Optional[str] = None,
+        limit: int = 50,
+    ) -> PagedResult[Dict[str, Any]]:
         """Searches for origins matching the `url_pattern`.
 
         Args:
-            url_pattern (str): Part of thr URL to search for
-            with_visit (bool): Whether origins with no visit are to be
-                               filtered out
-            page_token (str): Opaque value used for pagination.
-            count (int): number of results to return.
+            url_pattern: Part of the URL to search for
+            with_visit: Whether origins with no visit are to be
+              filtered out
+            page_token: Opaque value used for pagination
+            limit: number of results to return
 
         Returns:
-            a dictionary with keys:
-            * `next_page_token`:
-              opaque value used for fetching more results. `None` if there
-              are no more result.
-            * `results`:
-              list of dictionaries with key:
-              * `url`: URL of a matching origin
+            PagedResult of origin dicts matching the search criteria. If next_page_token
+            is None, there is no longer data to retrieve.
+
         """
-        query_clauses = []  # type: List[Dict[str, Any]]
+        query_clauses: List[Dict[str, Any]] = []
 
         if url_pattern:
             query_clauses.append(
@@ -169,45 +183,38 @@ class ElasticSearch:
                 "At least one of url_pattern and metadata_pattern must be provided."
             )
 
+        next_page_token: Optional[str] = None
+
         if with_visit:
             query_clauses.append({"term": {"has_visits": True,}})
 
         body = {
             "query": {"bool": {"must": query_clauses,}},
-            "size": count,
             "sort": [{"_score": "desc"}, {"sha1": "asc"},],
         }
         if page_token:
             # TODO: use ElasticSearch's scroll API?
-            page_token_content = msgpack.loads(base64.b64decode(page_token), raw=True)
+            page_token_content = token_decode(page_token)
             body["search_after"] = [
                 page_token_content[b"score"],
                 page_token_content[b"sha1"].decode("ascii"),
             ]
 
-        res = self._backend.search(index="origin", body=body, size=count,)
+        res = self._backend.search(index="origin", body=body, size=limit)
 
         hits = res["hits"]["hits"]
 
-        if len(hits) == count:
+        if len(hits) == limit:
             last_hit = hits[-1]
             next_page_token_content = {
                 b"score": last_hit["_score"],
                 b"sha1": last_hit["_source"]["sha1"],
             }
-            next_page_token = base64.b64encode(
-                msgpack.dumps(next_page_token_content)
-            )  # type: Optional[bytes]
-        else:
-            next_page_token = None
+            next_page_token = token_encode(next_page_token_content)
 
-        return {
-            "next_page_token": next_page_token,
-            "results": [
-                {
-                    # TODO: also add 'id'?
-                    "url": hit["_source"]["url"],
-                }
-                for hit in hits
-            ],
-        }
+        assert len(hits) <= limit
+
+        return PagedResult(
+            results=[{"url": hit["_source"]["url"]} for hit in hits],
+            next_page_token=next_page_token,
+        )
