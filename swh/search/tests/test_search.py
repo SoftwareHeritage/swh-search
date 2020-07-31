@@ -1,4 +1,4 @@
-# Copyright (C) 2019  The Software Heritage developers
+# Copyright (C) 2019-2020  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -10,188 +10,200 @@ from swh.search.utils import stream_results
 
 class CommonSearchTest:
     def test_origin_url_unique_word_prefix(self):
-        self.search.origin_update([
-            {'url': 'http://foobar.baz'},
-            {'url': 'http://barbaz.qux'},
-            {'url': 'http://qux.quux'},
-        ])
+        origin_foobar_baz = {"url": "http://foobar.baz"}
+        origin_barbaz_qux = {"url": "http://barbaz.qux"}
+        origin_qux_quux = {"url": "http://qux.quux"}
+        origins = [origin_foobar_baz, origin_barbaz_qux, origin_qux_quux]
+
+        self.search.origin_update(origins)
         self.search.flush()
 
-        results = self.search.origin_search(url_pattern='foobar')
-        assert results == {'next_page_token': None, 'results': [
-            {'url': 'http://foobar.baz'}]}
+        actual_page = self.search.origin_search(url_pattern="foobar")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin_foobar_baz]
 
-        results = self.search.origin_search(url_pattern='barb')
-        assert results == {'next_page_token': None, 'results': [
-            {'url': 'http://barbaz.qux'}]}
+        actual_page = self.search.origin_search(url_pattern="barb")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin_barbaz_qux]
 
         # 'bar' is part of 'foobar', but is not the beginning of it
-        results = self.search.origin_search(url_pattern='bar')
-        assert results == {'next_page_token': None, 'results': [
-            {'url': 'http://barbaz.qux'}]}
+        actual_page = self.search.origin_search(url_pattern="bar")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin_barbaz_qux]
 
-        results = self.search.origin_search(url_pattern='barbaz')
-        assert results == {'next_page_token': None, 'results': [
-            {'url': 'http://barbaz.qux'}]}
+        actual_page = self.search.origin_search(url_pattern="barbaz")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin_barbaz_qux]
 
     def test_origin_url_unique_word_prefix_multiple_results(self):
-        self.search.origin_update([
-            {'url': 'http://foobar.baz'},
-            {'url': 'http://barbaz.qux'},
-            {'url': 'http://qux.quux'},
-        ])
+        origin_foobar_baz = {"url": "http://foobar.baz"}
+        origin_barbaz_qux = {"url": "http://barbaz.qux"}
+        origin_qux_quux = {"url": "http://qux.quux"}
+
+        self.search.origin_update(
+            [origin_foobar_baz, origin_barbaz_qux, origin_qux_quux]
+        )
         self.search.flush()
 
-        results = self.search.origin_search(url_pattern='qu')
-        assert results['next_page_token'] is None
-
-        results = [res['url'] for res in results['results']]
-        expected_results = ['http://qux.quux', 'http://barbaz.qux']
+        actual_page = self.search.origin_search(url_pattern="qu")
+        assert actual_page.next_page_token is None
+        results = [r["url"] for r in actual_page.results]
+        expected_results = [o["url"] for o in [origin_qux_quux, origin_barbaz_qux]]
         assert sorted(results) == sorted(expected_results)
 
-        results = self.search.origin_search(url_pattern='qux')
-        assert results['next_page_token'] is None
-
-        results = [res['url'] for res in results['results']]
-        expected_results = ['http://barbaz.qux', 'http://qux.quux']
+        actual_page = self.search.origin_search(url_pattern="qux")
+        assert actual_page.next_page_token is None
+        results = [r["url"] for r in actual_page.results]
+        expected_results = [o["url"] for o in [origin_qux_quux, origin_barbaz_qux]]
         assert sorted(results) == sorted(expected_results)
 
     def test_origin_url_all_terms(self):
-        self.search.origin_update([
-            {'url': 'http://foo.bar/baz'},
-            {'url': 'http://foo.bar/foo.bar'},
-        ])
+        origin_foo_bar_baz = {"url": "http://foo.bar/baz"}
+        origin_foo_bar_foo_bar = {"url": "http://foo.bar/foo.bar"}
+        origins = [origin_foo_bar_baz, origin_foo_bar_foo_bar]
+
+        self.search.origin_update(origins)
         self.search.flush()
 
         # Only results containing all terms should be returned.
-        results = self.search.origin_search(url_pattern='foo bar baz')
-        assert results == {'next_page_token': None, 'results': [
-            {'url': 'http://foo.bar/baz'},
-        ]}
+        actual_page = self.search.origin_search(url_pattern="foo bar baz")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin_foo_bar_baz]
 
     def test_origin_with_visit(self):
-        self.search.origin_update([
-            {'url': 'http://foobar.baz', 'has_visits': True},
-        ])
+        origin_foobar_baz = {"url": "http://foobar/baz"}
+
+        self.search.origin_update(
+            [{**o, "has_visits": True} for o in [origin_foobar_baz]]
+        )
         self.search.flush()
 
-        results = self.search.origin_search(
-            url_pattern='foobar', with_visit=True)
-        assert results == {'next_page_token': None, 'results': [
-            {'url': 'http://foobar.baz'}]}
+        actual_page = self.search.origin_search(url_pattern="foobar", with_visit=True)
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin_foobar_baz]
 
     def test_origin_with_visit_added(self):
-        self.search.origin_update([
-            {'url': 'http://foobar.baz'},
-        ])
+        origin_foobar_baz = {"url": "http://foobar.baz"}
+
+        self.search.origin_update([origin_foobar_baz])
         self.search.flush()
 
-        results = self.search.origin_search(
-            url_pattern='foobar', with_visit=True)
-        assert results == {'next_page_token': None, 'results': []}
+        actual_page = self.search.origin_search(url_pattern="foobar", with_visit=True)
+        assert actual_page.next_page_token is None
+        assert actual_page.results == []
 
-        self.search.origin_update([
-            {'url': 'http://foobar.baz', 'has_visits': True},
-        ])
+        self.search.origin_update(
+            [{**o, "has_visits": True} for o in [origin_foobar_baz]]
+        )
         self.search.flush()
 
-        results = self.search.origin_search(
-            url_pattern='foobar', with_visit=True)
-        assert results == {'next_page_token': None, 'results': [
-            {'url': 'http://foobar.baz'}]}
+        actual_page = self.search.origin_search(url_pattern="foobar", with_visit=True)
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin_foobar_baz]
 
     def test_origin_intrinsic_metadata_description(self):
-        self.search.origin_update([
-            {
-                'url': 'http://origin1',
-                'intrinsic_metadata': {},
-            },
-            {
-                'url': 'http://origin2',
-                'intrinsic_metadata': {
-                    '@context': 'https://doi.org/10.5063/schema/codemeta-2.0',
-                    'description': 'foo bar',
+        origin1_nothin = {"url": "http://origin1"}
+        origin2_foobar = {"url": "http://origin2"}
+        origin3_barbaz = {"url": "http://origin3"}
+
+        self.search.origin_update(
+            [
+                {**origin1_nothin, "intrinsic_metadata": {},},
+                {
+                    **origin2_foobar,
+                    "intrinsic_metadata": {
+                        "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                        "description": "foo bar",
+                    },
                 },
-            },
-            {
-                'url': 'http://origin3',
-                'intrinsic_metadata': {
-                    '@context': 'https://doi.org/10.5063/schema/codemeta-2.0',
-                    'description': 'bar baz',
-                }
-            },
-        ])
+                {
+                    **origin3_barbaz,
+                    "intrinsic_metadata": {
+                        "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                        "description": "bar baz",
+                    },
+                },
+            ]
+        )
         self.search.flush()
 
-        results = self.search.origin_search(metadata_pattern='foo')
-        assert results == {'next_page_token': None, 'results': [
-            {'url': 'http://origin2'}]}
+        actual_page = self.search.origin_search(metadata_pattern="foo")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin2_foobar]
 
-        results = self.search.origin_search(metadata_pattern='foo bar')
-        assert results == {'next_page_token': None, 'results': [
-            {'url': 'http://origin2'}]}
+        actual_page = self.search.origin_search(metadata_pattern="foo bar")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin2_foobar]
 
-        results = self.search.origin_search(metadata_pattern='bar baz')
-        assert results == {'next_page_token': None, 'results': [
-            {'url': 'http://origin3'}]}
+        actual_page = self.search.origin_search(metadata_pattern="bar baz")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin3_barbaz]
 
     def test_origin_intrinsic_metadata_all_terms(self):
-        self.search.origin_update([
-            {
-                'url': 'http://origin1',
-                'intrinsic_metadata': {
-                    '@context': 'https://doi.org/10.5063/schema/codemeta-2.0',
-                    'description': 'foo bar foo bar',
+        origin1_foobarfoobar = {"url": "http://origin1"}
+        origin3_foobarbaz = {"url": "http://origin2"}
+
+        self.search.origin_update(
+            [
+                {
+                    **origin1_foobarfoobar,
+                    "intrinsic_metadata": {
+                        "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                        "description": "foo bar foo bar",
+                    },
                 },
-            },
-            {
-                'url': 'http://origin3',
-                'intrinsic_metadata': {
-                    '@context': 'https://doi.org/10.5063/schema/codemeta-2.0',
-                    'description': 'foo bar baz',
-                }
-            },
-        ])
+                {
+                    **origin3_foobarbaz,
+                    "intrinsic_metadata": {
+                        "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                        "description": "foo bar baz",
+                    },
+                },
+            ]
+        )
         self.search.flush()
 
-        results = self.search.origin_search(metadata_pattern='foo bar baz')
-        assert results == {'next_page_token': None, 'results': [
-            {'url': 'http://origin3'}]}
+        actual_page = self.search.origin_search(metadata_pattern="foo bar baz")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin3_foobarbaz]
 
     def test_origin_intrinsic_metadata_nested(self):
-        self.search.origin_update([
-            {
-                'url': 'http://origin1',
-                'intrinsic_metadata': {},
-            },
-            {
-                'url': 'http://origin2',
-                'intrinsic_metadata': {
-                    '@context': 'https://doi.org/10.5063/schema/codemeta-2.0',
-                    'keywords': ['foo', 'bar'],
+        origin1_nothin = {"url": "http://origin1"}
+        origin2_foobar = {"url": "http://origin2"}
+        origin3_barbaz = {"url": "http://origin3"}
+
+        self.search.origin_update(
+            [
+                {**origin1_nothin, "intrinsic_metadata": {},},
+                {
+                    **origin2_foobar,
+                    "intrinsic_metadata": {
+                        "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                        "keywords": ["foo", "bar"],
+                    },
                 },
-            },
-            {
-                'url': 'http://origin3',
-                'intrinsic_metadata': {
-                    '@context': 'https://doi.org/10.5063/schema/codemeta-2.0',
-                    'keywords': ['bar', 'baz'],
-                }
-            },
-        ])
+                {
+                    **origin3_barbaz,
+                    "intrinsic_metadata": {
+                        "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                        "keywords": ["bar", "baz"],
+                    },
+                },
+            ]
+        )
         self.search.flush()
 
-        results = self.search.origin_search(metadata_pattern='foo')
-        assert results == {'next_page_token': None, 'results': [
-            {'url': 'http://origin2'}]}
+        actual_page = self.search.origin_search(metadata_pattern="foo")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin2_foobar]
 
-        results = self.search.origin_search(metadata_pattern='foo bar')
-        assert results == {'next_page_token': None, 'results': [
-            {'url': 'http://origin2'}]}
+        actual_page = self.search.origin_search(metadata_pattern="foo bar")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin2_foobar]
 
-        results = self.search.origin_search(metadata_pattern='bar baz')
-        assert results == {'next_page_token': None, 'results': [
-            {'url': 'http://origin3'}]}
+        actual_page = self.search.origin_search(metadata_pattern="bar baz")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin3_barbaz]
 
     # TODO: add more tests with more codemeta terms
 
@@ -199,96 +211,86 @@ class CommonSearchTest:
 
     @settings(deadline=None)
     @given(strategies.integers(min_value=1, max_value=4))
-    def test_origin_url_paging(self, count):
+    def test_origin_url_paging(self, limit):
         # TODO: no hypothesis
+        origin1_foo = {"url": "http://origin1/foo"}
+        origin2_foobar = {"url": "http://origin2/foo/bar"}
+        origin3_foobarbaz = {"url": "http://origin3/foo/bar/baz"}
+
         self.reset()
-        self.search.origin_update([
-            {'url': 'http://origin1/foo'},
-            {'url': 'http://origin2/foo/bar'},
-            {'url': 'http://origin3/foo/bar/baz'},
-        ])
+        self.search.origin_update([origin1_foo, origin2_foobar, origin3_foobarbaz])
         self.search.flush()
 
         results = stream_results(
-            self.search.origin_search,
-            url_pattern='foo bar baz', count=count)
-        results = [res['url'] for res in results]
-        expected_results = [
-            'http://origin3/foo/bar/baz',
-        ]
-        assert sorted(results[0:len(expected_results)]) == \
-            sorted(expected_results)
+            self.search.origin_search, url_pattern="foo bar baz", limit=limit
+        )
+        results = [res["url"] for res in results]
+        expected_results = [o["url"] for o in [origin3_foobarbaz]]
+        assert sorted(results[0 : len(expected_results)]) == sorted(expected_results)
 
         results = stream_results(
-            self.search.origin_search,
-            url_pattern='foo bar', count=count)
-        expected_results = [
-            'http://origin2/foo/bar',
-            'http://origin3/foo/bar/baz',
-        ]
-        results = [res['url'] for res in results]
-        assert sorted(results[0:len(expected_results)]) == \
-            sorted(expected_results)
+            self.search.origin_search, url_pattern="foo bar", limit=limit
+        )
+        results = [res["url"] for res in results]
+        expected_results = [o["url"] for o in [origin2_foobar, origin3_foobarbaz]]
+        assert sorted(results[0 : len(expected_results)]) == sorted(expected_results)
 
         results = stream_results(
-            self.search.origin_search,
-            url_pattern='foo', count=count)
+            self.search.origin_search, url_pattern="foo", limit=limit
+        )
+        results = [res["url"] for res in results]
         expected_results = [
-            'http://origin1/foo',
-            'http://origin2/foo/bar',
-            'http://origin3/foo/bar/baz',
+            o["url"] for o in [origin1_foo, origin2_foobar, origin3_foobarbaz]
         ]
-        results = [res['url'] for res in results]
-        assert sorted(results[0:len(expected_results)]) == \
-            sorted(expected_results)
+        assert sorted(results[0 : len(expected_results)]) == sorted(expected_results)
 
     @settings(deadline=None)
     @given(strategies.integers(min_value=1, max_value=4))
-    def test_origin_intrinsic_metadata_paging(self, count):
+    def test_origin_intrinsic_metadata_paging(self, limit):
         # TODO: no hypothesis
+        origin1_foo = {"url": "http://origin1"}
+        origin2_foobar = {"url": "http://origin2"}
+        origin3_foobarbaz = {"url": "http://origin3"}
+
         self.reset()
-        self.search.origin_update([
-            {
-                'url': 'http://origin1',
-                'intrinsic_metadata': {
-                    '@context': 'https://doi.org/10.5063/schema/codemeta-2.0',
-                    'keywords': ['foo'],
+        self.search.origin_update(
+            [
+                {
+                    **origin1_foo,
+                    "intrinsic_metadata": {
+                        "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                        "keywords": ["foo"],
+                    },
                 },
-            },
-            {
-                'url': 'http://origin2',
-                'intrinsic_metadata': {
-                    '@context': 'https://doi.org/10.5063/schema/codemeta-2.0',
-                    'keywords': ['foo', 'bar'],
+                {
+                    **origin2_foobar,
+                    "intrinsic_metadata": {
+                        "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                        "keywords": ["foo", "bar"],
+                    },
                 },
-            },
-            {
-                'url': 'http://origin3',
-                'intrinsic_metadata': {
-                    '@context': 'https://doi.org/10.5063/schema/codemeta-2.0',
-                    'keywords': ['foo', 'bar', 'baz'],
-                }
-            },
-        ])
+                {
+                    **origin3_foobarbaz,
+                    "intrinsic_metadata": {
+                        "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                        "keywords": ["foo", "bar", "baz"],
+                    },
+                },
+            ]
+        )
         self.search.flush()
 
         results = stream_results(
-            self.search.origin_search,
-            metadata_pattern='foo bar baz', count=count)
-        assert list(results) == [
-            {'url': 'http://origin3'}]
+            self.search.origin_search, metadata_pattern="foo bar baz", limit=limit
+        )
+        assert list(results) == [origin3_foobarbaz]
 
         results = stream_results(
-            self.search.origin_search,
-            metadata_pattern='foo bar', count=count)
-        assert list(results) == [
-            {'url': 'http://origin2'},
-            {'url': 'http://origin3'}]
+            self.search.origin_search, metadata_pattern="foo bar", limit=limit
+        )
+        assert list(results) == [origin2_foobar, origin3_foobarbaz]
 
         results = stream_results(
-            self.search.origin_search,
-            metadata_pattern='foo', count=count)
-        assert list(results) == [
-            {'url': 'http://origin1'},
-            {'url': 'http://origin2'},
-            {'url': 'http://origin3'}]
+            self.search.origin_search, metadata_pattern="foo", limit=limit
+        )
+        assert list(results) == [origin1_foo, origin2_foobar, origin3_foobarbaz]

@@ -1,8 +1,14 @@
-swh-search (0.0.4-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-search (0.1.0-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.1.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2020-07-31 14:05:22
+    +0200)
+  * Upstream changes:     - v0.1.0     - Type origin_search(...) ->
+    PagedResult[Dict]     - README: Update necessary dependencies for
+    test purposes     - Fixes on journal updates     - Blackify strings
+    - setup: Update the minimum required runtime python3 version
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 23 Jan 2020 14:06:26 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 31 Jul 2020 12:10:22 +0000
 
 swh-search (0.0.4-1~swh1) unstable-swh; urgency=medium
 

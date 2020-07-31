@@ -14,7 +14,7 @@ from .test_search import CommonSearchTest
 class InmemorySearchTest(unittest.TestCase, CommonSearchTest):
     @pytest.fixture(autouse=True)
     def _instantiate_search(self):
-        self.search = get_search('memory', {})
+        self.search = get_search("memory", {})
 
     def setUp(self):
         self.reset()
@@ -23,18 +23,18 @@ class InmemorySearchTest(unittest.TestCase, CommonSearchTest):
         self.search.deinitialize()
         self.search.initialize()
 
-    @pytest.mark.skip('Not implemented in the in-memory search')
+    @pytest.mark.skip("Not implemented in the in-memory search")
     def test_origin_intrinsic_metadata_description(self):
         pass
 
-    @pytest.mark.skip('Not implemented in the in-memory search')
+    @pytest.mark.skip("Not implemented in the in-memory search")
     def test_origin_intrinsic_metadata_all_terms(self):
         pass
 
-    @pytest.mark.skip('Not implemented in the in-memory search')
+    @pytest.mark.skip("Not implemented in the in-memory search")
     def test_origin_intrinsic_metadata_nested(self):
         pass
 
-    @pytest.mark.skip('Not implemented in the in-memory search')
+    @pytest.mark.skip("Not implemented in the in-memory search")
     def test_origin_intrinsic_metadata_paging(self):
         pass
