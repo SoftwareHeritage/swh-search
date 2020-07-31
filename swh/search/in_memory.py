@@ -15,15 +15,6 @@ from swh.model.identifiers import origin_identifier
 from swh.search.interface import PagedResult
 
 
-def _sanitize_origin(origin):
-    origin = origin.copy()
-    res = {"url": origin.pop("url")}
-    for field_name in ("type", "intrinsic_metadata"):
-        if field_name in origin:
-            res[field_name] = origin.pop(field_name)
-    return res
-
-
 class InMemorySearch:
     def __init__(self):
         pass
