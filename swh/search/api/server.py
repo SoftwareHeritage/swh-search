@@ -7,8 +7,7 @@ import logging
 import os
 
 from swh.core import config
-from swh.core.api import (RPCServerApp, error_handler,
-                          encode_data_server as encode_data)
+from swh.core.api import RPCServerApp, error_handler, encode_data_server as encode_data
 
 from .. import get_search
 from ..elasticsearch import ElasticSearch
@@ -17,14 +16,12 @@ from ..elasticsearch import ElasticSearch
 def _get_search():
     global search
     if not search:
-        search = get_search(**app.config['search'])
+        search = get_search(**app.config["search"])
 
     return search
 
 
-app = RPCServerApp(__name__,
-                   backend_class=ElasticSearch,
-                   backend_factory=_get_search)
+app = RPCServerApp(__name__, backend_class=ElasticSearch, backend_factory=_get_search)
 
 search = None
 
@@ -34,15 +31,15 @@ def my_error_handler(exception):
     return error_handler(exception, encode_data)
 
 
-@app.route('/')
+@app.route("/")
 def index():
-    return 'SWH Search API server'
+    return "SWH Search API server"
 
 
 api_cfg = None
 
 
-def load_and_check_config(config_file, type='elasticsearch'):
+def load_and_check_config(config_file, type="elasticsearch"):
     """Check the minimal configuration is set to run the api or raise an
        error explanation.
 
@@ -59,14 +56,13 @@ def load_and_check_config(config_file, type='elasticsearch'):
 
     """
     if not config_file:
-        raise EnvironmentError('Configuration file must be defined')
+        raise EnvironmentError("Configuration file must be defined")
 
     if not os.path.exists(config_file):
-        raise FileNotFoundError('Configuration file %s does not exist' % (
-            config_file, ))
+        raise FileNotFoundError("Configuration file %s does not exist" % (config_file,))
 
     cfg = config.read(config_file)
-    if 'search' not in cfg:
+    if "search" not in cfg:
         raise KeyError("Missing 'search' configuration")
 
     return cfg
@@ -82,7 +78,7 @@ def make_app_from_configfile():
     """
     global api_cfg
     if not api_cfg:
-        config_file = os.environ.get('SWH_CONFIG_FILENAME')
+        config_file = os.environ.get("SWH_CONFIG_FILENAME")
         api_cfg = load_and_check_config(config_file)
         app.config.update(api_cfg)
     handler = logging.StreamHandler()

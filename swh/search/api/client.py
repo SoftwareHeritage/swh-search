@@ -10,4 +10,5 @@ from ..elasticsearch import ElasticSearch
 
 class RemoteSearch(RPCClient):
     """Proxy to a remote search API"""
+
     backend_class = ElasticSearch

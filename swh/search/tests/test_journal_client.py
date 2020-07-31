@@ -14,69 +14,58 @@ class SearchJournalClientTest(unittest.TestCase):
     def test_origin_from_journal(self):
         search_mock = MagicMock()
 
-        worker_fn = functools.partial(
-            process_journal_objects,
-            search=search_mock,
-        )
+        worker_fn = functools.partial(process_journal_objects, search=search_mock,)
 
-        worker_fn({'origin': [
-            {'url': 'http://foobar.baz'},
-        ]})
-        search_mock.origin_update.assert_called_once_with([
-            {'url': 'http://foobar.baz'},
-        ])
+        worker_fn({"origin": [{"url": "http://foobar.baz"},]})
+        search_mock.origin_update.assert_called_once_with(
+            [{"url": "http://foobar.baz"},]
+        )
 
         search_mock.reset_mock()
 
-        worker_fn({'origin': [
-            {'url': 'http://foobar.baz'},
-            {'url': 'http://barbaz.qux'},
-        ]})
-        search_mock.origin_update.assert_called_once_with([
-            {'url': 'http://foobar.baz'},
-            {'url': 'http://barbaz.qux'},
-        ])
+        worker_fn(
+            {"origin": [{"url": "http://foobar.baz"}, {"url": "http://barbaz.qux"},]}
+        )
+        search_mock.origin_update.assert_called_once_with(
+            [{"url": "http://foobar.baz"}, {"url": "http://barbaz.qux"},]
+        )
 
     def test_origin_visit_from_journal(self):
         search_mock = MagicMock()
 
-        worker_fn = functools.partial(
-            process_journal_objects,
-            search=search_mock,
-        )
+        worker_fn = functools.partial(process_journal_objects, search=search_mock,)
 
-        worker_fn({'origin_visit': [
-            {
-                'origin': {'url': 'http://foobar.baz'},
-            }
-        ]})
-        search_mock.origin_update.assert_called_once_with([
-            {'url': 'http://foobar.baz', 'has_visits': True},
-        ])
+        worker_fn({"origin_visit": [{"origin": {"url": "http://foobar.baz"},}]})
+        search_mock.origin_update.assert_called_once_with(
+            [{"url": "http://foobar.baz", "has_visits": True},]
+        )
 
     def test_origin_metadata_from_journal(self):
         search_mock = MagicMock()
 
-        worker_fn = functools.partial(
-            process_journal_objects,
-            search=search_mock,
-        )
+        worker_fn = functools.partial(process_journal_objects, search=search_mock,)
 
-        worker_fn({'origin_intrinsic_metadata': [
+        worker_fn(
             {
-                'origin_url': 'http://foobar.baz',
-                'metadata': {
-                    '@context': 'https://doi.org/10.5063/schema/codemeta-2.0',
-                    'description': 'foo bar',
+                "origin_intrinsic_metadata": [
+                    {
+                        "origin_url": "http://foobar.baz",
+                        "metadata": {
+                            "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                            "description": "foo bar",
+                        },
+                    },
+                ]
+            }
+        )
+        search_mock.origin_update.assert_called_once_with(
+            [
+                {
+                    "url": "http://foobar.baz",
+                    "intrinsic_metadata": {
+                        "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                        "description": "foo bar",
+                    },
                 },
-            },
-        ]})
-        search_mock.origin_update.assert_called_once_with([
-            {
-                'url': 'http://foobar.baz',
-                'intrinsic_metadata': {
-                    '@context': 'https://doi.org/10.5063/schema/codemeta-2.0',
-                    'description': 'foo bar',
-                },
-            },
-        ])
+            ]
+        )

@@ -1,9 +1,11 @@
 MANIFEST.in
 Makefile
 README.md
+pyproject.toml
 requirements-swh.txt
 requirements-test.txt
 requirements.txt
+setup.cfg
 setup.py
 version.txt
 swh/__init__.py
@@ -17,6 +19,7 @@ swh/search/__init__.py
 swh/search/cli.py
 swh/search/elasticsearch.py
 swh/search/in_memory.py
+swh/search/interface.py
 swh/search/journal_client.py
 swh/search/py.typed
 swh/search/utils.py

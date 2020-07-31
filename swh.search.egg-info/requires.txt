@@ -1,9 +1,10 @@
 vcversioner
 click
 elasticsearch<8.0.0,>=7.0.0
-swh.core[http]
-swh.journal
+swh.core[http]>=0.2.0
+swh.journal>=0.1.0
 swh.model
 
 [testing]
 pytest
+confluent-kafka

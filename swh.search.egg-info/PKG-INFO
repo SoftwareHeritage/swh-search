@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: swh.search
-Version: 0.0.4
+Version: 0.1.0
 Summary: Software Heritage search service
 Home-page: https://forge.softwareheritage.org/diffusion/DSEA
 Author: Software Heritage developers
@@ -9,6 +9,7 @@ License: UNKNOWN
 Project-URL: Bug Reports, https://forge.softwareheritage.org/maniphest
 Project-URL: Funding, https://www.softwareheritage.org/donate
 Project-URL: Source, https://forge.softwareheritage.org/source/swh-search
+Project-URL: Documentation, https://docs.softwareheritage.org/devel/swh-search/
 Description: swh-search
         ==========
         
@@ -16,11 +17,32 @@ Description: swh-search
         
         Currently uses ElasticSearch, and provides only origin search (by URL and metadata)
         
+        # Dependencies
+        
+        Python tests for this module include tests that cannot be run without a local
+        ElasticSearch instance, so you need the ElasticSearch server executable on your
+        machine (no need to have a running ElasticSearch server).
+        
+        ## Debian-like host
+        
+        The following instructions is enough:
+        ```
+        sudo apt install elasticsearch
+        ```
+        
+        
+        ## Non Debian-like host
+        
+        The tests expect:
+        - `/usr/share/elasticsearch/jdk/bin/java` to exist.
+        - `org.elasticsearch.bootstrap.Elasticsearch` to be in java's classpath.
+        
 Platform: UNKNOWN
 Classifier: Programming Language :: Python :: 3
 Classifier: Intended Audience :: Developers
 Classifier: License :: OSI Approved :: GNU General Public License v3 (GPLv3)
 Classifier: Operating System :: OS Independent
 Classifier: Development Status :: 3 - Alpha
+Requires-Python: >=3.7
 Description-Content-Type: text/markdown
 Provides-Extra: testing
