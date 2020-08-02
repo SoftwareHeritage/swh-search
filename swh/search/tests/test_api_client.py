@@ -1,4 +1,4 @@
-# Copyright (C) 2019  The Software Heritage developers
+# Copyright (C) 2019-2020  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -29,10 +29,10 @@ class TestRemoteSearch(CommonSearchTest, ServerTestFixture, unittest.TestCase):
         self.app = app
         super().setUp()
         self.reset()
-        self.search = get_search("remote", {"url": self.url(),})
+        self.search = get_search("remote", url=self.url(),)
 
     def reset(self):
-        search = get_search("elasticsearch", {"hosts": [self._elasticsearch_host],})
+        search = get_search("elasticsearch", hosts=[self._elasticsearch_host],)
         search.deinitialize()
         search.initialize()
 
