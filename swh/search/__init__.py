@@ -8,6 +8,8 @@ import warnings
 
 from typing import Any, Dict
 
+from swh.search.interface import SearchInterface
+
 
 SEARCH_IMPLEMENTATIONS = {
     "elasticsearch": ".elasticsearch.ElasticSearch",
@@ -16,7 +18,7 @@ SEARCH_IMPLEMENTATIONS = {
 }
 
 
-def get_search(cls: str, **kwargs: Dict[str, Any]):
+def get_search(cls: str, **kwargs: Dict[str, Any]) -> SearchInterface:
     """Get an search object of class `cls` with arguments `args`.
 
     Args:
