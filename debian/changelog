@@ -1,8 +1,23 @@
-swh-search (0.1.0-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-search (0.2.1-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.2.1     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2020-08-03 10:59:31
+    +0200)
+  * Upstream changes:     - v0.2.1     - setup.py: Migrate from
+    vcversioner to setuptools-scm
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 31 Jul 2020 12:14:05 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Mon, 03 Aug 2020 09:00:39 +0000
+
+swh-search (0.2.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.2.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2020-08-03 10:40:39
+    +0200)
+  * Upstream changes:     - v0.2.0     - swh.search: Define an interface
+    for search backends and use it     - swh.search.get_search: Simplify
+    instantiation
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Mon, 03 Aug 2020 08:42:45 +0000
 
 swh-search (0.1.0-1~swh1) unstable-swh; urgency=medium
 

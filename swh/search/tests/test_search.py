@@ -5,7 +5,7 @@
 
 from hypothesis import given, strategies, settings
 
-from swh.search.utils import stream_results
+from swh.core.api.classes import stream_results
 
 
 class CommonSearchTest:
