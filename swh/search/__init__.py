@@ -1,16 +1,29 @@
-# Copyright (C) 2019  The Software Heritage developers
+# Copyright (C) 2019-2020  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+import importlib
+import warnings
 
-def get_search(cls, args):
-    """Get an search object of class `search_class` with
-    arguments `search_args`.
+from typing import Any, Dict
+
+from swh.search.interface import SearchInterface
+
+
+SEARCH_IMPLEMENTATIONS = {
+    "elasticsearch": ".elasticsearch.ElasticSearch",
+    "remote": ".api.client.RemoteSearch",
+    "memory": ".in_memory.InMemorySearch",
+}
+
+
+def get_search(cls: str, **kwargs: Dict[str, Any]) -> SearchInterface:
+    """Get an search object of class `cls` with arguments `args`.
 
     Args:
-        cls (str): search's class, either 'local' or 'remote'
-        args (dict): dictionary of arguments passed to the
+        cls: search's class, either 'local' or 'remote'
+        args: dictionary of arguments passed to the
             search class constructor
 
     Returns:
@@ -20,13 +33,21 @@ def get_search(cls, args):
         ValueError if passed an unknown search class.
 
     """
-    if cls == "remote":
-        from .api.client import RemoteSearch as Search
-    elif cls == "elasticsearch":
-        from .elasticsearch import ElasticSearch as Search
-    elif cls == "memory":
-        from .in_memory import InMemorySearch as Search
-    else:
-        raise ValueError("Unknown indexer search class `%s`" % cls)
+    if "args" in kwargs:
+        warnings.warn(
+            'Explicit "args" key is deprecated, use keys directly instead.',
+            DeprecationWarning,
+        )
+        kwargs = kwargs["args"]
 
-    return Search(**args)
+    class_path = SEARCH_IMPLEMENTATIONS.get(cls)
+    if class_path is None:
+        raise ValueError(
+            "Unknown search class `%s`. Supported: %s"
+            % (cls, ", ".join(SEARCH_IMPLEMENTATIONS))
+        )
+
+    (module_path, class_name) = class_path.rsplit(".", 1)
+    module = importlib.import_module(module_path, package=__package__)
+    Search = getattr(module, class_name)
+    return Search(**kwargs)
