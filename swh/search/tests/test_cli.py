@@ -22,7 +22,7 @@ search:
     cls: elasticsearch
     args:
         hosts:
-        - '{elasticsearch_host}'
+        - '%(elasticsearch_host)s'
 """
 
 JOURNAL_OBJECTS_CONFIG_TEMPLATE = """
@@ -38,7 +38,7 @@ def invoke(catch_exceptions, args, config="", *, elasticsearch_host):
     runner = CliRunner()
     with tempfile.NamedTemporaryFile("a", suffix=".yml") as config_fd:
         config_fd.write(
-            (CLI_CONFIG + config).format(elasticsearch_host=elasticsearch_host)
+            (CLI_CONFIG + config) % {"elasticsearch_host": elasticsearch_host}
         )
         config_fd.seek(0)
         result = runner.invoke(cli, ["-C" + config_fd.name] + args)
