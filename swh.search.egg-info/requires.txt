@@ -7,4 +7,5 @@ swh.model
 
 [testing]
 pytest
+pytest-mock
 confluent-kafka

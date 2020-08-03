@@ -1,4 +1,4 @@
-# Copyright (C) 2019  The Software Heritage developers
+# Copyright (C) 2019-2020  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -10,7 +10,7 @@ from swh.core import config
 from swh.core.api import RPCServerApp, error_handler, encode_data_server as encode_data
 
 from .. import get_search
-from ..elasticsearch import ElasticSearch
+from ..interface import SearchInterface
 
 
 def _get_search():
@@ -21,7 +21,7 @@ def _get_search():
     return search
 
 
-app = RPCServerApp(__name__, backend_class=ElasticSearch, backend_factory=_get_search)
+app = RPCServerApp(__name__, backend_class=SearchInterface, backend_factory=_get_search)
 
 search = None
 

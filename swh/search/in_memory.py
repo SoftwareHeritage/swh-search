@@ -9,7 +9,6 @@ import re
 from collections import defaultdict
 from typing import Any, Dict, Iterable, Iterator, List, Optional
 
-from swh.core.api import remote_api_endpoint
 from swh.model.identifiers import origin_identifier
 
 from swh.search.interface import PagedResult
@@ -19,7 +18,6 @@ class InMemorySearch:
     def __init__(self):
         pass
 
-    @remote_api_endpoint("check")
     def check(self):
         return True
 
@@ -37,8 +35,7 @@ class InMemorySearch:
 
     _url_splitter = re.compile(r"\W")
 
-    @remote_api_endpoint("origin/update")
-    def origin_update(self, documents: Iterable[dict]) -> None:
+    def origin_update(self, documents: Iterable[Dict]) -> None:
         for document in documents:
             document = document.copy()
             id_ = origin_identifier(document)
@@ -48,7 +45,6 @@ class InMemorySearch:
             if id_ not in self._origin_ids:
                 self._origin_ids.append(id_)
 
-    @remote_api_endpoint("origin/search")
     def origin_search(
         self,
         *,
