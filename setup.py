@@ -51,9 +51,9 @@ setup(
         [swh.cli.subcommands]
         search=swh.search.cli:cli
     """,
-    setup_requires=["vcversioner"],
+    setup_requires=["setuptools-scm"],
+    use_scm_version=True,
     extras_require={"testing": parse_requirements("test")},
-    vcversioner={},
     include_package_data=True,
     classifiers=[
         "Programming Language :: Python :: 3",

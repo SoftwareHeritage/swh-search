@@ -1,4 +1,3 @@
-vcversioner
 click
 elasticsearch<8.0.0,>=7.0.0
 swh.core[http]>=0.2.0
