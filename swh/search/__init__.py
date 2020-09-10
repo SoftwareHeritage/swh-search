@@ -6,9 +6,12 @@
 import importlib
 import warnings
 
-from typing import Any, Dict
+from typing import Any, Dict, TYPE_CHECKING
 
-from swh.search.interface import SearchInterface
+
+if TYPE_CHECKING:
+    # importing swh.storage.interface triggers the load of 300+ modules, so...
+    from swh.search.interface import SearchInterface
 
 
 SEARCH_IMPLEMENTATIONS = {
@@ -18,7 +21,7 @@ SEARCH_IMPLEMENTATIONS = {
 }
 
 
-def get_search(cls: str, **kwargs: Dict[str, Any]) -> SearchInterface:
+def get_search(cls: str, **kwargs: Dict[str, Any]) -> "SearchInterface":
     """Get an search object of class `cls` with arguments `args`.
 
     Args:
