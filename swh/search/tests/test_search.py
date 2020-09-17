@@ -3,7 +3,7 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
-from hypothesis import given, strategies, settings
+from hypothesis import given, settings, strategies
 
 from swh.core.api.classes import stream_results
 

@@ -60,7 +60,9 @@ def journal_client_objects(ctx, stop_after_objects):
     to run relevant indexers (currently, only origin)
     on these new objects."""
     import functools
+
     from swh.journal.client import get_journal_client
+
     from . import get_search
     from .journal_client import process_journal_objects
 
@@ -99,7 +101,7 @@ def journal_client_objects(ctx, stop_after_objects):
 )
 def rpc_server(config_path, host, port, debug):
     """Starts a Software Heritage Indexer RPC HTTP server."""
-    from .api.server import load_and_check_config, app
+    from .api.server import app, load_and_check_config
 
     api_cfg = load_and_check_config(config_path, type="any")
     app.config.update(api_cfg)

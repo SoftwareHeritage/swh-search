@@ -5,17 +5,14 @@
 
 import copy
 import tempfile
+
+from click.testing import CliRunner
+from confluent_kafka import Producer
+import pytest
 import yaml
 
-import pytest
-
-from confluent_kafka import Producer
-from click.testing import CliRunner
-
 from swh.journal.serializers import value_to_kafka
-
 from swh.search.cli import cli
-
 
 CLI_CONFIG = """
 search:

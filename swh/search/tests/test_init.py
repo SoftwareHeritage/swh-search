@@ -8,12 +8,10 @@ import inspect
 import pytest
 
 from swh.search import get_search
-
-from swh.search.interface import SearchInterface
-from swh.search.elasticsearch import ElasticSearch
 from swh.search.api.client import RemoteSearch
+from swh.search.elasticsearch import ElasticSearch
 from swh.search.in_memory import InMemorySearch
-
+from swh.search.interface import SearchInterface
 
 SEARCH_IMPLEMENTATIONS_KWARGS = [
     ("remote", RemoteSearch, {"url": "localhost"}),

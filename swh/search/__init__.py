@@ -4,10 +4,8 @@
 # See top-level LICENSE file for more information
 
 import importlib
+from typing import TYPE_CHECKING, Any, Dict
 import warnings
-
-from typing import Any, Dict, TYPE_CHECKING
-
 
 if TYPE_CHECKING:
     # importing swh.storage.interface triggers the load of 300+ modules, so...

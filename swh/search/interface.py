@@ -5,10 +5,8 @@
 
 from typing import Any, Dict, Iterable, Optional, TypeVar
 
-from swh.core.api.classes import PagedResult as CorePagedResult
-
 from swh.core.api import remote_api_endpoint
-
+from swh.core.api.classes import PagedResult as CorePagedResult
 
 TResult = TypeVar("TResult")
 PagedResult = CorePagedResult[TResult, str]

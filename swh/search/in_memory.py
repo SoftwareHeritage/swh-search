@@ -3,14 +3,12 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+from collections import defaultdict
 import itertools
 import re
-
-from collections import defaultdict
 from typing import Any, Dict, Iterable, Iterator, List, Optional
 
 from swh.model.identifiers import origin_identifier
-
 from swh.search.interface import PagedResult
 
 
