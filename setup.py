@@ -49,7 +49,7 @@ setup(
     tests_require=parse_requirements("test"),
     entry_points="""
         [swh.cli.subcommands]
-        search=swh.search.cli:cli
+        search=swh.search.cli
     """,
     setup_requires=["setuptools-scm"],
     use_scm_version=True,

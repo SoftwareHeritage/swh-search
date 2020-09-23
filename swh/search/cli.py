@@ -7,10 +7,10 @@
 # control
 import click
 
-from swh.core.cli import CONTEXT_SETTINGS
+from swh.core.cli import CONTEXT_SETTINGS, swh as swh_cli_group
 
 
-@click.group(name="search", context_settings=CONTEXT_SETTINGS)
+@swh_cli_group.group(name="search", context_settings=CONTEXT_SETTINGS)
 @click.option(
     "--config-file",
     "-C",
@@ -19,7 +19,7 @@ from swh.core.cli import CONTEXT_SETTINGS
     help="Configuration file.",
 )
 @click.pass_context
-def cli(ctx, config_file):
+def search_cli_group(ctx, config_file):
     """Software Heritage Search tools."""
     from swh.core import config
 
@@ -28,7 +28,7 @@ def cli(ctx, config_file):
     ctx.obj["config"] = conf
 
 
-@cli.command("initialize")
+@search_cli_group.command("initialize")
 @click.pass_context
 def initialize(ctx):
     """Creates Elasticsearch indices."""
@@ -39,7 +39,7 @@ def initialize(ctx):
     print("Done.")
 
 
-@cli.group("journal-client")
+@search_cli_group.group("journal-client")
 @click.pass_context
 def journal_client(ctx):
     """"""
@@ -90,7 +90,7 @@ def journal_client_objects(ctx, stop_after_objects):
         client.close()
 
 
-@cli.command("rpc-serve")
+@search_cli_group.command("rpc-serve")
 @click.argument("config-path", required=True)
 @click.option("--host", default="0.0.0.0", help="Host to run the server")
 @click.option("--port", default=5010, type=click.INT, help="Binding port of the server")
