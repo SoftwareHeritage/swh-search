@@ -13,11 +13,9 @@ machine (no need to have a running ElasticSearch server).
 
 ## Debian-like host
 
-The following instructions is enough:
-```
-sudo apt install elasticsearch
-```
-
+The elasticsearch package is required. As it's not part of debian-stable,
+[another debian repository is required to be
+configured](https://www.elastic.co/guide/en/elasticsearch/reference/current/deb.html#deb-repo)
 
 ## Non Debian-like host
 
