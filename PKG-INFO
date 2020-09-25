@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: swh.search
-Version: 0.2.2
+Version: 0.2.3
 Summary: Software Heritage search service
 Home-page: https://forge.softwareheritage.org/diffusion/DSEA
 Author: Software Heritage developers
@@ -25,11 +25,9 @@ Description: swh-search
         
         ## Debian-like host
         
-        The following instructions is enough:
-        ```
-        sudo apt install elasticsearch
-        ```
-        
+        The elasticsearch package is required. As it's not part of debian-stable,
+        [another debian repository is required to be
+        configured](https://www.elastic.co/guide/en/elasticsearch/reference/current/deb.html#deb-repo)
         
         ## Non Debian-like host
         

@@ -7,7 +7,9 @@ import logging
 import os
 
 from swh.core import config
-from swh.core.api import RPCServerApp, error_handler, encode_data_server as encode_data
+from swh.core.api import RPCServerApp
+from swh.core.api import encode_data_server as encode_data
+from swh.core.api import error_handler
 
 from .. import get_search
 from ..interface import SearchInterface

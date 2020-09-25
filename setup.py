@@ -4,10 +4,10 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
-from setuptools import setup, find_packages
-
-from os import path
 from io import open
+from os import path
+
+from setuptools import find_packages, setup
 
 here = path.abspath(path.dirname(__file__))
 
@@ -49,7 +49,7 @@ setup(
     tests_require=parse_requirements("test"),
     entry_points="""
         [swh.cli.subcommands]
-        search=swh.search.cli:cli
+        search=swh.search.cli
     """,
     setup_requires=["setuptools-scm"],
     use_scm_version=True,

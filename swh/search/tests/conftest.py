@@ -13,7 +13,6 @@ import pytest
 
 from swh.search import get_search
 
-
 logger = logging.getLogger(__name__)
 
 

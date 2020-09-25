@@ -4,11 +4,12 @@
 # See top-level LICENSE file for more information
 
 import importlib
+from typing import TYPE_CHECKING, Any, Dict
 import warnings
 
-from typing import Any, Dict
-
-from swh.search.interface import SearchInterface
+if TYPE_CHECKING:
+    # importing swh.storage.interface triggers the load of 300+ modules, so...
+    from swh.search.interface import SearchInterface
 
 
 SEARCH_IMPLEMENTATIONS = {
@@ -18,7 +19,7 @@ SEARCH_IMPLEMENTATIONS = {
 }
 
 
-def get_search(cls: str, **kwargs: Dict[str, Any]) -> SearchInterface:
+def get_search(cls: str, **kwargs: Dict[str, Any]) -> "SearchInterface":
     """Get an search object of class `cls` with arguments `args`.
 
     Args:

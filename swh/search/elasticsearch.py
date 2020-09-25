@@ -4,16 +4,14 @@
 # See top-level LICENSE file for more information
 
 import base64
-import msgpack
-
-from typing import Any, Iterable, Dict, List, Iterator, Optional
+from typing import Any, Dict, Iterable, Iterator, List, Optional
 
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk, scan
+import msgpack
 
-from swh.model.identifiers import origin_identifier
 from swh.model import model
-
+from swh.model.identifiers import origin_identifier
 from swh.search.interface import PagedResult
 
 
