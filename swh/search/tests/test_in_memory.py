@@ -8,6 +8,7 @@ import unittest
 import pytest
 
 from swh.search import get_search
+
 from .test_search import CommonSearchTest
 
 

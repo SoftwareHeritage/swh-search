@@ -8,9 +8,9 @@ import unittest
 import pytest
 
 from swh.core.api.tests.server_testing import ServerTestFixture
-
 from swh.search import get_search
 from swh.search.api.server import app
+
 from .test_search import CommonSearchTest
 
 

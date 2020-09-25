@@ -5,16 +5,14 @@
 
 import copy
 import tempfile
+
+from click.testing import CliRunner
+from confluent_kafka import Producer
+import pytest
 import yaml
 
-import pytest
-
-from confluent_kafka import Producer
-from click.testing import CliRunner
-
 from swh.journal.serializers import value_to_kafka
-
-from swh.search.cli import cli
+from swh.search.cli import search_cli_group
 
 
 CLI_CONFIG = """
@@ -41,7 +39,7 @@ def invoke(catch_exceptions, args, config="", *, elasticsearch_host):
             (CLI_CONFIG + config) % {"elasticsearch_host": elasticsearch_host}
         )
         config_fd.seek(0)
-        result = runner.invoke(cli, ["-C" + config_fd.name] + args)
+        result = runner.invoke(search_cli_group, ["-C" + config_fd.name] + args)
     if not catch_exceptions and result.exception:
         print(result.output)
         raise result.exception
