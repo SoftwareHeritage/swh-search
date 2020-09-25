@@ -14,7 +14,6 @@ import yaml
 from swh.journal.serializers import value_to_kafka
 from swh.search.cli import search_cli_group
 
-
 CLI_CONFIG = """
 search:
     cls: elasticsearch
