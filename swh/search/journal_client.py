@@ -5,7 +5,6 @@
 
 import logging
 
-
 EXPECTED_MESSAGE_TYPES = {
     "origin",
     "origin_visit",

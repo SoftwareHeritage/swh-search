@@ -1,4 +1,4 @@
 
         [swh.cli.subcommands]
-        search=swh.search.cli:cli
+        search=swh.search.cli
     
