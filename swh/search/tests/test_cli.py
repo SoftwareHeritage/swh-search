@@ -69,7 +69,14 @@ def test__journal_client__origin(
     )
     result = invoke(
         False,
-        ["journal-client", "objects", "--stop-after-objects", "1",],
+        [
+            "journal-client",
+            "objects",
+            "--stop-after-objects",
+            "1",
+            "--object-type",
+            "origin",
+        ],
         journal_objects_config,
         elasticsearch_host=elasticsearch_host,
     )
@@ -116,7 +123,14 @@ def test__journal_client__origin_visit(
     )
     result = invoke(
         False,
-        ["journal-client", "objects", "--stop-after-objects", "1",],
+        [
+            "journal-client",
+            "objects",
+            "--stop-after-objects",
+            "1",
+            "--object-type",
+            "origin_visit",
+        ],
         journal_objects_config,
         elasticsearch_host=elasticsearch_host,
     )
