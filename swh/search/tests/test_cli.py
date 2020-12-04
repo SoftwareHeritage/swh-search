@@ -12,6 +12,7 @@ import pytest
 import yaml
 
 from swh.journal.serializers import value_to_kafka
+from swh.model.hashutil import hash_to_bytes
 from swh.search.cli import search_cli_group
 
 CLI_CONFIG = """
@@ -204,6 +205,75 @@ def test__journal_client__origin_visit_status(
     actual_page = swh_search.origin_search(url_pattern="foobar", with_visit=True)
     assert actual_page.next_page_token is None
     assert actual_page.results == [origin_foobar]
+
+
+def test__journal_client__origin_intrinsic_metadata(
+    swh_search, elasticsearch_host, kafka_prefix: str, kafka_server
+):
+    """Subscribing to origin-intrinsic-metadata should result in swh-search indexation
+
+    """
+    origin_foobar = {"url": "https://github.com/clojure/clojure"}
+
+    origin_intrinsic_metadata = {
+        "id": origin_foobar["url"],
+        "origin_url": origin_foobar["url"],
+        "metadata": {
+            "name": "clojure",
+            "type": "SoftwareSourceCode",
+            "license": "http://opensource.org/licenses/eclipse-1.0.php",
+            "version": "1.10.2-master-SNAPSHOT",
+            "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+            "identifier": "org.clojure",
+            "description": "Clojure core environment and runtime library.",
+            "codeRepository": "https://repo.maven.apache.org/maven2/org/clojure/clojure",  # noqa
+        },
+        "indexer_configuration_id": 1,
+        "from_revision": hash_to_bytes("f47c139e20970ee0852166f48ee2a4626632b86e"),
+        "mappings": ["maven"],
+    }
+
+    producer = Producer(
+        {
+            "bootstrap.servers": kafka_server,
+            "client.id": "test search origin intrinsic metadata producer",
+            "acks": "all",
+        }
+    )
+    topic = f"{kafka_prefix}.origin_intrinsic_metadata"
+    value = value_to_kafka(origin_intrinsic_metadata)
+    producer.produce(topic=topic, key=b"bogus-origin-intrinsic-metadata", value=value)
+
+    journal_objects_config = JOURNAL_OBJECTS_CONFIG_TEMPLATE.format(
+        broker=kafka_server, prefix=kafka_prefix, group_id="test-consumer"
+    )
+    result = invoke(
+        False,
+        [
+            "journal-client", "objects",
+            "--stop-after-objects", "1",
+            "--object-type", "origin_intrinsic_metadata"
+        ],
+        journal_objects_config,
+        elasticsearch_host=elasticsearch_host,
+    )
+
+    # Check the output
+    expected_output = "Processed 1 messages.\nDone.\n"
+    assert result.exit_code == 0, result.output
+    assert result.output == expected_output
+
+    swh_search.flush()
+
+    # search without visit returns the metadata
+    actual_page = swh_search.origin_search(url_pattern="clojure", with_visit=False)
+    assert actual_page.next_page_token is None
+    assert actual_page.results == [origin_foobar]
+
+    # no visit associated so it does not return anything
+    actual_page = swh_search.origin_search(url_pattern="clojure", with_visit=True)
+    assert actual_page.next_page_token is None
+    assert actual_page.results == []
 
 
 def test__journal_client__missing_main_journal_config_key(elasticsearch_host):
