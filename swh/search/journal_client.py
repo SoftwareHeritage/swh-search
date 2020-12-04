@@ -8,6 +8,7 @@ import logging
 EXPECTED_MESSAGE_TYPES = {
     "origin",
     "origin_visit",
+    "origin_visit_status",
     "origin_intrinsic_metadata",
 }
 
@@ -22,6 +23,9 @@ def process_journal_objects(messages, *, search):
 
     if "origin_visit" in messages:
         process_origin_visits(messages["origin_visit"], search)
+
+    if "origin_visit_status" in messages:
+        process_origin_visits(messages["origin_visit_status"], search)
 
     if "origin_intrinsic_metadata" in messages:
         process_origin_intrinsic_metadata(messages["origin_intrinsic_metadata"], search)
@@ -47,6 +51,17 @@ def process_origin_visits(visits, search):
                 "has_visits": True,
             }
             for visit in visits
+        ]
+    )
+
+
+def process_origin_visit_statuses(visit_statuses, search):
+    logging.debug("processing origin visit statuses %r", visit_statuses)
+
+    search.origin_update(
+        [
+            {"url": (visit_status["origin"]), "has_visits": True,}
+            for visit_status in visit_statuses
         ]
     )
 

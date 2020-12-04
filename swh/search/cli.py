@@ -59,7 +59,7 @@ def journal_client(ctx):
     "--object-type",
     "-o",
     multiple=True,
-    default=["origin", "origin_visit"],
+    default=["origin", "origin_visit", "origin_visit_status"],
     help="Default list of object types to subscribe to",
 )
 @click.option(

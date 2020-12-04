@@ -154,6 +154,58 @@ def test__journal_client__origin_visit(
     assert actual_page.results == [origin_foobar]
 
 
+def test__journal_client__origin_visit_status(
+    swh_search, elasticsearch_host, kafka_prefix: str, kafka_server
+):
+    """Subscribing to origin-visit-status should result in swh-search indexation
+
+    """
+    origin_foobar = {"url": "http://baz.foobar"}
+    producer = Producer(
+        {
+            "bootstrap.servers": kafka_server,
+            "client.id": "test search origin visit status producer",
+            "acks": "all",
+        }
+    )
+    topic = f"{kafka_prefix}.origin_visit_status"
+    value = value_to_kafka(
+        {
+            "origin": origin_foobar["url"],
+            "visit": 1,
+            "snapshot": None,
+            "status": "full",
+        }
+    )
+    producer.produce(topic=topic, key=b"bogus-origin-visit-status", value=value)
+
+    journal_objects_config = JOURNAL_OBJECTS_CONFIG_TEMPLATE.format(
+        broker=kafka_server, prefix=kafka_prefix, group_id="test-consumer"
+    )
+    result = invoke(
+        False,
+        ["journal-client", "objects", "--stop-after-objects", "1",],
+        journal_objects_config,
+        elasticsearch_host=elasticsearch_host,
+    )
+
+    # Check the output
+    expected_output = "Processed 1 messages.\nDone.\n"
+    assert result.exit_code == 0, result.output
+    assert result.output == expected_output
+
+    swh_search.flush()
+
+    # Both search returns the visit
+    actual_page = swh_search.origin_search(url_pattern="foobar", with_visit=False)
+    assert actual_page.next_page_token is None
+    assert actual_page.results == [origin_foobar]
+
+    actual_page = swh_search.origin_search(url_pattern="foobar", with_visit=True)
+    assert actual_page.next_page_token is None
+    assert actual_page.results == [origin_foobar]
+
+
 def test__journal_client__missing_main_journal_config_key(elasticsearch_host):
     """Missing configuration on journal should raise"""
     with pytest.raises(KeyError, match="journal"):
