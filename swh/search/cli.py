@@ -62,8 +62,14 @@ def journal_client(ctx):
     default=["origin", "origin_visit"],
     help="Default list of object types to subscribe to",
 )
+@click.option(
+    "--prefix",
+    "-p",
+    default="swh.journal.objects",
+    help="Topic prefix to use (e.g swh.journal.indexed)",
+)
 @click.pass_context
-def journal_client_objects(ctx, stop_after_objects, object_type):
+def journal_client_objects(ctx, stop_after_objects, object_type, prefix):
     """Listens for new objects from the SWH Journal, and schedules tasks
     to run relevant indexers (currently, origin and origin_visit)
     on these new objects.
@@ -80,6 +86,7 @@ def journal_client_objects(ctx, stop_after_objects, object_type):
     journal_cfg = config["journal"]
 
     object_types = object_type or journal_cfg.get("object_types")
+    prefix = prefix or journal_cfg.get("prefix")
 
     client = get_journal_client(
         cls="kafka",

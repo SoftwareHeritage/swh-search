@@ -76,6 +76,8 @@ def test__journal_client__origin(
             "1",
             "--object-type",
             "origin",
+            "--prefix",
+            kafka_prefix,
         ],
         journal_objects_config,
         elasticsearch_host=elasticsearch_host,
