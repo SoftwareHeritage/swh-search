@@ -7,7 +7,8 @@
 # control
 import click
 
-from swh.core.cli import CONTEXT_SETTINGS, swh as swh_cli_group
+from swh.core.cli import CONTEXT_SETTINGS
+from swh.core.cli import swh as swh_cli_group
 
 
 @swh_cli_group.group(name="search", context_settings=CONTEXT_SETTINGS)
@@ -54,11 +55,26 @@ def journal_client(ctx):
     type=int,
     help="Maximum number of objects to replay. Default is to run forever.",
 )
+@click.option(
+    "--object-type",
+    "-o",
+    multiple=True,
+    default=["origin", "origin_visit", "origin_visit_status"],
+    help="Default list of object types to subscribe to",
+)
+@click.option(
+    "--prefix",
+    "-p",
+    default="swh.journal.objects",
+    help="Topic prefix to use (e.g swh.journal.indexed)",
+)
 @click.pass_context
-def journal_client_objects(ctx, stop_after_objects):
+def journal_client_objects(ctx, stop_after_objects, object_type, prefix):
     """Listens for new objects from the SWH Journal, and schedules tasks
-    to run relevant indexers (currently, only origin)
-    on these new objects."""
+    to run relevant indexers (currently, origin and origin_visit)
+    on these new objects.
+
+    """
     import functools
 
     from swh.journal.client import get_journal_client
@@ -69,9 +85,12 @@ def journal_client_objects(ctx, stop_after_objects):
     config = ctx.obj["config"]
     journal_cfg = config["journal"]
 
+    object_types = object_type or journal_cfg.get("object_types")
+    prefix = prefix or journal_cfg.get("prefix")
+
     client = get_journal_client(
         cls="kafka",
-        object_types=["origin", "origin_visit"],
+        object_types=object_types,
         stop_after_objects=stop_after_objects,
         **journal_cfg,
     )
