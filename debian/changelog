@@ -1,8 +1,12 @@
-swh-search (0.3.0-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-search (0.3.1-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.3.1     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2020-12-09 18:21:33
+    +0100)
+  * Upstream changes:     - v0.3.1     - Allow configuration through cli
+    or config file
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 09 Dec 2020 15:33:14 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 09 Dec 2020 18:53:39 +0000
 
 swh-search (0.3.0-1~swh1) unstable-swh; urgency=medium
 

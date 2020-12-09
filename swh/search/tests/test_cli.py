@@ -185,7 +185,16 @@ def test__journal_client__origin_visit_status(
     )
     result = invoke(
         False,
-        ["journal-client", "objects", "--stop-after-objects", "1",],
+        [
+            "journal-client",
+            "objects",
+            "--stop-after-objects",
+            "1",
+            "--prefix",
+            kafka_prefix,
+            "--object-type",
+            "origin_visit_status",
+        ],
         journal_objects_config,
         elasticsearch_host=elasticsearch_host,
     )
@@ -250,9 +259,12 @@ def test__journal_client__origin_intrinsic_metadata(
     result = invoke(
         False,
         [
-            "journal-client", "objects",
-            "--stop-after-objects", "1",
-            "--object-type", "origin_intrinsic_metadata"
+            "journal-client",
+            "objects",
+            "--stop-after-objects",
+            "1",
+            "--object-type",
+            "origin_intrinsic_metadata",
         ],
         journal_objects_config,
         elasticsearch_host=elasticsearch_host,
@@ -289,8 +301,9 @@ def test__journal_client__missing_main_journal_config_key(elasticsearch_host):
 
 def test__journal_client__missing_journal_config_keys(elasticsearch_host):
     """Missing configuration on mandatory journal keys should raise"""
+    kafka_prefix = "swh.journal.objects"
     journal_objects_config = JOURNAL_OBJECTS_CONFIG_TEMPLATE.format(
-        broker="192.0.2.1", prefix="swh.journal.objects", group_id="test-consumer"
+        broker="192.0.2.1", prefix=kafka_prefix, group_id="test-consumer"
     )
     journal_config = yaml.safe_load(journal_objects_config)
 
@@ -304,7 +317,76 @@ def test__journal_client__missing_journal_config_keys(elasticsearch_host):
         with pytest.raises(TypeError, match=f"{key}"):
             invoke(
                 catch_exceptions=False,
-                args=["journal-client", "objects", "--stop-after-objects", "1",],
+                args=[
+                    "journal-client",
+                    "objects",
+                    "--stop-after-objects",
+                    "1",
+                    "--prefix",
+                    kafka_prefix,
+                    "--object-type",
+                    "origin_visit_status",
+                ],
                 config=yaml_cfg,  # incomplete config will make the cli raise
                 elasticsearch_host=elasticsearch_host,
             )
+
+
+def test__journal_client__missing_prefix_config_key(
+    swh_search, elasticsearch_host, kafka_server
+):
+    """Missing configuration on mandatory prefix key should raise"""
+
+    journal_cfg_template = """
+journal:
+    brokers:
+        - {broker}
+    group_id: {group_id}
+    """
+
+    journal_cfg = journal_cfg_template.format(
+        broker=kafka_server, group_id="test-consumer"
+    )
+
+    with pytest.raises(ValueError, match="prefix"):
+        invoke(
+            False,
+            # Missing --prefix (and no config key) will make the cli raise
+            [
+                "journal-client",
+                "objects",
+                "--stop-after-objects",
+                "1",
+                "--object-type",
+                "origin_visit_status",
+            ],
+            journal_cfg,
+            elasticsearch_host=elasticsearch_host,
+        )
+
+
+def test__journal_client__missing_object_types_config_key(
+    swh_search, elasticsearch_host, kafka_server
+):
+    """Missing configuration on mandatory object-types key should raise"""
+
+    journal_cfg_template = """
+journal:
+    brokers:
+        - {broker}
+    prefix: swh.journal.objects
+    group_id: {group_id}
+    """
+
+    journal_cfg = journal_cfg_template.format(
+        broker=kafka_server, group_id="test-consumer"
+    )
+
+    with pytest.raises(ValueError, match="object_types"):
+        invoke(
+            False,
+            # Missing --object-types (and no config key) will make the cli raise
+            ["journal-client", "objects", "--stop-after-objects", "1"],
+            journal_cfg,
+            elasticsearch_host=elasticsearch_host,
+        )

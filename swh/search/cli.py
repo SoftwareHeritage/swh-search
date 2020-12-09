@@ -59,14 +59,10 @@ def journal_client(ctx):
     "--object-type",
     "-o",
     multiple=True,
-    default=["origin", "origin_visit", "origin_visit_status"],
     help="Default list of object types to subscribe to",
 )
 @click.option(
-    "--prefix",
-    "-p",
-    default="swh.journal.objects",
-    help="Topic prefix to use (e.g swh.journal.indexed)",
+    "--prefix", "-p", help="Topic prefix to use (e.g swh.journal.indexed)",
 )
 @click.pass_context
 def journal_client_objects(ctx, stop_after_objects, object_type, prefix):
@@ -85,15 +81,19 @@ def journal_client_objects(ctx, stop_after_objects, object_type, prefix):
     config = ctx.obj["config"]
     journal_cfg = config["journal"]
 
-    object_types = object_type or journal_cfg.get("object_types")
-    prefix = prefix or journal_cfg.get("prefix")
-
-    client = get_journal_client(
-        cls="kafka",
-        object_types=object_types,
-        stop_after_objects=stop_after_objects,
-        **journal_cfg,
+    journal_cfg["object_types"] = object_type or journal_cfg.get("object_types", [])
+    journal_cfg["prefix"] = prefix or journal_cfg.get("prefix")
+    journal_cfg["stop_after_objects"] = stop_after_objects or journal_cfg.get(
+        "stop_after_objects"
     )
+
+    if len(journal_cfg["object_types"]) == 0:
+        raise ValueError("'object_types' must be specified by cli or configuration")
+
+    if journal_cfg["prefix"] is None:
+        raise ValueError("'prefix' must be specified by cli or configuration")
+
+    client = get_journal_client(cls="kafka", **journal_cfg,)
     search = get_search(**config["search"])
 
     worker_fn = functools.partial(process_journal_objects, search=search,)
