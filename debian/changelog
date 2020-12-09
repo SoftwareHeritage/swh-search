@@ -1,8 +1,17 @@
-swh-search (0.2.3-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-search (0.3.0-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.3.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2020-12-08 11:30:33
+    +0100)
+  * Upstream changes:     - v0.3.0     - cli: Subscribe journal client
+    to origin_intrinsic_metadata topic     - cli: Subscribe journal
+    client to origin_visit_status     - cli: Allow topic prefix
+    declaration through cli or configuration     - cli: Allow object-
+    type declaration through cli or configuration     - tox.ini: pin
+    black to the pre-commit version (19.10b0) to avoid flip-flops     -
+    Run isort after the CLI import changes
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 25 Sep 2020 10:54:40 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 08 Dec 2020 10:33:30 +0000
 
 swh-search (0.2.3-1~swh1) unstable-swh; urgency=medium
 
