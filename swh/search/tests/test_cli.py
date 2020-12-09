@@ -226,7 +226,6 @@ def test__journal_client__origin_intrinsic_metadata(
 
     origin_intrinsic_metadata = {
         "id": origin_foobar["url"],
-        "origin_url": origin_foobar["url"],
         "metadata": {
             "name": "clojure",
             "type": "SoftwareSourceCode",

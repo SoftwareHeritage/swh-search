@@ -49,7 +49,7 @@ class SearchJournalClientTest(unittest.TestCase):
             {
                 "origin_intrinsic_metadata": [
                     {
-                        "origin_url": "http://foobar.baz",
+                        "id": "http://foobar.baz",
                         "metadata": {
                             "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                             "description": "foo bar",
