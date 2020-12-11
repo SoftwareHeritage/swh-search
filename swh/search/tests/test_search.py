@@ -167,6 +167,29 @@ class CommonSearchTest:
         assert actual_page.next_page_token is None
         assert actual_page.results == [origin3_foobarbaz]
 
+    def test_origin_intrinsic_metadata_matches_cross_fields(self):
+        """Checks the backend finds results even if the two words in the query are
+        each in a different field."""
+        origin1 = {"url": "http://origin1"}
+
+        self.search.origin_update(
+            [
+                {
+                    **origin1,
+                    "intrinsic_metadata": {
+                        "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                        "description": "foo bar",
+                        "author": "John Doe",
+                    },
+                },
+            ]
+        )
+        self.search.flush()
+
+        actual_page = self.search.origin_search(metadata_pattern="foo John")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin1]
+
     def test_origin_intrinsic_metadata_nested(self):
         origin1_nothin = {"url": "http://origin1"}
         origin2_foobar = {"url": "http://origin2"}
@@ -268,11 +291,9 @@ class CommonSearchTest:
         assert actual_page.next_page_token is None
         assert actual_page.results == [origin3_bazqux]
 
-        # FIXME: the following won't work because "foo" and "bar" are not in the
-        # same field.
-        # actual_page = self.search.origin_search(metadata_pattern="foo bar")
-        # assert actual_page.next_page_token is None
-        # assert actual_page.results == [origin2_foobar]
+        actual_page = self.search.origin_search(metadata_pattern="foo bar")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin1_foobar]
 
     # TODO: add more tests with more codemeta terms
 

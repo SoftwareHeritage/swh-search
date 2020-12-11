@@ -148,6 +148,7 @@ class ElasticSearch:
                         "query": {
                             "multi_match": {
                                 "query": metadata_pattern,
+                                "type": "cross_fields",
                                 "operator": "and",
                                 "fields": ["intrinsic_metadata.*"],
                             }
