@@ -167,6 +167,49 @@ class CommonSearchTest:
         assert actual_page.next_page_token is None
         assert actual_page.results == [origin3_foobarbaz]
 
+    def test_origin_intrinsic_metadata_long_description(self):
+        origin1 = {"url": "http://origin1"}
+
+        self.search.origin_update(
+            [
+                {
+                    **origin1,
+                    "intrinsic_metadata": {
+                        "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                        "description": " ".join(f"foo{i}" for i in range(1000000)),
+                    },
+                },
+            ]
+        )
+        self.search.flush()
+
+        actual_page = self.search.origin_search(metadata_pattern="foo42")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin1]
+
+    def test_origin_intrinsic_metadata_matches_cross_fields(self):
+        """Checks the backend finds results even if the two words in the query are
+        each in a different field."""
+        origin1 = {"url": "http://origin1"}
+
+        self.search.origin_update(
+            [
+                {
+                    **origin1,
+                    "intrinsic_metadata": {
+                        "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                        "description": "foo bar",
+                        "author": "John Doe",
+                    },
+                },
+            ]
+        )
+        self.search.flush()
+
+        actual_page = self.search.origin_search(metadata_pattern="foo John")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin1]
+
     def test_origin_intrinsic_metadata_nested(self):
         origin1_nothin = {"url": "http://origin1"}
         origin2_foobar = {"url": "http://origin2"}
@@ -204,6 +247,73 @@ class CommonSearchTest:
         actual_page = self.search.origin_search(metadata_pattern="bar baz")
         assert actual_page.next_page_token is None
         assert actual_page.results == [origin3_barbaz]
+
+    def test_origin_intrinsic_metadata_inconsistent_type(self):
+        """Checks the same field can have a concrete value, an object, or an array
+        in different documents."""
+        origin1_foobar = {"url": "http://origin1"}
+        origin2_barbaz = {"url": "http://origin2"}
+        origin3_bazqux = {"url": "http://origin3"}
+
+        self.search.origin_update(
+            [
+                {
+                    **origin1_foobar,
+                    "intrinsic_metadata": {
+                        "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                        "author": {"familyName": "Foo", "givenName": "Bar",},
+                    },
+                },
+            ]
+        )
+        self.search.flush()
+        self.search.origin_update(
+            [
+                {
+                    **origin2_barbaz,
+                    "intrinsic_metadata": {
+                        "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                        "author": "Bar Baz",
+                    },
+                },
+                {
+                    **origin3_bazqux,
+                    "intrinsic_metadata": {
+                        "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                        "author": ["Baz", "Qux"],
+                    },
+                },
+            ]
+        )
+        self.search.flush()
+
+        actual_page = self.search.origin_search(metadata_pattern="bar")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin2_barbaz, origin1_foobar]
+
+        actual_page = self.search.origin_search(metadata_pattern="baz")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin2_barbaz, origin3_bazqux]
+
+        actual_page = self.search.origin_search(metadata_pattern="foo")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin1_foobar]
+
+        actual_page = self.search.origin_search(metadata_pattern="bar baz")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin2_barbaz]
+
+        actual_page = self.search.origin_search(metadata_pattern="qux")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin3_bazqux]
+
+        actual_page = self.search.origin_search(metadata_pattern="baz qux")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin3_bazqux]
+
+        actual_page = self.search.origin_search(metadata_pattern="foo bar")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin1_foobar]
 
     # TODO: add more tests with more codemeta terms
 
