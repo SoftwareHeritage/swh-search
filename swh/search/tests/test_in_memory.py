@@ -39,3 +39,15 @@ class InmemorySearchTest(unittest.TestCase, CommonSearchTest):
     @pytest.mark.skip("Not implemented in the in-memory search")
     def test_origin_intrinsic_metadata_paging(self):
         pass
+
+    @pytest.mark.skip("Not implemented in the in-memory search")
+    def test_origin_intrinsic_metadata_inconsistent_type(self):
+        pass
+
+    @pytest.mark.skip("Not implemented in the in-memory search")
+    def test_origin_intrinsic_metadata_matches_cross_fields(self):
+        pass
+
+    @pytest.mark.skip("Not implemented in the in-memory search")
+    def test_origin_intrinsic_metadata_long_description(self):
+        pass

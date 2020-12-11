@@ -13,6 +13,7 @@ Build-Depends: debhelper (>= 9),
                python3-setuptools-scm,
                python3-swh.core,
                python3-swh.journal,
+               python3-swh.indexer,
                python3-swh.model,
                elasticsearch
 Standards-Version: 3.9.6
