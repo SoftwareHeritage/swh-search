@@ -10,6 +10,7 @@ from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk, scan
 import msgpack
 
+from swh.indexer import codemeta
 from swh.model import model
 from swh.model.identifiers import origin_identifier
 from swh.search.interface import PagedResult
@@ -21,6 +22,8 @@ def _sanitize_origin(origin):
     for field_name in ("intrinsic_metadata", "has_visits"):
         if field_name in origin:
             res[field_name] = origin.pop(field_name)
+    if "intrinsic_metadata" in res:
+        res["intrinsic_metadata"] = codemeta.expand(res["intrinsic_metadata"])
     return res
 
 
