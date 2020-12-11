@@ -167,6 +167,26 @@ class CommonSearchTest:
         assert actual_page.next_page_token is None
         assert actual_page.results == [origin3_foobarbaz]
 
+    def test_origin_intrinsic_metadata_long_description(self):
+        origin1 = {"url": "http://origin1"}
+
+        self.search.origin_update(
+            [
+                {
+                    **origin1,
+                    "intrinsic_metadata": {
+                        "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                        "description": " ".join(f"foo{i}" for i in range(1000000)),
+                    },
+                },
+            ]
+        )
+        self.search.flush()
+
+        actual_page = self.search.origin_search(metadata_pattern="foo42")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin1]
+
     def test_origin_intrinsic_metadata_matches_cross_fields(self):
         """Checks the backend finds results even if the two words in the query are
         each in a different field."""
