@@ -38,6 +38,31 @@ def test_journal_client_origin_visit_from_journal():
     )
 
 
+def test_journal_client_origin_visit_status_from_journal():
+    search_mock = MagicMock()
+
+    worker_fn = functools.partial(process_journal_objects, search=search_mock,)
+
+    worker_fn(
+        {
+            "origin_visit_status": [
+                {"origin": "http://foobar.baz", "status": "full"}  # full visits ok
+            ]
+        }
+    )
+    search_mock.origin_update.assert_called_once_with(
+        [{"url": "http://foobar.baz", "has_visits": True},]
+    )
+
+    search_mock.reset_mock()
+
+    # non-full visits are filtered out
+    worker_fn(
+        {"origin_visit_status": [{"origin": "http://foobar.baz", "status": "partial"}]}
+    )
+    search_mock.origin_update.assert_not_called()
+
+
 def test_journal_client_origin_metadata_from_journal():
     search_mock = MagicMock()
 
