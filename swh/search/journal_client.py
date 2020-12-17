@@ -25,7 +25,7 @@ def process_journal_objects(messages, *, search):
         process_origin_visits(messages["origin_visit"], search)
 
     if "origin_visit_status" in messages:
-        process_origin_visits(messages["origin_visit_status"], search)
+        process_origin_visit_statuses(messages["origin_visit_status"], search)
 
     if "origin_intrinsic_metadata" in messages:
         process_origin_intrinsic_metadata(messages["origin_intrinsic_metadata"], search)
@@ -58,12 +58,14 @@ def process_origin_visits(visits, search):
 def process_origin_visit_statuses(visit_statuses, search):
     logging.debug("processing origin visit statuses %r", visit_statuses)
 
-    search.origin_update(
-        [
-            {"url": (visit_status["origin"]), "has_visits": True,}
-            for visit_status in visit_statuses
-        ]
-    )
+    full_visit_status = [
+        {"url": (visit_status["origin"]), "has_visits": True,}
+        for visit_status in visit_statuses
+        if visit_status["status"] == "full"
+    ]
+
+    if full_visit_status:
+        search.origin_update(full_visit_status)
 
 
 def process_origin_intrinsic_metadata(origin_metadata, search):
