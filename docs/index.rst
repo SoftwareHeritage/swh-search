@@ -16,6 +16,7 @@ match some criteria; for example full-text search.
    :maxdepth: 2
    :caption: Contents:
 
+   cli
 
 Reference Documentation
 -----------------------
