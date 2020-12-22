@@ -18,12 +18,28 @@ from swh.search.interface import PagedResult
 
 def _sanitize_origin(origin):
     origin = origin.copy()
+
+    # Whitelist fields to be saved in Elasticsearch
     res = {"url": origin.pop("url")}
     for field_name in ("intrinsic_metadata", "has_visits"):
         if field_name in origin:
             res[field_name] = origin.pop(field_name)
+
+    # Run the JSON-LD expansion algorithm
+    # <https://www.w3.org/TR/json-ld-api/#expansion>
+    # to normalize the Codemeta metadata.
+    # This is required as Elasticsearch will needs each field to have a consistent
+    # type across documents to be searchable; and non-expanded JSON-LD documents
+    # can have various types in the same field. For example, all these are
+    # equivalent in JSON-LD:
+    # * {"author": "Jane Doe"}
+    # * {"author": ["Jane Doe"]}
+    # * {"author": {"@value": "Jane Doe"}}
+    # * {"author": [{"@value": "Jane Doe"}]}
+    # and JSON-LD expansion will convert them all to the last one.
     if "intrinsic_metadata" in res:
         res["intrinsic_metadata"] = codemeta.expand(res["intrinsic_metadata"])
+
     return res
 
 
@@ -61,12 +77,17 @@ class ElasticSearch:
             index="origin",
             body={
                 "properties": {
+                    # sha1 of the URL; used as the document id
                     "sha1": {"type": "keyword", "doc_values": True,},
+                    # Used both to search URLs, and as the result to return
+                    # as a response to queries
                     "url": {
                         "type": "text",
                         # To split URLs into token on any character
                         # that is not alphanumerical
                         "analyzer": "simple",
+                        # 2-gram and partial-3-gram search (ie. with the end of the
+                        # third word potentially missing)
                         "fields": {
                             "as_you_type": {
                                 "type": "search_as_you_type",
@@ -74,12 +95,14 @@ class ElasticSearch:
                             }
                         },
                     },
+                    # used to filter out origins that were never visited
                     "has_visits": {"type": "boolean",},
                     "intrinsic_metadata": {
                         "type": "nested",
                         "properties": {
                             "@context": {
-                                # don't bother indexing tokens
+                                # don't bother indexing tokens in these URIs, as the
+                                # are used as namespaces
                                 "type": "keyword",
                             }
                         },
@@ -148,8 +171,16 @@ class ElasticSearch:
                         "query": {
                             "multi_match": {
                                 "query": metadata_pattern,
+                                # Makes it so that the "foo bar" query returns
+                                # documents which contain "foo" in a field and "bar"
+                                # in a different field
                                 "type": "cross_fields",
+                                # All keywords must be found in a document for it to
+                                # be considered a match.
+                                # TODO: allow missing keywords?
                                 "operator": "and",
+                                # Searches on all fields of the intrinsic_metadata dict,
+                                # recursively.
                                 "fields": ["intrinsic_metadata.*"],
                             }
                         },
@@ -161,8 +192,6 @@ class ElasticSearch:
             raise ValueError(
                 "At least one of url_pattern and metadata_pattern must be provided."
             )
-
-        next_page_token: Optional[str] = None
 
         if with_visit:
             query_clauses.append({"term": {"has_visits": True,}})
@@ -183,7 +212,11 @@ class ElasticSearch:
 
         hits = res["hits"]["hits"]
 
+        next_page_token: Optional[str] = None
+
         if len(hits) == limit:
+            # There are more results after this page; return a pagination token
+            # to get them in a future query
             last_hit = hits[-1]
             next_page_token_content = {
                 b"score": last_hit["_score"],
