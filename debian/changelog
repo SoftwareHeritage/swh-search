@@ -1,8 +1,12 @@
-swh-search (0.3.4-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-search (0.3.5-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.3.5     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2020-12-22 17:32:26 +0100)
+  * Upstream changes:     - v0.3.5     - * Write some basic
+    documentation to describe what swh-search is.     - * Add more
+    comments in elasticsearch.py
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 17 Dec 2020 11:18:30 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 22 Dec 2020 16:38:29 +0000
 
 swh-search (0.3.4-1~swh1) unstable-swh; urgency=medium
 
