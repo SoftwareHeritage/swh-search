@@ -3,6 +3,12 @@ swh-search
 
 Search service for the Software Heritage archive.
 
+It is similar to swh-storage in what it contains,
+but provides different ways to query it: while swh-storage is mostly
+a key-value store that returns an object from a primary key,
+swh-search is focused on reverse indices, to allow finding objects that
+match some criteria; for example full-text search.
+
 Currently uses ElasticSearch, and provides only origin search (by URL and metadata)
 
 # Dependencies
