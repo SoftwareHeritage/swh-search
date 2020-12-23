@@ -13,6 +13,7 @@ import yaml
 
 from swh.journal.serializers import value_to_kafka
 from swh.model.hashutil import hash_to_bytes
+from swh.search import get_search
 from swh.search.cli import search_cli_group
 
 CLI_CONFIG = """
@@ -21,6 +22,7 @@ search:
     args:
         hosts:
         - '%(elasticsearch_host)s'
+        index_prefix: test
 """
 
 JOURNAL_OBJECTS_CONFIG_TEMPLATE = """
@@ -389,3 +391,21 @@ journal:
             journal_cfg,
             elasticsearch_host=elasticsearch_host,
         )
+
+
+def test__initialize__with_prefix(elasticsearch_host):
+    """Initializing the index with a prefix should create an <prefix>_origin index"""
+
+    search = get_search(
+        "elasticsearch", hosts=[elasticsearch_host], index_prefix="test"
+    )
+
+    assert search.origin_index == "test_origin"
+
+
+def test__initialize__without_prefix(elasticsearch_host):
+    """Initializing the index without a prefix should create an origin index"""
+
+    search = get_search("elasticsearch", hosts=[elasticsearch_host])
+
+    assert search.origin_index == "origin"

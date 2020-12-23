@@ -123,7 +123,9 @@ def swh_search(elasticsearch_host):
 
     """
     logger.debug("swh_search: elasticsearch_host: %s", elasticsearch_host)
-    search = get_search("elasticsearch", hosts=[elasticsearch_host],)
+    search = get_search(
+        "elasticsearch", hosts=[elasticsearch_host], index_prefix="test"
+    )
     search.deinitialize()  # To reset internal state from previous runs
     search.initialize()  # install required index
     yield search
