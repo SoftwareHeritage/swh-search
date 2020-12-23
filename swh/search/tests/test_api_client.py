@@ -23,7 +23,7 @@ class TestRemoteSearch(CommonSearchTest, ServerTestFixture, unittest.TestCase):
         self.config = {
             "search": {
                 "cls": "elasticsearch",
-                "args": {"hosts": [self._elasticsearch_host],},
+                "args": {"hosts": [self._elasticsearch_host], "index_prefix": "test"},
             }
         }
         self.app = app
@@ -32,7 +32,9 @@ class TestRemoteSearch(CommonSearchTest, ServerTestFixture, unittest.TestCase):
         self.search = get_search("remote", url=self.url(),)
 
     def reset(self):
-        search = get_search("elasticsearch", hosts=[self._elasticsearch_host],)
+        search = get_search(
+            "elasticsearch", hosts=[self._elasticsearch_host], index_prefix="test"
+        )
         search.deinitialize()
         search.initialize()
 

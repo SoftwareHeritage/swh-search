@@ -59,8 +59,14 @@ def token_decode(page_token: str) -> Dict[bytes, Any]:
 
 
 class ElasticSearch:
-    def __init__(self, hosts: List[str]):
+    def __init__(self, hosts: List[str], index_prefix=None):
         self._backend = Elasticsearch(hosts=hosts)
+        self.index_prefix = index_prefix
+
+        self.origin_index = "origin"
+
+        if index_prefix:
+            self.origin_index = index_prefix + "_" + self.origin_index
 
     def check(self):
         return self._backend.ping()
@@ -71,10 +77,10 @@ class ElasticSearch:
 
     def initialize(self) -> None:
         """Declare Elasticsearch indices and mappings"""
-        if not self._backend.indices.exists(index="origin"):
-            self._backend.indices.create(index="origin")
+        if not self._backend.indices.exists(index=self.origin_index):
+            self._backend.indices.create(index=self.origin_index)
         self._backend.indices.put_mapping(
-            index="origin",
+            index=self.origin_index,
             body={
                 "properties": {
                     # sha1 of the URL; used as the document id
@@ -112,7 +118,7 @@ class ElasticSearch:
         )
 
     def flush(self) -> None:
-        self._backend.indices.refresh(index="_all")
+        self._backend.indices.refresh(index=self.origin_index)
 
     def origin_update(self, documents: Iterable[Dict]) -> None:
         documents = map(_sanitize_origin, documents)
@@ -123,18 +129,20 @@ class ElasticSearch:
             {
                 "_op_type": "update",
                 "_id": sha1,
-                "_index": "origin",
+                "_index": self.origin_index,
                 "doc": {**document, "sha1": sha1,},
                 "doc_as_upsert": True,
             }
             for (sha1, document) in documents_with_sha1
         ]
-        bulk(self._backend, actions, index="origin")
+        bulk(self._backend, actions, index=self.origin_index)
 
     def origin_dump(self) -> Iterator[model.Origin]:
-        results = scan(self._backend, index="*")
+        results = scan(self._backend, index=self.origin_index)
         for hit in results:
-            yield self._backend.termvectors(index="origin", id=hit["_id"], fields=["*"])
+            yield self._backend.termvectors(
+                index=self.origin_index, id=hit["_id"], fields=["*"]
+            )
 
     def origin_search(
         self,
@@ -208,7 +216,7 @@ class ElasticSearch:
                 page_token_content[b"sha1"].decode("ascii"),
             ]
 
-        res = self._backend.search(index="origin", body=body, size=limit)
+        res = self._backend.search(index=self.origin_index, body=body, size=limit)
 
         hits = res["hits"]["hits"]
 
