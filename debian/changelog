@@ -1,8 +1,10 @@
-swh-search (0.3.5-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-search (0.4.0-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.4.0     - (tagged by Vincent SELLIER
+    <vincent.sellier@softwareheritage.org> on 2020-12-23 16:37:18 +0100)
+  * Upstream changes:     - Support an index name prefix
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 22 Dec 2020 16:40:28 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 23 Dec 2020 15:41:09 +0000
 
 swh-search (0.3.5-1~swh1) unstable-swh; urgency=medium
 
