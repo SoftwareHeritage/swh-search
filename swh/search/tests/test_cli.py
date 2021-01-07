@@ -147,14 +147,14 @@ def test__journal_client__origin_visit(
 
     swh_search.flush()
 
-    # Both search returns the visit
     actual_page = swh_search.origin_search(url_pattern="foobar", with_visit=False)
     assert actual_page.next_page_token is None
     assert actual_page.results == [origin_foobar]
 
+    # Not considered visited unless the visit is full
     actual_page = swh_search.origin_search(url_pattern="foobar", with_visit=True)
     assert actual_page.next_page_token is None
-    assert actual_page.results == [origin_foobar]
+    assert actual_page.results == []
 
 
 def test__journal_client__origin_visit_status(

@@ -48,7 +48,6 @@ def process_origin_visits(visits, search):
                     if isinstance(visit["origin"], str)
                     else visit["origin"]["url"]
                 ),
-                "has_visits": True,
             }
             for visit in visits
         ]
