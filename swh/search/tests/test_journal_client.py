@@ -34,7 +34,7 @@ def test_journal_client_origin_visit_from_journal():
 
     worker_fn({"origin_visit": [{"origin": {"url": "http://foobar.baz"},}]})
     search_mock.origin_update.assert_called_once_with(
-        [{"url": "http://foobar.baz", "has_visits": True},]
+        [{"url": "http://foobar.baz"},]
     )
 
 
