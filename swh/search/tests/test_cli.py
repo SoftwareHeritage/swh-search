@@ -19,10 +19,9 @@ from swh.search.cli import search_cli_group
 CLI_CONFIG = """
 search:
     cls: elasticsearch
-    args:
-        hosts:
-        - '%(elasticsearch_host)s'
-        index_prefix: test
+    hosts:
+    - '%(elasticsearch_host)s'
+    index_prefix: test
 """
 
 JOURNAL_OBJECTS_CONFIG_TEMPLATE = """
