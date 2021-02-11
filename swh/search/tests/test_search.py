@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2020  The Software Heritage developers
+# Copyright (C) 2019-2021  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -100,6 +100,89 @@ class CommonSearchTest:
         actual_page = self.search.origin_search(url_pattern="foobar", with_visit=True)
         assert actual_page.next_page_token is None
         assert actual_page.results == [origin_foobar_baz]
+
+    def test_origin_no_visit_types_search(self):
+        origins = [{"url": "http://foobar.baz"}]
+
+        self.search.origin_update(origins)
+        self.search.flush()
+
+        actual_page = self.search.origin_search(url_pattern="http", visit_types=["git"])
+        assert actual_page.next_page_token is None
+        results = [r["url"] for r in actual_page.results]
+        expected_results = []
+        assert sorted(results) == sorted(expected_results)
+
+        actual_page = self.search.origin_search(url_pattern="http", visit_types=None)
+        assert actual_page.next_page_token is None
+        results = [r["url"] for r in actual_page.results]
+        expected_results = [origin["url"] for origin in origins]
+        assert sorted(results) == sorted(expected_results)
+
+    def test_origin_visit_types_search(self):
+        origins = [
+            {"url": "http://foobar.baz", "visit_types": ["git"]},
+            {"url": "http://barbaz.qux", "visit_types": ["svn"]},
+            {"url": "http://qux.quux", "visit_types": ["hg"]},
+        ]
+
+        self.search.origin_update(origins)
+        self.search.flush()
+
+        for origin in origins:
+            actual_page = self.search.origin_search(
+                url_pattern="http", visit_types=origin["visit_types"]
+            )
+            assert actual_page.next_page_token is None
+            results = [r["url"] for r in actual_page.results]
+            expected_results = [origin["url"]]
+            assert sorted(results) == sorted(expected_results)
+
+        actual_page = self.search.origin_search(url_pattern="http", visit_types=None)
+        assert actual_page.next_page_token is None
+        results = [r["url"] for r in actual_page.results]
+        expected_results = [origin["url"] for origin in origins]
+        assert sorted(results) == sorted(expected_results)
+
+    def test_origin_visit_types_update_search(self):
+        origin_url = "http://foobar.baz"
+        self.search.origin_update([{"url": origin_url}])
+        self.search.flush()
+
+        def _add_visit_type(visit_type):
+            self.search.origin_update(
+                [{"url": origin_url, "visit_types": [visit_type]}]
+            )
+            self.search.flush()
+
+        def _check_visit_types(visit_types_list):
+            for visit_types in visit_types_list:
+                actual_page = self.search.origin_search(
+                    url_pattern="http", visit_types=visit_types
+                )
+                assert actual_page.next_page_token is None
+                results = [r["url"] for r in actual_page.results]
+                expected_results = [origin_url]
+                assert sorted(results) == sorted(expected_results)
+
+        _add_visit_type("git")
+        _check_visit_types([["git"], ["git", "hg"]])
+
+        _add_visit_type("svn")
+        _check_visit_types([["git"], ["svn"], ["svn", "git"], ["git", "hg", "svn"]])
+
+        _add_visit_type("hg")
+        _check_visit_types(
+            [
+                ["git"],
+                ["svn"],
+                ["hg"],
+                ["svn", "git"],
+                ["hg", "git"],
+                ["hg", "svn"],
+                ["git", "hg", "svn"],
+            ]
+        )
 
     def test_origin_intrinsic_metadata_description(self):
         origin1_nothin = {"url": "http://origin1"}

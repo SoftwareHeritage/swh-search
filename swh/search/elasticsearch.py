@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2020  The Software Heritage developers
+# Copyright (C) 2019-2021  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -21,7 +21,7 @@ def _sanitize_origin(origin):
 
     # Whitelist fields to be saved in Elasticsearch
     res = {"url": origin.pop("url")}
-    for field_name in ("intrinsic_metadata", "has_visits"):
+    for field_name in ("intrinsic_metadata", "has_visits", "visit_types"):
         if field_name in origin:
             res[field_name] = origin.pop(field_name)
 
@@ -103,6 +103,7 @@ class ElasticSearch:
                             }
                         },
                     },
+                    "visit_types": {"type": "keyword"},
                     # used to filter out origins that were never visited
                     "has_visits": {"type": "boolean",},
                     "intrinsic_metadata": {
@@ -129,13 +130,36 @@ class ElasticSearch:
         documents_with_sha1 = (
             (origin_identifier(document), document) for document in documents
         )
+        # painless script that will be executed when updating an origin document
+        update_script = """
+        // backup current visit_types field value
+        List visit_types = ctx._source.getOrDefault("visit_types", []);
+
+        // update origin document with new field values
+        ctx._source.putAll(params);
+
+        // restore previous visit types after visit_types field overriding
+        if (ctx._source.containsKey("visit_types")) {
+            for (int i = 0; i < visit_types.length; ++i) {
+                if (!ctx._source.visit_types.contains(visit_types[i])) {
+                    ctx._source.visit_types.add(visit_types[i]);
+                }
+            }
+        }
+        """
+
         actions = [
             {
                 "_op_type": "update",
                 "_id": sha1,
                 "_index": self.origin_index,
-                "doc": {**document, "sha1": sha1,},
-                "doc_as_upsert": True,
+                "scripted_upsert": True,
+                "upsert": {**document, "sha1": sha1,},
+                "script": {
+                    "source": update_script,
+                    "lang": "painless",
+                    "params": document,
+                },
             }
             for (sha1, document) in documents_with_sha1
         ]
@@ -164,6 +188,7 @@ class ElasticSearch:
         url_pattern: Optional[str] = None,
         metadata_pattern: Optional[str] = None,
         with_visit: bool = False,
+        visit_types: Optional[List[str]] = None,
         page_token: Optional[str] = None,
         limit: int = 50,
     ) -> PagedResult[Dict[str, Any]]:
@@ -217,6 +242,9 @@ class ElasticSearch:
 
         if with_visit:
             query_clauses.append({"term": {"has_visits": True,}})
+
+        if visit_types is not None:
+            query_clauses.append({"terms": {"visit_types": visit_types}})
 
         body = {
             "query": {"bool": {"must": query_clauses,}},

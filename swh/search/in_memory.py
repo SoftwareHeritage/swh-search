@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2020  The Software Heritage developers
+# Copyright (C) 2019-2021  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -59,7 +59,12 @@ class InMemorySearch:
             id_ = origin_identifier(document)
             if "url" in document:
                 document["_url_tokens"] = set(self._url_splitter.split(document["url"]))
+            if "visit_types" in document:
+                document["visit_types"] = set(document["visit_types"])
+            if "visit_types" in self._origins[id_]:
+                document["visit_types"].update(self._origins[id_]["visit_types"])
             self._origins[id_].update(document)
+
             if id_ not in self._origin_ids:
                 self._origin_ids.append(id_)
 
@@ -69,6 +74,7 @@ class InMemorySearch:
         url_pattern: Optional[str] = None,
         metadata_pattern: Optional[str] = None,
         with_visit: bool = False,
+        visit_types: Optional[List[str]] = None,
         page_token: Optional[str] = None,
         limit: int = 50,
     ) -> PagedResult[Dict[str, Any]]:
@@ -119,6 +125,13 @@ class InMemorySearch:
 
         if with_visit:
             hits = filter(lambda o: o.get("has_visits"), hits)
+
+        if visit_types is not None:
+            visit_types_set = set(visit_types)
+            hits = filter(
+                lambda o: visit_types_set.intersection(o.get("visit_types", set())),
+                hits,
+            )
 
         start_at_index = int(page_token) if page_token else 0
 
