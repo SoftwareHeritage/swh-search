@@ -362,6 +362,32 @@ class CommonSearchTest:
         assert actual_page.next_page_token is None
         assert actual_page.results == [origin2]
 
+    def test_origin_intrinsic_metadata_update(self):
+        origin = {"url": "http://origin1"}
+        origin_data = {
+            **origin,
+            "intrinsic_metadata": {
+                "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                "author": "John Doe",
+            },
+        }
+
+        self.search.origin_update([origin_data])
+        self.search.flush()
+
+        actual_page = self.search.origin_search(metadata_pattern="John")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin]
+
+        origin_data["intrinsic_metadata"]["author"] = "Jane Doe"
+
+        self.search.origin_update([origin_data])
+        self.search.flush()
+
+        actual_page = self.search.origin_search(metadata_pattern="Jane")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin]
+
     # TODO: add more tests with more codemeta terms
 
     # TODO: add more tests with edge cases
