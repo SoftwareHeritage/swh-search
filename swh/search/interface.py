@@ -3,13 +3,28 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
-from typing import Any, Dict, Iterable, List, Optional, TypeVar
+from typing import Iterable, List, Optional, TypeVar
+
+from typing_extensions import TypedDict
 
 from swh.core.api import remote_api_endpoint
 from swh.core.api.classes import PagedResult as CorePagedResult
 
 TResult = TypeVar("TResult")
 PagedResult = CorePagedResult[TResult, str]
+
+
+class MinimalOriginDict(TypedDict):
+    """Mandatory keys of an :cls:`OriginDict`"""
+
+    url: str
+
+
+class OriginDict(MinimalOriginDict, total=False):
+    """Argument passed to :meth:`SearchInterface.origin_update`."""
+
+    visit_types: List[str]
+    has_visits: bool
 
 
 class SearchInterface:
@@ -29,7 +44,7 @@ class SearchInterface:
         ...
 
     @remote_api_endpoint("origin/update")
-    def origin_update(self, documents: Iterable[Dict]) -> None:
+    def origin_update(self, documents: Iterable[OriginDict]) -> None:
         """Persist documents to the search backend.
 
         """
@@ -45,7 +60,7 @@ class SearchInterface:
         visit_types: Optional[List[str]] = None,
         page_token: Optional[str] = None,
         limit: int = 50,
-    ) -> PagedResult[Dict[str, Any]]:
+    ) -> PagedResult[MinimalOriginDict]:
         """Searches for origins matching the `url_pattern`.
 
         Args:

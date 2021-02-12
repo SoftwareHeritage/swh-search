@@ -12,7 +12,7 @@ import msgpack
 from swh.indexer import codemeta
 from swh.model import model
 from swh.model.identifiers import origin_identifier
-from swh.search.interface import PagedResult
+from swh.search.interface import MinimalOriginDict, OriginDict, PagedResult
 from swh.search.metrics import send_metric, timed
 
 
@@ -125,7 +125,7 @@ class ElasticSearch:
         self._backend.indices.refresh(index=self.origin_index)
 
     @timed
-    def origin_update(self, documents: Iterable[Dict]) -> None:
+    def origin_update(self, documents: Iterable[OriginDict]) -> None:
         documents = map(_sanitize_origin, documents)
         documents_with_sha1 = (
             (origin_identifier(document), document) for document in documents
@@ -191,7 +191,7 @@ class ElasticSearch:
         visit_types: Optional[List[str]] = None,
         page_token: Optional[str] = None,
         limit: int = 50,
-    ) -> PagedResult[Dict[str, Any]]:
+    ) -> PagedResult[MinimalOriginDict]:
         query_clauses: List[Dict[str, Any]] = []
 
         if url_pattern:
