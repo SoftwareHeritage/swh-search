@@ -11,6 +11,26 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional
 from swh.model.identifiers import origin_identifier
 from swh.search.interface import PagedResult
 
+_words_regexp = re.compile(r"\w+")
+
+
+def _dict_words_set(d):
+    """Recursively extract set of words from dict content."""
+    values = set()
+
+    def extract(obj, words):
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                extract(v, words)
+        elif isinstance(obj, list):
+            for item in obj:
+                extract(item, words)
+        else:
+            words.update(_words_regexp.findall(str(obj).lower()))
+        return words
+
+    return extract(d, values)
+
 
 class InMemorySearch:
     def __init__(self):
@@ -76,9 +96,19 @@ class InMemorySearch:
             hits = filter(predicate, hits)
 
         if metadata_pattern:
-            raise NotImplementedError(
-                "Metadata search is not implemented in the in-memory backend."
+            metadata_pattern_words = set(
+                _words_regexp.findall(metadata_pattern.lower())
             )
+
+            def predicate(match):
+                if "intrinsic_metadata" not in match:
+                    return False
+
+                return metadata_pattern_words.issubset(
+                    _dict_words_set(match["intrinsic_metadata"])
+                )
+
+            hits = filter(predicate, hits)
 
         if not url_pattern and not metadata_pattern:
             raise ValueError(
