@@ -289,7 +289,9 @@ class CommonSearchTest:
 
         actual_page = self.search.origin_search(metadata_pattern="bar")
         assert actual_page.next_page_token is None
-        assert actual_page.results == [origin2_barbaz, origin1_foobar]
+        results = [r["url"] for r in actual_page.results]
+        expected_results = [o["url"] for o in [origin2_barbaz, origin1_foobar]]
+        assert sorted(results) == sorted(expected_results)
 
         actual_page = self.search.origin_search(metadata_pattern="baz")
         assert actual_page.next_page_token is None
