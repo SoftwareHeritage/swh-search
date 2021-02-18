@@ -61,8 +61,8 @@ class InMemorySearch:
                 document["_url_tokens"] = set(self._url_splitter.split(document["url"]))
             if "visit_types" in document:
                 document["visit_types"] = set(document["visit_types"])
-            if "visit_types" in self._origins[id_]:
-                document["visit_types"].update(self._origins[id_]["visit_types"])
+                if "visit_types" in self._origins[id_]:
+                    document["visit_types"].update(self._origins[id_]["visit_types"])
             self._origins[id_].update(document)
 
             if id_ not in self._origin_ids:

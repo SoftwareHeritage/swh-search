@@ -184,6 +184,24 @@ class CommonSearchTest:
             ]
         )
 
+    def test_origin_update_with_no_visit_types(self):
+        """
+        Update an origin with visit types first then with no visit types,
+        check origin can still be searched with visit types afterwards.
+        """
+        origin_url = "http://foobar.baz"
+        self.search.origin_update([{"url": origin_url, "visit_types": ["git"]}])
+        self.search.flush()
+
+        self.search.origin_update([{"url": origin_url}])
+        self.search.flush()
+
+        actual_page = self.search.origin_search(url_pattern="http", visit_types=["git"])
+        assert actual_page.next_page_token is None
+        results = [r["url"] for r in actual_page.results]
+        expected_results = [origin_url]
+        assert results == expected_results
+
     def test_origin_intrinsic_metadata_description(self):
         origin1_nothin = {"url": "http://origin1"}
         origin2_foobar = {"url": "http://origin2"}
