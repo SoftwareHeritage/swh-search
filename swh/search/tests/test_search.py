@@ -317,6 +317,51 @@ class CommonSearchTest:
         assert actual_page.next_page_token is None
         assert actual_page.results == [origin1_foobar]
 
+    def test_origin_intrinsic_metadata_date(self):
+        """Checks inserting a date-like in a field does not update the mapping to
+        require every document uses a date in that field; or that search queries
+        use a date either.
+        Likewise for numeric fields."""
+        origin1 = {"url": "http://origin1"}
+        origin2 = {"url": "http://origin2"}
+
+        self.search.origin_update(
+            [
+                {
+                    **origin1,
+                    "intrinsic_metadata": {
+                        "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                        "dateCreated": "2021-02-18T10:16:52",
+                        "version": "1.0",
+                    },
+                }
+            ]
+        )
+        self.search.flush()
+
+        self.search.origin_update(
+            [
+                {
+                    **origin2,
+                    "intrinsic_metadata": {
+                        "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                        "dateCreated": "a long time ago",
+                        "address": "in a galaxy far, far away",
+                        "version": "a new hope",
+                    },
+                },
+            ]
+        )
+        self.search.flush()
+
+        actual_page = self.search.origin_search(metadata_pattern="2021")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin1]
+
+        actual_page = self.search.origin_search(metadata_pattern="long time ago")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin2]
+
     # TODO: add more tests with more codemeta terms
 
     # TODO: add more tests with edge cases

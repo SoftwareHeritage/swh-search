@@ -83,6 +83,7 @@ class ElasticSearch:
         self._backend.indices.put_mapping(
             index=self.origin_index,
             body={
+                "date_detection": False,
                 "properties": {
                     # sha1 of the URL; used as the document id
                     "sha1": {"type": "keyword", "doc_values": True,},
@@ -114,7 +115,7 @@ class ElasticSearch:
                             }
                         },
                     },
-                }
+                },
             },
         )
 
