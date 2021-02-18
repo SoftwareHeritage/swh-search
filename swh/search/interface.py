@@ -1,9 +1,9 @@
-# Copyright (C) 2020  The Software Heritage developers
+# Copyright (C) 2020-2021  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
-from typing import Any, Dict, Iterable, Optional, TypeVar
+from typing import Any, Dict, Iterable, List, Optional, TypeVar
 
 from swh.core.api import remote_api_endpoint
 from swh.core.api.classes import PagedResult as CorePagedResult
@@ -42,6 +42,7 @@ class SearchInterface:
         url_pattern: Optional[str] = None,
         metadata_pattern: Optional[str] = None,
         with_visit: bool = False,
+        visit_types: Optional[List[str]] = None,
         page_token: Optional[str] = None,
         limit: int = 50,
     ) -> PagedResult[Dict[str, Any]]:
@@ -51,6 +52,8 @@ class SearchInterface:
             url_pattern: Part of the URL to search for
             with_visit: Whether origins with no visit are to be
               filtered out
+            visit_types: Only origins having any of the provided visit types
+                (e.g. git, svn, pypi) will be returned
             page_token: Opaque value used for pagination
             limit: number of results to return
 
