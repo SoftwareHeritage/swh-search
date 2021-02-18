@@ -6,14 +6,14 @@
 import base64
 from typing import Any, Dict, Iterable, Iterator, List, Optional
 
-from elasticsearch import Elasticsearch
-from elasticsearch.helpers import bulk, scan
+from elasticsearch import Elasticsearch, helpers
 import msgpack
 
 from swh.indexer import codemeta
 from swh.model import model
 from swh.model.identifiers import origin_identifier
 from swh.search.interface import PagedResult
+from swh.search.metrics import send_metric, timed
 
 
 def _sanitize_origin(origin):
@@ -68,6 +68,7 @@ class ElasticSearch:
         if index_prefix:
             self.origin_index = index_prefix + "_" + self.origin_index
 
+    @timed
     def check(self):
         return self._backend.ping()
 
@@ -117,9 +118,11 @@ class ElasticSearch:
             },
         )
 
+    @timed
     def flush(self) -> None:
         self._backend.indices.refresh(index=self.origin_index)
 
+    @timed
     def origin_update(self, documents: Iterable[Dict]) -> None:
         documents = map(_sanitize_origin, documents)
         documents_with_sha1 = (
@@ -135,15 +138,25 @@ class ElasticSearch:
             }
             for (sha1, document) in documents_with_sha1
         ]
-        bulk(self._backend, actions, index=self.origin_index)
+
+        indexed_count, errors = helpers.bulk(
+            self._backend, actions, index=self.origin_index
+        )
+        assert isinstance(errors, List)  # Make mypy happy
+
+        send_metric("document:index", count=indexed_count, method_name="origin_update")
+        send_metric(
+            "document:index_error", count=len(errors), method_name="origin_update"
+        )
 
     def origin_dump(self) -> Iterator[model.Origin]:
-        results = scan(self._backend, index=self.origin_index)
+        results = helpers.scan(self._backend, index=self.origin_index)
         for hit in results:
             yield self._backend.termvectors(
                 index=self.origin_index, id=hit["_id"], fields=["*"]
             )
 
+    @timed
     def origin_search(
         self,
         *,
