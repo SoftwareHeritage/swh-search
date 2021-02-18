@@ -19,10 +19,9 @@ from swh.search.cli import search_cli_group
 CLI_CONFIG = """
 search:
     cls: elasticsearch
-    args:
-        hosts:
-        - '%(elasticsearch_host)s'
-        index_prefix: test
+    hosts:
+    - '%(elasticsearch_host)s'
+    index_prefix: test
 """
 
 JOURNAL_OBJECTS_CONFIG_TEMPLATE = """
@@ -120,7 +119,7 @@ def test__journal_client__origin_visit(
         }
     )
     topic = f"{kafka_prefix}.origin_visit"
-    value = value_to_kafka({"origin": origin_foobar["url"]})
+    value = value_to_kafka({"origin": origin_foobar["url"], "type": "git"})
     producer.produce(topic=topic, key=b"bogus-origin-visit", value=value)
 
     journal_objects_config = JOURNAL_OBJECTS_CONFIG_TEMPLATE.format(

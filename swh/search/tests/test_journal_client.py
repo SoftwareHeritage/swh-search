@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2020  The Software Heritage developers
+# Copyright (C) 2019-2021  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -32,9 +32,9 @@ def test_journal_client_origin_visit_from_journal():
 
     worker_fn = functools.partial(process_journal_objects, search=search_mock,)
 
-    worker_fn({"origin_visit": [{"origin": {"url": "http://foobar.baz"},}]})
+    worker_fn({"origin_visit": [{"origin": "http://foobar.baz", "type": "git"},]})
     search_mock.origin_update.assert_called_once_with(
-        [{"url": "http://foobar.baz"},]
+        [{"url": "http://foobar.baz", "visit_types": ["git"]},]
     )
 
 
