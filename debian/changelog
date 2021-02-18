@@ -1,8 +1,10 @@
-swh-search (0.6.0-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-search (0.6.1-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.6.1     - (tagged by Antoine Lambert
+    <antoine.lambert@inria.fr> on 2021-02-18 18:55:56 +0100)
+  * Upstream changes:     - version 0.6.1
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 18 Feb 2021 14:33:07 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 18 Feb 2021 18:00:51 +0000
 
 swh-search (0.6.0-1~swh1) unstable-swh; urgency=medium
 
