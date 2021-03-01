@@ -14,18 +14,45 @@ from swh.core.config import load_from_envvar
 from swh.search.api.server import load_and_check_config, make_app_from_configfile
 
 
+def _write_config_file(tmp_path, monkeypatch, content):
+    conf_path = os.path.join(str(tmp_path), "search.yml")
+    with open(conf_path, "w") as f:
+        f.write(yaml.dump(content))
+    monkeypatch.setenv("SWH_CONFIG_FILENAME", conf_path)
+    return conf_path
+
+
 @pytest.fixture
-def swh_search_server_config() -> Dict[str, Any]:
+def swh_search_server_config_without_indexes() -> Dict[str, Any]:
     return {"search": {"cls": "elasticsearch", "hosts": ["es1"],}}
 
 
 @pytest.fixture
-def swh_search_config(monkeypatch, swh_search_server_config, tmp_path):
-    conf_path = os.path.join(str(tmp_path), "search.yml")
-    with open(conf_path, "w") as f:
-        f.write(yaml.dump(swh_search_server_config))
-    monkeypatch.setenv("SWH_CONFIG_FILENAME", conf_path)
-    return conf_path
+def swh_search_server_config_with_indexes(
+    swh_search_server_config_without_indexes,
+) -> Dict[str, Any]:
+    return {
+        **swh_search_server_config_without_indexes,
+        **{"indexes": {"origin": {"index": "test"}}},
+    }
+
+
+@pytest.fixture
+def swh_search_config_without_indexes(
+    monkeypatch, swh_search_server_config_without_indexes, tmp_path
+):
+    return _write_config_file(
+        tmp_path, monkeypatch, swh_search_server_config_without_indexes
+    )
+
+
+@pytest.fixture
+def swh_search_config_with_indexes(
+    monkeypatch, swh_search_server_config_with_indexes, tmp_path
+):
+    return _write_config_file(
+        tmp_path, monkeypatch, swh_search_server_config_with_indexes
+    )
 
 
 def prepare_config_file(tmpdir, config_dict: Dict, name: str = "config.yml") -> str:
@@ -69,14 +96,30 @@ def test_load_and_check_config_wrong_configuration(tmpdir):
         load_and_check_config(config_path)
 
 
-def test_load_and_check_config_local_config_fine(swh_search_server_config, tmpdir):
+def test_load_and_check_config_local_config_fine(
+    swh_search_server_config_with_indexes, tmpdir
+):
     """'local' complete configuration is fine"""
-    config_path = prepare_config_file(tmpdir, swh_search_server_config)
+    config_path = prepare_config_file(tmpdir, swh_search_server_config_with_indexes)
     cfg = load_and_check_config(config_path)
-    assert cfg == swh_search_server_config
+    assert cfg == swh_search_server_config_with_indexes
 
 
-def test_server_make_app_from_config_file(swh_search_config):
+def test_server_make_app_from_config_file_without_indexes(
+    swh_search_config_without_indexes,
+):
+    app = make_app_from_configfile()
+    expected_cfg = load_from_envvar()
+
+    assert app is not None
+    assert isinstance(app, RPCServerApp)
+    assert app.config["search"] == expected_cfg["search"]
+
+    app2 = make_app_from_configfile()
+    assert app is app2
+
+
+def test_server_make_app_from_config_file_with_indexes(swh_search_config_with_indexes,):
     app = make_app_from_configfile()
     expected_cfg = load_from_envvar()
 

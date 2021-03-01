@@ -15,6 +15,16 @@ from swh.model.identifiers import origin_identifier
 from swh.search.interface import MinimalOriginDict, OriginDict, PagedResult
 from swh.search.metrics import send_metric, timed
 
+INDEX_NAME_PARAM = "index"
+READ_ALIAS_PARAM = "read_alias"
+WRITE_ALIAS_PARAM = "write_alias"
+
+ORIGIN_DEFAULT_CONFIG = {
+    INDEX_NAME_PARAM: "origin",
+    READ_ALIAS_PARAM: "origin-read",
+    WRITE_ALIAS_PARAM: "origin-write",
+}
+
 
 def _sanitize_origin(origin):
     origin = origin.copy()
@@ -59,14 +69,21 @@ def token_decode(page_token: str) -> Dict[bytes, Any]:
 
 
 class ElasticSearch:
-    def __init__(self, hosts: List[str], index_prefix=None):
+    def __init__(self, hosts: List[str], indexes: Dict[str, Dict[str, str]]):
         self._backend = Elasticsearch(hosts=hosts)
-        self.index_prefix = index_prefix
 
-        self.origin_index = "origin"
+        # Merge current configuration with default values
+        origin_config = indexes.get("origin", {})
+        self.origin_config = {**ORIGIN_DEFAULT_CONFIG, **origin_config}
 
-        if index_prefix:
-            self.origin_index = index_prefix + "_" + self.origin_index
+    def _get_origin_index(self) -> str:
+        return self.origin_config[INDEX_NAME_PARAM]
+
+    def _get_origin_read_alias(self) -> str:
+        return self.origin_config[READ_ALIAS_PARAM]
+
+    def _get_origin_write_alias(self) -> str:
+        return self.origin_config[WRITE_ALIAS_PARAM]
 
     @timed
     def check(self):
@@ -77,11 +94,23 @@ class ElasticSearch:
         self._backend.indices.delete(index="*")
 
     def initialize(self) -> None:
-        """Declare Elasticsearch indices and mappings"""
-        if not self._backend.indices.exists(index=self.origin_index):
-            self._backend.indices.create(index=self.origin_index)
+        """Declare Elasticsearch indices, aliases and mappings"""
+
+        if not self._backend.indices.exists(index=self._get_origin_index()):
+            self._backend.indices.create(index=self._get_origin_index())
+
+        if not self._backend.indices.exists_alias(self._get_origin_read_alias()):
+            self._backend.indices.put_alias(
+                index=self._get_origin_index(), name=self._get_origin_read_alias()
+            )
+
+        if not self._backend.indices.exists_alias(self._get_origin_write_alias()):
+            self._backend.indices.put_alias(
+                index=self._get_origin_index(), name=self._get_origin_write_alias()
+            )
+
         self._backend.indices.put_mapping(
-            index=self.origin_index,
+            index=self._get_origin_index(),
             body={
                 "date_detection": False,
                 "properties": {
@@ -122,10 +151,11 @@ class ElasticSearch:
 
     @timed
     def flush(self) -> None:
-        self._backend.indices.refresh(index=self.origin_index)
+        self._backend.indices.refresh(index=self._get_origin_write_alias())
 
     @timed
     def origin_update(self, documents: Iterable[OriginDict]) -> None:
+        write_index = self._get_origin_write_alias()
         documents = map(_sanitize_origin, documents)
         documents_with_sha1 = (
             (origin_identifier(document), document) for document in documents
@@ -152,7 +182,7 @@ class ElasticSearch:
             {
                 "_op_type": "update",
                 "_id": sha1,
-                "_index": self.origin_index,
+                "_index": write_index,
                 "scripted_upsert": True,
                 "upsert": {**document, "sha1": sha1,},
                 "script": {
@@ -164,9 +194,7 @@ class ElasticSearch:
             for (sha1, document) in documents_with_sha1
         ]
 
-        indexed_count, errors = helpers.bulk(
-            self._backend, actions, index=self.origin_index
-        )
+        indexed_count, errors = helpers.bulk(self._backend, actions, index=write_index)
         assert isinstance(errors, List)  # Make mypy happy
 
         send_metric("document:index", count=indexed_count, method_name="origin_update")
@@ -175,10 +203,10 @@ class ElasticSearch:
         )
 
     def origin_dump(self) -> Iterator[model.Origin]:
-        results = helpers.scan(self._backend, index=self.origin_index)
+        results = helpers.scan(self._backend, index=self._get_origin_read_alias())
         for hit in results:
             yield self._backend.termvectors(
-                index=self.origin_index, id=hit["_id"], fields=["*"]
+                index=self._get_origin_read_alias(), id=hit["_id"], fields=["*"]
             )
 
     @timed
@@ -258,7 +286,9 @@ class ElasticSearch:
                 page_token_content[b"sha1"].decode("ascii"),
             ]
 
-        res = self._backend.search(index=self.origin_index, body=body, size=limit)
+        res = self._backend.search(
+            index=self._get_origin_read_alias(), body=body, size=limit
+        )
 
         hits = res["hits"]["hits"]
 
