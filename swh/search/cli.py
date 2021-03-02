@@ -125,6 +125,6 @@ def rpc_server(config_path, host, port, index_prefix, debug):
     """Starts a Software Heritage Indexer RPC HTTP server."""
     from .api.server import app, load_and_check_config
 
-    api_cfg = load_and_check_config(config_path, type="any")
+    api_cfg = load_and_check_config(config_path)
     app.config.update(api_cfg)
     app.run(host, port=int(port), index_prefix=index_prefix, debug=bool(debug))

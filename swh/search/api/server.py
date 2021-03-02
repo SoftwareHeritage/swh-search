@@ -1,10 +1,11 @@
-# Copyright (C) 2019-2020  The Software Heritage developers
+# Copyright (C) 2019-2021  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
 import logging
 import os
+from typing import Any, Dict
 
 from swh.core import config
 from swh.core.api import RPCServerApp
@@ -43,13 +44,13 @@ def index():
 api_cfg = None
 
 
-def load_and_check_config(config_file, type="elasticsearch"):
+def load_and_check_config(config_file: str) -> Dict[str, Any]:
     """Check the minimal configuration is set to run the api or raise an
        error explanation.
 
     Args:
-        config_file (str): Path to the configuration file to load
-        type (str): configuration type. For 'local' type, more
+        config_file: Path to the configuration file to load
+        type: configuration type. For 'local' type, more
                     checks are done.
 
     Raises:
