@@ -11,7 +11,13 @@ import yaml
 
 from swh.core.api import RPCServerApp
 from swh.core.config import load_from_envvar
+from swh.search.api import server
 from swh.search.api.server import load_and_check_config, make_app_from_configfile
+
+
+def teardown_function():
+    # Ensure there is no configuration loaded from a previous test
+    server.api_cfg = None
 
 
 def _write_config_file(tmp_path, monkeypatch, content):
@@ -32,8 +38,10 @@ def swh_search_server_config_with_indexes(
     swh_search_server_config_without_indexes,
 ) -> Dict[str, Any]:
     return {
-        **swh_search_server_config_without_indexes,
-        **{"indexes": {"origin": {"index": "test"}}},
+        "search": {
+            **{"indexes": {"origin": {"index": "test"}}},
+            **swh_search_server_config_without_indexes["search"],
+        }
     }
 
 
@@ -122,10 +130,27 @@ def test_server_make_app_from_config_file_without_indexes(
 def test_server_make_app_from_config_file_with_indexes(swh_search_config_with_indexes,):
     app = make_app_from_configfile()
     expected_cfg = load_from_envvar()
-
     assert app is not None
     assert isinstance(app, RPCServerApp)
     assert app.config["search"] == expected_cfg["search"]
 
     app2 = make_app_from_configfile()
     assert app is app2
+
+
+def test_server_first_call_initialize_elasticsearch(
+    swh_search_config_with_indexes, mocker
+):
+    """Test the initialize method is called during the first and first only
+       request to the server"""
+    mock = mocker.patch("swh.search.elasticsearch.ElasticSearch.initialize")
+
+    app = make_app_from_configfile()
+    app.config["TESTING"] = True
+    tc = app.test_client()
+
+    tc.get("/")
+    assert mock.call_count == 1
+
+    tc.get("/")
+    assert mock.call_count == 1

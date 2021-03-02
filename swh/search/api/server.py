@@ -16,6 +16,8 @@ from swh.search.metrics import timed
 from .. import get_search
 from ..interface import SearchInterface
 
+logger = logging.getLogger(__name__)
+
 
 def _get_search():
     global search
@@ -39,6 +41,13 @@ def my_error_handler(exception):
 @timed
 def index():
     return "SWH Search API server"
+
+
+@app.before_first_request
+def initialized_index():
+    search = _get_search()
+    logger.info("Initializing indexes with configuration: ", search.origin_config)
+    search.initialize()
 
 
 api_cfg = None
