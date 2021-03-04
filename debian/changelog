@@ -1,3 +1,12 @@
+swh-search (0.7.1-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.7.1     - (tagged by Vincent SELLIER
+    <vincent.sellier@softwareheritage.org> on 2021-03-04 15:59:28 +0100)
+  * Upstream changes:     - v0.7.1     - Changelog:     - * Allow to
+    instantiate the service with default indexes configuration
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 04 Mar 2021 15:06:34 +0000
+
 swh-search (0.7.0-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.7.0     - (tagged by Vincent SELLIER
