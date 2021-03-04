@@ -21,7 +21,11 @@ search:
     cls: elasticsearch
     hosts:
     - '%(elasticsearch_host)s'
-    index_prefix: test
+    indexes:
+        origin:
+            index: test
+            read_alias: test-read
+            write_alias: test-write
 """
 
 JOURNAL_OBJECTS_CONFIG_TEMPLATE = """
@@ -392,19 +396,45 @@ journal:
         )
 
 
-def test__initialize__with_prefix(elasticsearch_host):
-    """Initializing the index with a prefix should create an <prefix>_origin index"""
+def test__initialize__with_index_name(elasticsearch_host):
+    """Initializing the index with an index name should create the right index"""
 
     search = get_search(
-        "elasticsearch", hosts=[elasticsearch_host], index_prefix="test"
+        "elasticsearch",
+        hosts=[elasticsearch_host],
+        indexes={"origin": {"index": "test"}},
     )
 
-    assert search.origin_index == "test_origin"
+    assert search._get_origin_index() == "test"
+    assert search._get_origin_read_alias() == "origin-read"
+    assert search._get_origin_write_alias() == "origin-write"
 
 
-def test__initialize__without_prefix(elasticsearch_host):
-    """Initializing the index without a prefix should create an origin index"""
+def test__initialize__with_read_alias(elasticsearch_host):
+    """Initializing the index with a search alias name should create
+       the right search alias"""
 
-    search = get_search("elasticsearch", hosts=[elasticsearch_host])
+    search = get_search(
+        "elasticsearch",
+        hosts=[elasticsearch_host],
+        indexes={"origin": {"read_alias": "test"}},
+    )
 
-    assert search.origin_index == "origin"
+    assert search._get_origin_index() == "origin"
+    assert search._get_origin_read_alias() == "test"
+    assert search._get_origin_write_alias() == "origin-write"
+
+
+def test__initialize__with_write_alias(elasticsearch_host):
+    """Initializing the index with an indexing alias name should create
+       the right indexing alias"""
+
+    search = get_search(
+        "elasticsearch",
+        hosts=[elasticsearch_host],
+        indexes={"origin": {"write_alias": "test"}},
+    )
+
+    assert search._get_origin_index() == "origin"
+    assert search._get_origin_read_alias() == "origin-read"
+    assert search._get_origin_write_alias() == "test"
