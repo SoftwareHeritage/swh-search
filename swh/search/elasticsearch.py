@@ -69,7 +69,7 @@ def token_decode(page_token: str) -> Dict[bytes, Any]:
 
 
 class ElasticSearch:
-    def __init__(self, hosts: List[str], indexes: Dict[str, Dict[str, str]]):
+    def __init__(self, hosts: List[str], indexes: Dict[str, Dict[str, str]] = {}):
         self._backend = Elasticsearch(hosts=hosts)
 
         # Merge current configuration with default values
