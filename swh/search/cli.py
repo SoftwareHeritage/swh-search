@@ -107,24 +107,3 @@ def journal_client_objects(ctx, stop_after_objects, object_type, prefix):
         print("Done.")
     finally:
         client.close()
-
-
-@search_cli_group.command("rpc-serve")
-@click.argument("config-path", required=True)
-@click.option("--host", default="0.0.0.0", help="Host to run the server")
-@click.option("--port", default=5010, type=click.INT, help="Binding port of the server")
-@click.option(
-    "--index-prefix", required=False, help="The prefix to add before the index names"
-)
-@click.option(
-    "--debug/--nodebug",
-    default=True,
-    help="Indicates if the server should run in debug mode",
-)
-def rpc_server(config_path, host, port, index_prefix, debug):
-    """Starts a Software Heritage Indexer RPC HTTP server."""
-    from .api.server import app, load_and_check_config
-
-    api_cfg = load_and_check_config(config_path, type="any")
-    app.config.update(api_cfg)
-    app.run(host, port=int(port), index_prefix=index_prefix, debug=bool(debug))

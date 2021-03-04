@@ -3,3 +3,4 @@
 # dependency lines, see https://pip.readthedocs.org/en/1.1/requirements.html
 click
 elasticsearch>=7.0.0,<8.0.0
+typing-extensions

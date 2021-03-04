@@ -69,3 +69,19 @@ class TestElasticsearchSearch(CommonSearchTest, BaseElasticsearchTest):
                 "operation": "index_error",
             },
         )
+
+    def test_write_alias_usage(self):
+        mock = self.mocker.patch("elasticsearch.helpers.bulk")
+        mock.return_value = 2, ["result"]
+
+        self.search.origin_update([{"url": "http://foobar.baz"}])
+
+        assert mock.call_args[1]["index"] == "test-write"
+
+    def test_read_alias_usage(self):
+        mock = self.mocker.patch("elasticsearch.Elasticsearch.search")
+        mock.return_value = {"hits": {"hits": []}}
+
+        self.search.origin_search(url_pattern="foobar.baz")
+
+        assert mock.call_args[1]["index"] == "test-read"

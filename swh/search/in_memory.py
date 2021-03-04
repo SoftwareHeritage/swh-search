@@ -9,7 +9,7 @@ import re
 from typing import Any, Dict, Iterable, Iterator, List, Optional
 
 from swh.model.identifiers import origin_identifier
-from swh.search.interface import PagedResult
+from swh.search.interface import MinimalOriginDict, OriginDict, PagedResult
 
 _words_regexp = re.compile(r"\w+")
 
@@ -53,14 +53,16 @@ class InMemorySearch:
 
     _url_splitter = re.compile(r"\W")
 
-    def origin_update(self, documents: Iterable[Dict]) -> None:
-        for document in documents:
-            document = document.copy()
+    def origin_update(self, documents: Iterable[OriginDict]) -> None:
+        for source_document in documents:
+            document: Dict[str, Any] = dict(source_document)
             id_ = origin_identifier(document)
             if "url" in document:
-                document["_url_tokens"] = set(self._url_splitter.split(document["url"]))
+                document["_url_tokens"] = set(
+                    self._url_splitter.split(source_document["url"])
+                )
             if "visit_types" in document:
-                document["visit_types"] = set(document["visit_types"])
+                document["visit_types"] = set(source_document["visit_types"])
                 if "visit_types" in self._origins[id_]:
                     document["visit_types"].update(self._origins[id_]["visit_types"])
             self._origins[id_].update(document)
@@ -77,7 +79,7 @@ class InMemorySearch:
         visit_types: Optional[List[str]] = None,
         page_token: Optional[str] = None,
         limit: int = 50,
-    ) -> PagedResult[Dict[str, Any]]:
+    ) -> PagedResult[MinimalOriginDict]:
         hits: Iterator[Dict[str, Any]] = (
             self._origins[id_] for id_ in self._origin_ids
         )

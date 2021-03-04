@@ -15,7 +15,11 @@ from swh.search.interface import SearchInterface
 
 SEARCH_IMPLEMENTATIONS_KWARGS = [
     ("remote", RemoteSearch, {"url": "localhost"}),
-    ("elasticsearch", ElasticSearch, {"hosts": ["localhost"], "index_prefix": "test"}),
+    (
+        "elasticsearch",
+        ElasticSearch,
+        {"hosts": ["localhost"], "indexes": {"origin": {"index": "test"}}},
+    ),
 ]
 
 SEARCH_IMPLEMENTATIONS = SEARCH_IMPLEMENTATIONS_KWARGS + [

@@ -1,8 +1,16 @@
-swh-search (0.6.1-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-search (0.7.0-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.7.0     - (tagged by Vincent SELLIER
+    <vincent.sellier@softwareheritage.org> on 2021-03-04 12:09:12 +0100)
+  * Upstream changes:     - v0.7.0     - Changelog:     - * Ensure the
+    elasticsearch indexes are initialized before the first request     -
+    * Use elasticsearch aliases to simplify maintenance operations     -
+    * search.cli: Drop unused and untested rpc-serve cli entrypoint     -
+    * api.wsgi: Drop unused wsgi module     - * Add missing server tests
+    - * Add typing to origin_update's argument and origin_search's
+    return
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 18 Feb 2021 18:02:50 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 04 Mar 2021 11:19:29 +0000
 
 swh-search (0.6.1-1~swh1) unstable-swh; urgency=medium
 
