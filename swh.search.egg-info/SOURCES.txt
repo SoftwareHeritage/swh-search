@@ -45,7 +45,6 @@ swh/search/py.typed
 swh/search/api/__init__.py
 swh/search/api/client.py
 swh/search/api/server.py
-swh/search/api/wsgi.py
 swh/search/tests/__init__.py
 swh/search/tests/conftest.py
 swh/search/tests/test_api_client.py
@@ -55,3 +54,4 @@ swh/search/tests/test_in_memory.py
 swh/search/tests/test_init.py
 swh/search/tests/test_journal_client.py
 swh/search/tests/test_search.py
+swh/search/tests/test_server.py
