@@ -1,6 +1,6 @@
 .. _swh-search:
 
-Software Heritage - search service
+Software Heritage - Search service
 ==================================
 
 The SWH search service, or swh-search, stores a partial copy of

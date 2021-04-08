@@ -81,7 +81,9 @@ class InMemorySearch:
         limit: int = 50,
     ) -> PagedResult[MinimalOriginDict]:
         hits: Iterator[Dict[str, Any]] = (
-            self._origins[id_] for id_ in self._origin_ids
+            self._origins[id_]
+            for id_ in self._origin_ids
+            if not self._origins[id_].get("blocklisted")
         )
 
         if url_pattern:
