@@ -1,3 +1,12 @@
+swh-search (0.8.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.8.0     - (tagged by Nicolas Dandrimont
+    <nicolas@dandrimont.eu> on 2021-04-08 17:37:41 +0200)
+  * Upstream changes:     - Release swh.search 0.8.0     - Implement a
+    blocklist for origin results     - Fix docs typesetting
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 08 Apr 2021 15:42:22 +0000
+
 swh-search (0.7.1-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.7.1     - (tagged by Vincent SELLIER
