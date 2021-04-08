@@ -31,7 +31,12 @@ def _sanitize_origin(origin):
 
     # Whitelist fields to be saved in Elasticsearch
     res = {"url": origin.pop("url")}
-    for field_name in ("intrinsic_metadata", "has_visits", "visit_types"):
+    for field_name in (
+        "blocklisted",
+        "has_visits",
+        "intrinsic_metadata",
+        "visit_types",
+    ):
         if field_name in origin:
             res[field_name] = origin.pop(field_name)
 
@@ -145,6 +150,8 @@ class ElasticSearch:
                             }
                         },
                     },
+                    # Has this origin been taken down?
+                    "blocklisted": {"type": "boolean",},
                 },
             },
         )
@@ -275,7 +282,12 @@ class ElasticSearch:
             query_clauses.append({"terms": {"visit_types": visit_types}})
 
         body = {
-            "query": {"bool": {"must": query_clauses,}},
+            "query": {
+                "bool": {
+                    "must": query_clauses,
+                    "must_not": [{"term": {"blocklisted": True}}],
+                }
+            },
             "sort": [{"_score": "desc"}, {"sha1": "asc"},],
         }
         if page_token:
