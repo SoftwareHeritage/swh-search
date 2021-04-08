@@ -578,3 +578,39 @@ class CommonSearchTest:
             self.search.origin_search, metadata_pattern="foo", limit=limit
         )
         assert list(results) == [origin1_foo, origin2_foobar, origin3_foobarbaz]
+
+    def test_search_blocklisted_results(self):
+        origin1 = {"url": "http://origin1"}
+        origin2 = {"url": "http://origin2", "blocklisted": True}
+
+        self.search.origin_update([origin1, origin2])
+        self.search.flush()
+
+        actual_page = self.search.origin_search(url_pattern="origin")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin1]
+
+    def test_search_blocklisted_update(self):
+        origin1 = {"url": "http://origin1"}
+        self.search.origin_update([origin1])
+        self.search.flush()
+
+        result_page = self.search.origin_search(url_pattern="origin")
+        assert result_page.next_page_token is None
+        assert result_page.results == [origin1]
+
+        self.search.origin_update([{**origin1, "blocklisted": True}])
+        self.search.flush()
+
+        result_page = self.search.origin_search(url_pattern="origin")
+        assert result_page.next_page_token is None
+        assert result_page.results == []
+
+        self.search.origin_update(
+            [{**origin1, "has_visits": True, "visit_types": ["git"]}]
+        )
+        self.search.flush()
+
+        result_page = self.search.origin_search(url_pattern="origin")
+        assert result_page.next_page_token is None
+        assert result_page.results == []
