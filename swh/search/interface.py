@@ -15,7 +15,7 @@ PagedResult = CorePagedResult[TResult, str]
 
 
 class MinimalOriginDict(TypedDict):
-    """Mandatory keys of an :cls:`OriginDict`"""
+    """Mandatory keys of an :class:`OriginDict`"""
 
     url: str
 
