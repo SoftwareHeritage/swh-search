@@ -1,3 +1,11 @@
+swh-search (0.8.1-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.8.1     - (tagged by Antoine Lambert
+    <antoine.lambert@inria.fr> on 2021-04-29 14:36:43 +0200)
+  * Upstream changes:     - version 0.8.1
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 29 Apr 2021 12:41:23 +0000
+
 swh-search (0.8.0-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.8.0     - (tagged by Nicolas Dandrimont
