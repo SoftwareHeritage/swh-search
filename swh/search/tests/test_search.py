@@ -3,7 +3,10 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+from datetime import datetime, timedelta, timezone
+
 from hypothesis import given, settings, strategies
+import pytest
 
 from swh.core.api.classes import stream_results
 
@@ -183,6 +186,77 @@ class CommonSearchTest:
                 ["git", "hg", "svn"],
             ]
         )
+
+    def test_origin_nb_visits_update_search(self):
+        origin_url = "http://foobar.baz"
+        self.search.origin_update([{"url": origin_url}])
+        self.search.flush()
+
+        def _update_nb_visits(nb_visits):
+            self.search.origin_update([{"url": origin_url, "nb_visits": nb_visits}])
+            self.search.flush()
+
+        def _check_min_nb_visits(min_nb_visits):
+            actual_page = self.search.origin_search(
+                url_pattern=origin_url, min_nb_visits=min_nb_visits,
+            )
+            assert actual_page.next_page_token is None
+            results = [r["url"] for r in actual_page.results]
+            expected_results = [origin_url]
+            assert sorted(results) == sorted(expected_results)
+
+        _update_nb_visits(2)
+        _check_min_nb_visits(2)  # Works for = 2
+        _check_min_nb_visits(1)  # Works for < 2
+
+        with pytest.raises(AssertionError):
+            _check_min_nb_visits(
+                5
+            )  # No results for nb_visits >= 5 (should throw error)
+
+        _update_nb_visits(5)
+        _check_min_nb_visits(5)  # Works for = 5
+        _check_min_nb_visits(3)  # Works for < 5
+
+    def test_origin_last_visit_date_update_search(self):
+        origin_url = "http://foobar.baz"
+        self.search.origin_update([{"url": origin_url}])
+        self.search.flush()
+
+        def _update_last_visit_date(last_visit_date):
+            self.search.origin_update(
+                [{"url": origin_url, "last_visit_date": last_visit_date}]
+            )
+            self.search.flush()
+
+        def _check_min_last_visit_date(min_last_visit_date):
+            actual_page = self.search.origin_search(
+                url_pattern=origin_url, min_last_visit_date=min_last_visit_date,
+            )
+            assert actual_page.next_page_token is None
+            results = [r["url"] for r in actual_page.results]
+            expected_results = [origin_url]
+            assert sorted(results) == sorted(expected_results)
+
+        now = datetime.now(tz=timezone.utc).isoformat()
+        now_minus_5_hours = (
+            datetime.now(tz=timezone.utc) - timedelta(hours=5)
+        ).isoformat()
+        now_plus_5_hours = (
+            datetime.now(tz=timezone.utc) + timedelta(hours=5)
+        ).isoformat()
+
+        _update_last_visit_date(now)
+
+        _check_min_last_visit_date(now)  # Works for =
+        _check_min_last_visit_date(now_minus_5_hours)  # Works for <
+        with pytest.raises(AssertionError):
+            _check_min_last_visit_date(now_plus_5_hours)  # Fails for >
+
+        _update_last_visit_date(now_plus_5_hours)
+
+        _check_min_last_visit_date(now_plus_5_hours)  # Works for =
+        _check_min_last_visit_date(now)  # Works for <
 
     def test_origin_update_with_no_visit_types(self):
         """

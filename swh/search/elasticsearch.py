@@ -37,6 +37,8 @@ def _sanitize_origin(origin):
         "has_visits",
         "intrinsic_metadata",
         "visit_types",
+        "nb_visits",
+        "last_visit_date",
     ):
         if field_name in origin:
             res[field_name] = origin.pop(field_name)
@@ -141,6 +143,8 @@ class ElasticSearch:
                     "visit_types": {"type": "keyword"},
                     # used to filter out origins that were never visited
                     "has_visits": {"type": "boolean",},
+                    "nb_visits": {"type": "integer"},
+                    "last_visit_date": {"type": "date"},
                     "intrinsic_metadata": {
                         "type": "nested",
                         "properties": {
@@ -171,21 +175,40 @@ class ElasticSearch:
         # painless script that will be executed when updating an origin document
         update_script = dedent(
             """
-            // backup current visit_types field value
-            List visit_types = ctx._source.getOrDefault("visit_types", []);
+        // backup current visit_types field value
+        List visit_types = ctx._source.getOrDefault("visit_types", []);
+        int nb_visits = ctx._source.getOrDefault("nb_visits", 0);
+        ZonedDateTime last_visit_date = ZonedDateTime.parse(ctx._source.getOrDefault("last_visit_date", "0001-01-01T00:00:00Z"));
 
-            // update origin document with new field values
-            ctx._source.putAll(params);
+        // update origin document with new field values
+        ctx._source.putAll(params);
 
-            // restore previous visit types after visit_types field overriding
-            if (ctx._source.containsKey("visit_types")) {
-                for (int i = 0; i < visit_types.length; ++i) {
-                    if (!ctx._source.visit_types.contains(visit_types[i])) {
-                        ctx._source.visit_types.add(visit_types[i]);
-                    }
+        // restore previous visit types after visit_types field overriding
+        if (ctx._source.containsKey("visit_types")) {
+            for (int i = 0; i < visit_types.length; ++i) {
+                if (!ctx._source.visit_types.contains(visit_types[i])) {
+                    ctx._source.visit_types.add(visit_types[i]);
                 }
             }
-            """
+        }
+
+        // Undo overwrite if incoming nb_visits is smaller
+        if (ctx._source.containsKey("nb_visits")) {
+            int incoming_nb_visits = ctx._source.getOrDefault("nb_visits", 0);
+            if(incoming_nb_visits < nb_visits){
+                ctx._source.nb_visits = nb_visits;
+            }
+        }
+
+        // Undo overwrite if incoming last_visit_date is older
+        if (ctx._source.containsKey("last_visit_date")) {
+            ZonedDateTime incoming_last_visit_date = ZonedDateTime.parse(ctx._source.getOrDefault("last_visit_date", "0001-01-01T00:00:00Z"));
+            int difference = incoming_last_visit_date.compareTo(last_visit_date); // returns -1, 0 or 1
+            if(difference < 0){
+                ctx._source.last_visit_date = last_visit_date;
+            }
+        }
+        """  # noqa
         )
 
         actions = [
@@ -227,6 +250,8 @@ class ElasticSearch:
         metadata_pattern: Optional[str] = None,
         with_visit: bool = False,
         visit_types: Optional[List[str]] = None,
+        min_nb_visits: int = 0,
+        min_last_visit_date: str = "",
         page_token: Optional[str] = None,
         limit: int = 50,
     ) -> PagedResult[MinimalOriginDict]:
@@ -280,6 +305,18 @@ class ElasticSearch:
 
         if with_visit:
             query_clauses.append({"term": {"has_visits": True,}})
+        if min_nb_visits:
+            query_clauses.append({"range": {"nb_visits": {"gte": min_nb_visits,},}})
+        if min_last_visit_date:
+            query_clauses.append(
+                {
+                    "range": {
+                        "last_visit_date": {
+                            "gte": min_last_visit_date.replace("Z", "+00:00"),
+                        }
+                    }
+                }
+            )
 
         if visit_types is not None:
             query_clauses.append({"terms": {"visit_types": visit_types}})
@@ -293,6 +330,7 @@ class ElasticSearch:
             },
             "sort": [{"_score": "desc"}, {"sha1": "asc"},],
         }
+
         if page_token:
             # TODO: use ElasticSearch's scroll API?
             page_token_content = token_decode(page_token)
