@@ -4,6 +4,7 @@
 # See top-level LICENSE file for more information
 
 import base64
+from textwrap import dedent
 from typing import Any, Dict, Iterable, Iterator, List, Optional
 
 from elasticsearch import Elasticsearch, helpers
@@ -168,22 +169,24 @@ class ElasticSearch:
             (origin_identifier(document), document) for document in documents
         )
         # painless script that will be executed when updating an origin document
-        update_script = """
-        // backup current visit_types field value
-        List visit_types = ctx._source.getOrDefault("visit_types", []);
+        update_script = dedent(
+            """
+            // backup current visit_types field value
+            List visit_types = ctx._source.getOrDefault("visit_types", []);
 
-        // update origin document with new field values
-        ctx._source.putAll(params);
+            // update origin document with new field values
+            ctx._source.putAll(params);
 
-        // restore previous visit types after visit_types field overriding
-        if (ctx._source.containsKey("visit_types")) {
-            for (int i = 0; i < visit_types.length; ++i) {
-                if (!ctx._source.visit_types.contains(visit_types[i])) {
-                    ctx._source.visit_types.add(visit_types[i]);
+            // restore previous visit types after visit_types field overriding
+            if (ctx._source.containsKey("visit_types")) {
+                for (int i = 0; i < visit_types.length; ++i) {
+                    if (!ctx._source.visit_types.contains(visit_types[i])) {
+                        ctx._source.visit_types.add(visit_types[i]);
+                    }
                 }
             }
-        }
-        """
+            """
+        )
 
         actions = [
             {
