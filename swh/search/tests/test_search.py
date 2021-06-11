@@ -277,7 +277,7 @@ class CommonSearchTest:
                     **origin1,
                     "intrinsic_metadata": {
                         "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
-                        "description": " ".join(f"foo{i}" for i in range(1000000)),
+                        "description": " ".join(f"foo{i}" for i in range(1000)),
                     },
                 },
             ]
