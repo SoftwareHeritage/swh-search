@@ -269,6 +269,11 @@ class CommonSearchTest:
         assert actual_page.results == [origin3_foobarbaz]
 
     def test_origin_intrinsic_metadata_long_description(self):
+        """Checks ElasticSearch does not try to store large values untokenize,
+        which would be inefficient and crash it with:
+
+        Document contains at least one immense term in field="intrinsic_metadata.http://schema.org/description.@value" (whose UTF8 encoding is longer than the max length 32766), all of which were skipped.
+        """  # noqa
         origin1 = {"url": "http://origin1"}
 
         self.search.origin_update(
@@ -277,7 +282,7 @@ class CommonSearchTest:
                     **origin1,
                     "intrinsic_metadata": {
                         "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
-                        "description": " ".join(f"foo{i}" for i in range(1000)),
+                        "description": " ".join(f"foo{i}" for i in range(100000)),
                     },
                 },
             ]
