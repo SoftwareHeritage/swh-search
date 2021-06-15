@@ -120,6 +120,17 @@ class ElasticSearch:
         self._backend.indices.put_mapping(
             index=self._get_origin_index(),
             body={
+                "dynamic_templates": [
+                    {
+                        "booleans_as_string": {
+                            # All fields stored as string in the metadata
+                            # even the booleans
+                            "match_mapping_type": "boolean",
+                            "path_match": "intrinsic_metadata.*",
+                            "mapping": {"type": "keyword"},
+                        }
+                    }
+                ],
                 "date_detection": False,
                 "properties": {
                     # sha1 of the URL; used as the document id

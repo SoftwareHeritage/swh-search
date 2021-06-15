@@ -497,11 +497,11 @@ class CommonSearchTest:
         assert actual_page.next_page_token is None
         assert actual_page.results == [origin1_foobar]
 
-    def test_origin_intrinsic_metadata_date(self):
+    def test_origin_intrinsic_metadata_string_mapping(self):
         """Checks inserting a date-like in a field does not update the mapping to
         require every document uses a date in that field; or that search queries
         use a date either.
-        Likewise for numeric fields."""
+        Likewise for numeric and boolean fields."""
         origin1 = {"url": "http://origin1"}
         origin2 = {"url": "http://origin2"}
 
@@ -513,12 +513,12 @@ class CommonSearchTest:
                         "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                         "dateCreated": "2021-02-18T10:16:52",
                         "version": "1.0",
+                        "isAccessibleForFree": True,
                     },
                 }
             ]
         )
         self.search.flush()
-
         self.search.origin_update(
             [
                 {
@@ -528,6 +528,7 @@ class CommonSearchTest:
                         "dateCreated": "a long time ago",
                         "address": "in a galaxy far, far away",
                         "version": "a new hope",
+                        "isAccessibleForFree": "it depends",
                     },
                 },
             ]
@@ -539,6 +540,14 @@ class CommonSearchTest:
         assert actual_page.results == [origin1]
 
         actual_page = self.search.origin_search(metadata_pattern="long time ago")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin2]
+
+        actual_page = self.search.origin_search(metadata_pattern="true")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin1]
+
+        actual_page = self.search.origin_search(metadata_pattern="it depends")
         assert actual_page.next_page_token is None
         assert actual_page.results == [origin2]
 
