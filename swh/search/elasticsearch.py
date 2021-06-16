@@ -38,7 +38,9 @@ def _sanitize_origin(origin):
         "intrinsic_metadata",
         "visit_types",
         "nb_visits",
+        "snapshot_id",
         "last_visit_date",
+        "last_eventful_visit_date",
     ):
         if field_name in origin:
             res[field_name] = origin.pop(field_name)
@@ -155,7 +157,9 @@ class ElasticSearch:
                     # used to filter out origins that were never visited
                     "has_visits": {"type": "boolean",},
                     "nb_visits": {"type": "integer"},
+                    "snapshot_id": {"type": "keyword"},
                     "last_visit_date": {"type": "date"},
+                    "last_eventful_visit_date": {"type": "date"},
                     "intrinsic_metadata": {
                         "type": "nested",
                         "properties": {
@@ -190,6 +194,8 @@ class ElasticSearch:
         List visit_types = ctx._source.getOrDefault("visit_types", []);
         int nb_visits = ctx._source.getOrDefault("nb_visits", 0);
         ZonedDateTime last_visit_date = ZonedDateTime.parse(ctx._source.getOrDefault("last_visit_date", "0001-01-01T00:00:00Z"));
+        String snapshot_id = ctx._source.getOrDefault("snapshot_id", "");
+        ZonedDateTime last_eventful_visit_date = ZonedDateTime.parse(ctx._source.getOrDefault("last_eventful_visit_date", "0001-01-01T00:00:00Z"));
 
         // update origin document with new field values
         ctx._source.putAll(params);
@@ -217,6 +223,18 @@ class ElasticSearch:
             int difference = incoming_last_visit_date.compareTo(last_visit_date); // returns -1, 0 or 1
             if(difference < 0){
                 ctx._source.last_visit_date = last_visit_date;
+            }
+        }
+
+        // Undo update of last_eventful_date and snapshot_id if
+        // snapshot_id hasn't changed OR incoming_last_eventful_visit_date is older
+        if (ctx._source.containsKey("snapshot_id")) {
+            String incoming_snapshot_id = ctx._source.getOrDefault("snapshot_id", "");
+            ZonedDateTime incoming_last_eventful_visit_date = ZonedDateTime.parse(ctx._source.getOrDefault("last_eventful_visit_date", "0001-01-01T00:00:00Z"));
+            int difference = incoming_last_eventful_visit_date.compareTo(last_eventful_visit_date); // returns -1, 0 or 1
+            if(snapshot_id == incoming_snapshot_id || difference < 0){
+                ctx._source.snapshot_id = snapshot_id;
+                ctx._source.last_eventful_visit_date = last_eventful_visit_date;
             }
         }
         """  # noqa
@@ -263,6 +281,7 @@ class ElasticSearch:
         visit_types: Optional[List[str]] = None,
         min_nb_visits: int = 0,
         min_last_visit_date: str = "",
+        min_last_eventful_visit_date: str = "",
         page_token: Optional[str] = None,
         limit: int = 50,
     ) -> PagedResult[MinimalOriginDict]:
@@ -324,6 +343,16 @@ class ElasticSearch:
                     "range": {
                         "last_visit_date": {
                             "gte": min_last_visit_date.replace("Z", "+00:00"),
+                        }
+                    }
+                }
+            )
+        if min_last_eventful_visit_date:
+            query_clauses.append(
+                {
+                    "range": {
+                        "last_eventful_visit_date": {
+                            "gte": min_last_eventful_visit_date.replace("Z", "+00:00"),
                         }
                     }
                 }

@@ -79,6 +79,27 @@ class InMemorySearch:
                         .replace("Z", "+00:00")
                     ),
                 ).isoformat()
+
+            if "snapshot_id" in document and "last_eventful_visit_date" in document:
+                incoming_date = datetime.fromisoformat(
+                    document["last_eventful_visit_date"]
+                )
+                current_date = datetime.fromisoformat(
+                    self._origins[id_]
+                    .get("last_eventful_visit_date", "0001-01-01T00:00:00Z",)
+                    .replace("Z", "+00:00")
+                )
+                incoming_snapshot_id = document["snapshot_id"]
+                current_snapshot_id = self._origins[id_].get("snapshot_id", "")
+
+                if (
+                    incoming_snapshot_id == current_snapshot_id
+                    or incoming_date < current_date
+                ):
+                    # update not required so override the incoming_values
+                    document["snapshot_id"] = current_snapshot_id
+                    document["last_eventful_visit_date"] = current_date.isoformat()
+
             self._origins[id_].update(document)
 
             if id_ not in self._origin_ids:
@@ -94,6 +115,7 @@ class InMemorySearch:
         page_token: Optional[str] = None,
         min_nb_visits: int = 0,
         min_last_visit_date: str = "",
+        min_last_eventful_visit_date: str = "",
         limit: int = 50,
     ) -> PagedResult[MinimalOriginDict]:
         hits: Iterator[Dict[str, Any]] = (
@@ -149,8 +171,23 @@ class InMemorySearch:
             hits = filter(lambda o: o.get("nb_visits", 0) >= min_nb_visits, hits)
         if min_last_visit_date:
             hits = filter(
-                lambda o: datetime.fromisoformat(o.get("last_visit_date", ""))
+                lambda o: datetime.fromisoformat(
+                    o.get("last_visit_date", "0001-01-01T00:00:00Z").replace(
+                        "Z", "+00:00"
+                    )
+                )
                 >= datetime.fromisoformat(min_last_visit_date),
+                hits,
+            )
+
+        if min_last_eventful_visit_date:
+            hits = filter(
+                lambda o: datetime.fromisoformat(
+                    o.get("last_eventful_visit_date", "0001-01-01T00:00:00Z").replace(
+                        "Z", "+00:00"
+                    )
+                )
+                >= datetime.fromisoformat(min_last_eventful_visit_date),
                 hits,
             )
 

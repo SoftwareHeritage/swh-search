@@ -53,6 +53,7 @@ def test_journal_client_origin_visit_status_from_journal():
                     "status": "full",
                     "visit": 5,
                     "date": current_datetime,
+                    "snapshot": None,
                 }  # full visits ok
             ]
         }
@@ -63,7 +64,9 @@ def test_journal_client_origin_visit_status_from_journal():
                 "url": "http://foobar.baz",
                 "has_visits": True,
                 "nb_visits": 5,
+                "snapshot_id": None,
                 "last_visit_date": current_datetime.isoformat(),
+                "last_eventful_visit_date": current_datetime.isoformat(),
             },
         ]
     )

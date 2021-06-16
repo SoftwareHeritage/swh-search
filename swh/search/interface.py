@@ -61,6 +61,7 @@ class SearchInterface:
         page_token: Optional[str] = None,
         min_nb_visits: int = 0,
         min_last_visit_date: str = "",
+        min_last_eventful_visit_date: str = "",
         limit: int = 50,
     ) -> PagedResult[MinimalOriginDict]:
         """Searches for origins matching the `url_pattern`.
@@ -76,6 +77,9 @@ class SearchInterface:
                 the provided value
             min_last_visit_date: Filter origins that have
                 last_visit_date on or after the provided date(ISO format)
+            min_last_eventful_visit_date: Filter origins that have
+                last_eventful_visit_date (eventful = snapshot_id changed)
+                on or after the provided date(ISO format)
             limit: number of results to return
 
         Returns:

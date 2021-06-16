@@ -4,6 +4,7 @@
 # See top-level LICENSE file for more information
 
 from datetime import datetime, timedelta, timezone
+from itertools import permutations
 
 from hypothesis import given, settings, strategies
 import pytest
@@ -257,6 +258,108 @@ class CommonSearchTest:
 
         _check_min_last_visit_date(now_plus_5_hours)  # Works for =
         _check_min_last_visit_date(now)  # Works for <
+
+    def test_journal_client_origin_visit_status_permutation(self):
+        NOW = datetime.now(tz=timezone.utc).isoformat()
+        NOW_MINUS_5_HOURS = (
+            datetime.now(tz=timezone.utc) - timedelta(hours=5)
+        ).isoformat()
+        NOW_PLUS_5_HOURS = (
+            datetime.now(tz=timezone.utc) + timedelta(hours=5)
+        ).isoformat()
+
+        VISIT_STATUSES = [
+            {
+                "url": "http://foobar.baz",
+                "snapshot_id": "SNAPSHOT_1",
+                "last_eventful_visit_date": NOW,
+            },
+            {
+                "url": "http://foobar.baz",
+                "snapshot_id": "SNAPSHOT_1",
+                "last_eventful_visit_date": NOW_MINUS_5_HOURS,
+            },
+            {
+                "url": "http://foobar.baz",
+                "snapshot_id": "SNAPSHOT_2",
+                "last_eventful_visit_date": NOW_PLUS_5_HOURS,
+            },
+        ]
+
+        for visit_statuses in permutations(VISIT_STATUSES, len(VISIT_STATUSES)):
+            self.search.origin_update(visit_statuses)
+            self.search.flush()
+            origin_url = "http://foobar.baz"
+            actual_page = self.search.origin_search(
+                url_pattern=origin_url, min_last_eventful_visit_date=NOW_PLUS_5_HOURS,
+            )
+            assert actual_page.next_page_token is None
+            results = [r["url"] for r in actual_page.results]
+            expected_results = [origin_url]
+            assert sorted(results) == sorted(expected_results)
+
+            self.reset()
+
+    def test_origin_last_eventful_visit_date_update_search(self):
+        origin_url = "http://foobar.baz"
+        self.search.origin_update([{"url": origin_url}])
+        self.search.flush()
+
+        def _update_last_eventful_visit_date(snapshot_id, last_eventful_visit_date):
+            self.search.origin_update(
+                [
+                    {
+                        "url": origin_url,
+                        "snapshot_id": snapshot_id,
+                        "last_eventful_visit_date": last_eventful_visit_date,
+                    }
+                ]
+            )
+            self.search.flush()
+
+        def _check_min_last_eventful_visit_date(min_last_eventful_visit_date):
+            actual_page = self.search.origin_search(
+                url_pattern=origin_url,
+                min_last_eventful_visit_date=min_last_eventful_visit_date,
+            )
+            assert actual_page.next_page_token is None
+            results = [r["url"] for r in actual_page.results]
+            expected_results = [origin_url]
+            assert sorted(results) == sorted(expected_results)
+
+        now = datetime.now(tz=timezone.utc).isoformat()
+        now_minus_5_hours = (
+            datetime.now(tz=timezone.utc) - timedelta(hours=5)
+        ).isoformat()
+        now_plus_5_hours = (
+            datetime.now(tz=timezone.utc) + timedelta(hours=5)
+        ).isoformat()
+
+        snapshot_1 = "SNAPSHOT_1"
+        snapshot_2 = "SNAPSHOT_2"
+
+        _update_last_eventful_visit_date(snapshot_1, now)
+
+        _check_min_last_eventful_visit_date(now)  # Works for =
+        _check_min_last_eventful_visit_date(now_minus_5_hours)  # Works for <
+        with pytest.raises(AssertionError):
+            _check_min_last_eventful_visit_date(now_plus_5_hours)  # Fails for >
+
+        _update_last_eventful_visit_date(
+            snapshot_1, now_plus_5_hours
+        )  # Revisit(not eventful) same origin
+
+        _check_min_last_eventful_visit_date(
+            now
+        )  # Should remain the same because recent visit wasn't eventful
+        with pytest.raises(AssertionError):
+            _check_min_last_eventful_visit_date(now_plus_5_hours)
+
+        _update_last_eventful_visit_date(
+            snapshot_2, now_plus_5_hours
+        )  # Revisit(eventful) same origin
+        _check_min_last_eventful_visit_date(now_plus_5_hours)  # Works for =
+        _check_min_last_eventful_visit_date(now)  # Works for <
 
     def test_origin_update_with_no_visit_types(self):
         """

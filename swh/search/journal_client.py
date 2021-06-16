@@ -63,7 +63,9 @@ def process_origin_visit_statuses(visit_statuses, search):
             "url": (visit_status["origin"]),
             "has_visits": True,
             "nb_visits": visit_status["visit"],
+            "snapshot_id": visit_status.get("snapshot"),
             "last_visit_date": visit_status["date"].isoformat(),
+            "last_eventful_visit_date": visit_status["date"].isoformat(),
         }
         for visit_status in visit_statuses
         if visit_status["status"] == "full"
