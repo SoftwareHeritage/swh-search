@@ -3,6 +3,7 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+from datetime import datetime, timezone
 import functools
 from unittest.mock import MagicMock
 
@@ -42,23 +43,45 @@ def test_journal_client_origin_visit_status_from_journal():
     search_mock = MagicMock()
 
     worker_fn = functools.partial(process_journal_objects, search=search_mock,)
+    current_datetime = datetime.now(tz=timezone.utc)
 
     worker_fn(
         {
             "origin_visit_status": [
-                {"origin": "http://foobar.baz", "status": "full"}  # full visits ok
+                {
+                    "origin": "http://foobar.baz",
+                    "status": "full",
+                    "visit": 5,
+                    "date": current_datetime,
+                }  # full visits ok
             ]
         }
     )
     search_mock.origin_update.assert_called_once_with(
-        [{"url": "http://foobar.baz", "has_visits": True},]
+        [
+            {
+                "url": "http://foobar.baz",
+                "has_visits": True,
+                "nb_visits": 5,
+                "last_visit_date": current_datetime.isoformat(),
+            },
+        ]
     )
 
     search_mock.reset_mock()
 
     # non-full visits are filtered out
     worker_fn(
-        {"origin_visit_status": [{"origin": "http://foobar.baz", "status": "partial"}]}
+        {
+            "origin_visit_status": [
+                {
+                    "origin": "http://foobar.baz",
+                    "status": "partial",
+                    "visit": 5,
+                    "date": current_datetime,
+                }
+            ]
+        }
     )
     search_mock.origin_update.assert_not_called()
 
