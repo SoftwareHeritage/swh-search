@@ -62,6 +62,8 @@ class SearchInterface:
         min_nb_visits: int = 0,
         min_last_visit_date: str = "",
         min_last_eventful_visit_date: str = "",
+        min_last_revision_date: str = "",
+        min_last_release_date: str = "",
         limit: int = 50,
     ) -> PagedResult[MinimalOriginDict]:
         """Searches for origins matching the `url_pattern`.
@@ -80,6 +82,10 @@ class SearchInterface:
             min_last_eventful_visit_date: Filter origins that have
                 last_eventful_visit_date (eventful = snapshot_id changed)
                 on or after the provided date(ISO format)
+            min_last_revision_date: Filter origins that have
+                last_revision_date on or after the provided date(ISO format)
+            min_last_release_date: Filter origins that have
+                last_release_date on or after the provided date(ISO format)
             limit: number of results to return
 
         Returns:

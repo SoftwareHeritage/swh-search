@@ -41,6 +41,8 @@ def _sanitize_origin(origin):
         "snapshot_id",
         "last_visit_date",
         "last_eventful_visit_date",
+        "last_revision_date",
+        "last_release_date",
     ):
         if field_name in origin:
             res[field_name] = origin.pop(field_name)
@@ -160,6 +162,8 @@ class ElasticSearch:
                     "snapshot_id": {"type": "keyword"},
                     "last_visit_date": {"type": "date"},
                     "last_eventful_visit_date": {"type": "date"},
+                    "last_release_date": {"type": "date"},
+                    "last_revision_date": {"type": "date"},
                     "intrinsic_metadata": {
                         "type": "nested",
                         "properties": {
@@ -196,6 +200,8 @@ class ElasticSearch:
         ZonedDateTime last_visit_date = ZonedDateTime.parse(ctx._source.getOrDefault("last_visit_date", "0001-01-01T00:00:00Z"));
         String snapshot_id = ctx._source.getOrDefault("snapshot_id", "");
         ZonedDateTime last_eventful_visit_date = ZonedDateTime.parse(ctx._source.getOrDefault("last_eventful_visit_date", "0001-01-01T00:00:00Z"));
+        ZonedDateTime last_revision_date = ZonedDateTime.parse(ctx._source.getOrDefault("last_revision_date", "0001-01-01T00:00:00Z"));
+        ZonedDateTime last_release_date = ZonedDateTime.parse(ctx._source.getOrDefault("last_release_date", "0001-01-01T00:00:00Z"));
 
         // update origin document with new field values
         ctx._source.putAll(params);
@@ -235,6 +241,24 @@ class ElasticSearch:
             if(snapshot_id == incoming_snapshot_id || difference < 0){
                 ctx._source.snapshot_id = snapshot_id;
                 ctx._source.last_eventful_visit_date = last_eventful_visit_date;
+            }
+        }
+
+        // Undo overwrite if incoming last_revision_date is older
+        if (ctx._source.containsKey("last_revision_date")) {
+            ZonedDateTime incoming_last_revision_date = ZonedDateTime.parse(ctx._source.getOrDefault("last_revision_date", "0001-01-01T00:00:00Z"));
+            int difference = incoming_last_revision_date.compareTo(last_revision_date); // returns -1, 0 or 1
+            if(difference < 0){
+                ctx._source.last_revision_date = last_revision_date;
+            }
+        }
+
+        // Undo overwrite if incoming last_release_date is older
+        if (ctx._source.containsKey("last_release_date")) {
+            ZonedDateTime incoming_last_release_date = ZonedDateTime.parse(ctx._source.getOrDefault("last_release_date", "0001-01-01T00:00:00Z"));
+            int difference = incoming_last_release_date.compareTo(last_release_date); // returns -1, 0 or 1
+            if(difference < 0){
+                ctx._source.last_release_date = last_release_date;
             }
         }
         """  # noqa
@@ -282,6 +306,8 @@ class ElasticSearch:
         min_nb_visits: int = 0,
         min_last_visit_date: str = "",
         min_last_eventful_visit_date: str = "",
+        min_last_revision_date: str = "",
+        min_last_release_date: str = "",
         page_token: Optional[str] = None,
         limit: int = 50,
     ) -> PagedResult[MinimalOriginDict]:
@@ -353,6 +379,26 @@ class ElasticSearch:
                     "range": {
                         "last_eventful_visit_date": {
                             "gte": min_last_eventful_visit_date.replace("Z", "+00:00"),
+                        }
+                    }
+                }
+            )
+        if min_last_revision_date:
+            query_clauses.append(
+                {
+                    "range": {
+                        "last_revision_date": {
+                            "gte": min_last_revision_date.replace("Z", "+00:00"),
+                        }
+                    }
+                }
+            )
+        if min_last_release_date:
+            query_clauses.append(
+                {
+                    "range": {
+                        "last_release_date": {
+                            "gte": min_last_release_date.replace("Z", "+00:00"),
                         }
                     }
                 }

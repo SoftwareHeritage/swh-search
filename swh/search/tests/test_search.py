@@ -361,6 +361,54 @@ class CommonSearchTest:
         _check_min_last_eventful_visit_date(now_plus_5_hours)  # Works for =
         _check_min_last_eventful_visit_date(now)  # Works for <
 
+    def _test_origin_last_revision_release_date_update_search(self, date_type):
+        origin_url = "http://foobar.baz"
+        self.search.origin_update([{"url": origin_url}])
+        self.search.flush()
+
+        def _update_last_revision_release_date(date):
+            self.search.origin_update([{"url": origin_url, date_type: date,}])
+            self.search.flush()
+
+        def _check_min_last_revision_release_date(date):
+            actual_page = self.search.origin_search(
+                url_pattern=origin_url, **{f"min_{date_type}": date},
+            )
+            assert actual_page.next_page_token is None
+            results = [r["url"] for r in actual_page.results]
+            expected_results = [origin_url]
+            assert sorted(results) == sorted(expected_results)
+
+        now = datetime.now(tz=timezone.utc).isoformat()
+        now_minus_5_hours = (
+            datetime.now(tz=timezone.utc) - timedelta(hours=5)
+        ).isoformat()
+        now_plus_5_hours = (
+            datetime.now(tz=timezone.utc) + timedelta(hours=5)
+        ).isoformat()
+
+        _update_last_revision_release_date(now)
+
+        _check_min_last_revision_release_date(now)
+        _check_min_last_revision_release_date(now_minus_5_hours)
+        with pytest.raises(AssertionError):
+            _check_min_last_revision_release_date(now_plus_5_hours)
+
+        _update_last_revision_release_date(now_plus_5_hours)
+
+        _check_min_last_revision_release_date(now_plus_5_hours)
+        _check_min_last_revision_release_date(now)
+
+    def test_origin_last_revision_date_update_search(self):
+        self._test_origin_last_revision_release_date_update_search(
+            date_type="last_revision_date"
+        )
+
+    def test_origin_last_release_date_update_search(self):
+        self._test_origin_last_revision_release_date_update_search(
+            date_type="last_revision_date"
+        )
+
     def test_origin_update_with_no_visit_types(self):
         """
         Update an origin with visit types first then with no visit types,

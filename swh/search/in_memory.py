@@ -100,6 +100,24 @@ class InMemorySearch:
                     document["snapshot_id"] = current_snapshot_id
                     document["last_eventful_visit_date"] = current_date.isoformat()
 
+            if "last_revision_date" in document:
+                document["last_revision_date"] = max(
+                    datetime.fromisoformat(document["last_revision_date"]),
+                    datetime.fromisoformat(
+                        self._origins[id_]
+                        .get("last_revision_date", "0001-01-01T00:00:00Z",)
+                        .replace("Z", "+00:00")
+                    ),
+                ).isoformat()
+            if "last_release_date" in document:
+                document["last_release_date"] = max(
+                    datetime.fromisoformat(document["last_release_date"]),
+                    datetime.fromisoformat(
+                        self._origins[id_]
+                        .get("last_release_date", "0001-01-01T00:00:00Z",)
+                        .replace("Z", "+00:00")
+                    ),
+                ).isoformat()
             self._origins[id_].update(document)
 
             if id_ not in self._origin_ids:
@@ -116,6 +134,8 @@ class InMemorySearch:
         min_nb_visits: int = 0,
         min_last_visit_date: str = "",
         min_last_eventful_visit_date: str = "",
+        min_last_revision_date: str = "",
+        min_last_release_date: str = "",
         limit: int = 50,
     ) -> PagedResult[MinimalOriginDict]:
         hits: Iterator[Dict[str, Any]] = (
@@ -188,6 +208,27 @@ class InMemorySearch:
                     )
                 )
                 >= datetime.fromisoformat(min_last_eventful_visit_date),
+                hits,
+            )
+
+        if min_last_revision_date:
+            hits = filter(
+                lambda o: datetime.fromisoformat(
+                    o.get("last_revision_date", "0001-01-01T00:00:00Z").replace(
+                        "Z", "+00:00"
+                    )
+                )
+                >= datetime.fromisoformat(min_last_revision_date),
+                hits,
+            )
+        if min_last_release_date:
+            hits = filter(
+                lambda o: datetime.fromisoformat(
+                    o.get("last_release_date", "0001-01-01T00:00:00Z").replace(
+                        "Z", "+00:00"
+                    )
+                )
+                >= datetime.fromisoformat(min_last_release_date),
                 hits,
             )
 
