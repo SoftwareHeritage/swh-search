@@ -59,7 +59,12 @@ def process_origin_visit_statuses(visit_statuses, search):
     logging.debug("processing origin visit statuses %r", visit_statuses)
 
     full_visit_status = [
-        {"url": (visit_status["origin"]), "has_visits": True,}
+        {
+            "url": (visit_status["origin"]),
+            "has_visits": True,
+            "nb_visits": visit_status["visit"],
+            "last_visit_date": visit_status["date"].isoformat(),
+        }
         for visit_status in visit_statuses
         if visit_status["status"] == "full"
     ]

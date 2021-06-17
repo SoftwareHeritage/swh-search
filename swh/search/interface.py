@@ -59,6 +59,8 @@ class SearchInterface:
         with_visit: bool = False,
         visit_types: Optional[List[str]] = None,
         page_token: Optional[str] = None,
+        min_nb_visits: int = 0,
+        min_last_visit_date: str = "",
         limit: int = 50,
     ) -> PagedResult[MinimalOriginDict]:
         """Searches for origins matching the `url_pattern`.
@@ -70,6 +72,10 @@ class SearchInterface:
             visit_types: Only origins having any of the provided visit types
                 (e.g. git, svn, pypi) will be returned
             page_token: Opaque value used for pagination
+            min_nb_visits: Filter origins that have number of visits >=
+                the provided value
+            min_last_visit_date: Filter origins that have
+                last_visit_date on or after the provided date(ISO format)
             limit: number of results to return
 
         Returns:

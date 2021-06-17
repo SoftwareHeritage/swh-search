@@ -10,3 +10,7 @@ swh.model
 pytest
 pytest-mock
 confluent-kafka
+types-click
+types-pytz
+types-pyyaml
+types-requests

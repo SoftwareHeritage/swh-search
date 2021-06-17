@@ -3,7 +3,10 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+from datetime import datetime, timedelta, timezone
+
 from hypothesis import given, settings, strategies
+import pytest
 
 from swh.core.api.classes import stream_results
 
@@ -184,6 +187,77 @@ class CommonSearchTest:
             ]
         )
 
+    def test_origin_nb_visits_update_search(self):
+        origin_url = "http://foobar.baz"
+        self.search.origin_update([{"url": origin_url}])
+        self.search.flush()
+
+        def _update_nb_visits(nb_visits):
+            self.search.origin_update([{"url": origin_url, "nb_visits": nb_visits}])
+            self.search.flush()
+
+        def _check_min_nb_visits(min_nb_visits):
+            actual_page = self.search.origin_search(
+                url_pattern=origin_url, min_nb_visits=min_nb_visits,
+            )
+            assert actual_page.next_page_token is None
+            results = [r["url"] for r in actual_page.results]
+            expected_results = [origin_url]
+            assert sorted(results) == sorted(expected_results)
+
+        _update_nb_visits(2)
+        _check_min_nb_visits(2)  # Works for = 2
+        _check_min_nb_visits(1)  # Works for < 2
+
+        with pytest.raises(AssertionError):
+            _check_min_nb_visits(
+                5
+            )  # No results for nb_visits >= 5 (should throw error)
+
+        _update_nb_visits(5)
+        _check_min_nb_visits(5)  # Works for = 5
+        _check_min_nb_visits(3)  # Works for < 5
+
+    def test_origin_last_visit_date_update_search(self):
+        origin_url = "http://foobar.baz"
+        self.search.origin_update([{"url": origin_url}])
+        self.search.flush()
+
+        def _update_last_visit_date(last_visit_date):
+            self.search.origin_update(
+                [{"url": origin_url, "last_visit_date": last_visit_date}]
+            )
+            self.search.flush()
+
+        def _check_min_last_visit_date(min_last_visit_date):
+            actual_page = self.search.origin_search(
+                url_pattern=origin_url, min_last_visit_date=min_last_visit_date,
+            )
+            assert actual_page.next_page_token is None
+            results = [r["url"] for r in actual_page.results]
+            expected_results = [origin_url]
+            assert sorted(results) == sorted(expected_results)
+
+        now = datetime.now(tz=timezone.utc).isoformat()
+        now_minus_5_hours = (
+            datetime.now(tz=timezone.utc) - timedelta(hours=5)
+        ).isoformat()
+        now_plus_5_hours = (
+            datetime.now(tz=timezone.utc) + timedelta(hours=5)
+        ).isoformat()
+
+        _update_last_visit_date(now)
+
+        _check_min_last_visit_date(now)  # Works for =
+        _check_min_last_visit_date(now_minus_5_hours)  # Works for <
+        with pytest.raises(AssertionError):
+            _check_min_last_visit_date(now_plus_5_hours)  # Fails for >
+
+        _update_last_visit_date(now_plus_5_hours)
+
+        _check_min_last_visit_date(now_plus_5_hours)  # Works for =
+        _check_min_last_visit_date(now)  # Works for <
+
     def test_origin_update_with_no_visit_types(self):
         """
         Update an origin with visit types first then with no visit types,
@@ -269,6 +343,11 @@ class CommonSearchTest:
         assert actual_page.results == [origin3_foobarbaz]
 
     def test_origin_intrinsic_metadata_long_description(self):
+        """Checks ElasticSearch does not try to store large values untokenize,
+        which would be inefficient and crash it with:
+
+        Document contains at least one immense term in field="intrinsic_metadata.http://schema.org/description.@value" (whose UTF8 encoding is longer than the max length 32766), all of which were skipped.
+        """  # noqa
         origin1 = {"url": "http://origin1"}
 
         self.search.origin_update(
@@ -277,7 +356,7 @@ class CommonSearchTest:
                     **origin1,
                     "intrinsic_metadata": {
                         "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
-                        "description": " ".join(f"foo{i}" for i in range(1000000)),
+                        "description": " ".join(f"foo{i}" for i in range(100000)),
                     },
                 },
             ]
@@ -418,11 +497,11 @@ class CommonSearchTest:
         assert actual_page.next_page_token is None
         assert actual_page.results == [origin1_foobar]
 
-    def test_origin_intrinsic_metadata_date(self):
+    def test_origin_intrinsic_metadata_string_mapping(self):
         """Checks inserting a date-like in a field does not update the mapping to
         require every document uses a date in that field; or that search queries
         use a date either.
-        Likewise for numeric fields."""
+        Likewise for numeric and boolean fields."""
         origin1 = {"url": "http://origin1"}
         origin2 = {"url": "http://origin2"}
 
@@ -434,12 +513,12 @@ class CommonSearchTest:
                         "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                         "dateCreated": "2021-02-18T10:16:52",
                         "version": "1.0",
+                        "isAccessibleForFree": True,
                     },
                 }
             ]
         )
         self.search.flush()
-
         self.search.origin_update(
             [
                 {
@@ -449,6 +528,7 @@ class CommonSearchTest:
                         "dateCreated": "a long time ago",
                         "address": "in a galaxy far, far away",
                         "version": "a new hope",
+                        "isAccessibleForFree": "it depends",
                     },
                 },
             ]
@@ -460,6 +540,14 @@ class CommonSearchTest:
         assert actual_page.results == [origin1]
 
         actual_page = self.search.origin_search(metadata_pattern="long time ago")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin2]
+
+        actual_page = self.search.origin_search(metadata_pattern="true")
+        assert actual_page.next_page_token is None
+        assert actual_page.results == [origin1]
+
+        actual_page = self.search.origin_search(metadata_pattern="it depends")
         assert actual_page.next_page_token is None
         assert actual_page.results == [origin2]
 

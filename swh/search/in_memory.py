@@ -4,6 +4,7 @@
 # See top-level LICENSE file for more information
 
 from collections import defaultdict
+from datetime import datetime
 import itertools
 import re
 from typing import Any, Dict, Iterable, Iterator, List, Optional
@@ -65,6 +66,19 @@ class InMemorySearch:
                 document["visit_types"] = set(source_document["visit_types"])
                 if "visit_types" in self._origins[id_]:
                     document["visit_types"].update(self._origins[id_]["visit_types"])
+            if "nb_visits" in document:
+                document["nb_visits"] = max(
+                    document["nb_visits"], self._origins[id_].get("nb_visits", 0)
+                )
+            if "last_visit_date" in document:
+                document["last_visit_date"] = max(
+                    datetime.fromisoformat(document["last_visit_date"]),
+                    datetime.fromisoformat(
+                        self._origins[id_]
+                        .get("last_visit_date", "0001-01-01T00:00:00.000000Z",)
+                        .replace("Z", "+00:00")
+                    ),
+                ).isoformat()
             self._origins[id_].update(document)
 
             if id_ not in self._origin_ids:
@@ -78,6 +92,8 @@ class InMemorySearch:
         with_visit: bool = False,
         visit_types: Optional[List[str]] = None,
         page_token: Optional[str] = None,
+        min_nb_visits: int = 0,
+        min_last_visit_date: str = "",
         limit: int = 50,
     ) -> PagedResult[MinimalOriginDict]:
         hits: Iterator[Dict[str, Any]] = (
@@ -129,6 +145,14 @@ class InMemorySearch:
 
         if with_visit:
             hits = filter(lambda o: o.get("has_visits"), hits)
+        if min_nb_visits:
+            hits = filter(lambda o: o.get("nb_visits", 0) >= min_nb_visits, hits)
+        if min_last_visit_date:
+            hits = filter(
+                lambda o: datetime.fromisoformat(o.get("last_visit_date", ""))
+                >= datetime.fromisoformat(min_last_visit_date),
+                hits,
+            )
 
         if visit_types is not None:
             visit_types_set = set(visit_types)
