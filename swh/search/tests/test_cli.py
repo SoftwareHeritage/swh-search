@@ -4,6 +4,7 @@
 # See top-level LICENSE file for more information
 
 import copy
+from datetime import datetime, timezone
 import tempfile
 
 from click.testing import CliRunner
@@ -179,6 +180,7 @@ def test__journal_client__origin_visit_status(
         {
             "origin": origin_foobar["url"],
             "visit": 1,
+            "date": datetime.now(tz=timezone.utc),
             "snapshot": None,
             "status": "full",
         }
