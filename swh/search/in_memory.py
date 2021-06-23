@@ -4,13 +4,17 @@
 # See top-level LICENSE file for more information
 
 from collections import defaultdict
-from datetime import datetime
-import itertools
+from datetime import datetime, timezone
 import re
 from typing import Any, Dict, Iterable, Iterator, List, Optional
 
 from swh.model.identifiers import origin_identifier
-from swh.search.interface import MinimalOriginDict, OriginDict, PagedResult
+from swh.search.interface import (
+    SORT_BY_OPTIONS,
+    MinimalOriginDict,
+    OriginDict,
+    PagedResult,
+)
 
 _words_regexp = re.compile(r"\w+")
 
@@ -31,6 +35,37 @@ def _dict_words_set(d):
         return words
 
     return extract(d, values)
+
+
+def _get_sorting_key(origin, field):
+    """Get value of the field from an origin for sorting origins.
+
+    Here field should be a member of SORT_BY_OPTIONS.
+    If "-" is present at the start of field then invert the value
+    in a way that it reverses the sorting order.
+    """
+    reversed = False
+    if field[0] == "-":
+        field = field[1:]
+        reversed = True
+
+    datetime_max = datetime.max.replace(tzinfo=timezone.utc)
+
+    if field in ["nb_visits"]:  # unlike other options, nb_visits is of type integer
+        if reversed:
+            return -origin.get(field, 0)
+        else:
+            return origin.get(field, 0)
+
+    elif field in SORT_BY_OPTIONS:
+        if reversed:
+            return datetime_max - datetime.fromisoformat(
+                origin.get(field, "0001-01-01T00:00:00Z").replace("Z", "+00:00")
+            )
+        else:
+            return datetime.fromisoformat(
+                origin.get(field, "0001-01-01T00:00:00Z").replace("Z", "+00:00")
+            )
 
 
 class InMemorySearch:
@@ -136,6 +171,7 @@ class InMemorySearch:
         min_last_eventful_visit_date: str = "",
         min_last_revision_date: str = "",
         min_last_release_date: str = "",
+        sort_by: List[str] = [],
         limit: int = 50,
     ) -> PagedResult[MinimalOriginDict]:
         hits: Iterator[Dict[str, Any]] = (
@@ -239,11 +275,15 @@ class InMemorySearch:
                 hits,
             )
 
+        hits_list = sorted(
+            hits, key=lambda o: tuple(_get_sorting_key(o, field) for field in sort_by),
+        )
+
         start_at_index = int(page_token) if page_token else 0
 
         origins = [
             {"url": hit["url"]}
-            for hit in itertools.islice(hits, start_at_index, start_at_index + limit)
+            for hit in hits_list[start_at_index : start_at_index + limit]
         ]
 
         if len(origins) == limit:

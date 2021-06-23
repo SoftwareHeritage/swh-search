@@ -409,6 +409,46 @@ class CommonSearchTest:
             date_type="last_revision_date"
         )
 
+    def test_origin_sort_by_search(self):
+
+        now = datetime.now(tz=timezone.utc).isoformat()
+        now_minus_5_hours = (
+            datetime.now(tz=timezone.utc) - timedelta(hours=5)
+        ).isoformat()
+        now_plus_5_hours = (
+            datetime.now(tz=timezone.utc) + timedelta(hours=5)
+        ).isoformat()
+
+        ORIGINS = [
+            {
+                "url": "http://foobar.1.com",
+                "nb_visits": 1,
+                "last_visit_date": now_minus_5_hours,
+            },
+            {"url": "http://foobar.2.com", "nb_visits": 2, "last_visit_date": now,},
+            {
+                "url": "http://foobar.3.com",
+                "nb_visits": 3,
+                "last_visit_date": now_plus_5_hours,
+            },
+        ]
+        self.search.origin_update(ORIGINS)
+        self.search.flush()
+
+        def _check_results(sort_by, origins):
+            page = self.search.origin_search(url_pattern="foobar", sort_by=sort_by)
+            results = [r["url"] for r in page.results]
+            assert results == [origin["url"] for origin in origins]
+
+        _check_results(["nb_visits"], ORIGINS)
+        _check_results(["-nb_visits"], ORIGINS[::-1])
+
+        _check_results(["last_visit_date"], ORIGINS)
+        _check_results(["-last_visit_date"], ORIGINS[::-1])
+
+        _check_results(["nb_visits", "-last_visit_date"], ORIGINS)
+        _check_results(["-last_visit_date", "nb_visits"], ORIGINS[::-1])
+
     def test_origin_update_with_no_visit_types(self):
         """
         Update an origin with visit types first then with no visit types,

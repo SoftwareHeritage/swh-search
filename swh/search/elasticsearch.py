@@ -13,7 +13,12 @@ import msgpack
 from swh.indexer import codemeta
 from swh.model import model
 from swh.model.identifiers import origin_identifier
-from swh.search.interface import MinimalOriginDict, OriginDict, PagedResult
+from swh.search.interface import (
+    SORT_BY_OPTIONS,
+    MinimalOriginDict,
+    OriginDict,
+    PagedResult,
+)
 from swh.search.metrics import send_metric, timed
 
 INDEX_NAME_PARAM = "index"
@@ -329,6 +334,7 @@ class ElasticSearch:
         min_last_revision_date: str = "",
         min_last_release_date: str = "",
         page_token: Optional[str] = None,
+        sort_by: List[str] = [],
         limit: int = 50,
     ) -> PagedResult[MinimalOriginDict]:
         query_clauses: List[Dict[str, Any]] = []
@@ -427,6 +433,21 @@ class ElasticSearch:
         if visit_types is not None:
             query_clauses.append({"terms": {"visit_types": visit_types}})
 
+        sorting_params = []
+
+        for field in sort_by:
+            order = "asc"
+            if field and field[0] == "-":
+                field = field[1:]
+                order = "desc"
+
+            if field in SORT_BY_OPTIONS:
+                sorting_params.append({field: order})
+
+        sorting_params.extend(
+            [{"_score": "desc"}, {"sha1": "asc"},]
+        )
+
         body = {
             "query": {
                 "bool": {
@@ -434,7 +455,7 @@ class ElasticSearch:
                     "must_not": [{"term": {"blocklisted": True}}],
                 }
             },
-            "sort": [{"_score": "desc"}, {"sha1": "asc"},],
+            "sort": sorting_params,
         }
 
         if page_token:

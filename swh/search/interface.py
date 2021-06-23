@@ -13,6 +13,14 @@ from swh.core.api.classes import PagedResult as CorePagedResult
 TResult = TypeVar("TResult")
 PagedResult = CorePagedResult[TResult, str]
 
+SORT_BY_OPTIONS = [
+    "nb_visits",
+    "last_visit_date",
+    "last_eventful_visit_date",
+    "last_revision_date",
+    "last_release_date",
+]
+
 
 class MinimalOriginDict(TypedDict):
     """Mandatory keys of an :class:`OriginDict`"""
@@ -64,6 +72,7 @@ class SearchInterface:
         min_last_eventful_visit_date: str = "",
         min_last_revision_date: str = "",
         min_last_release_date: str = "",
+        sort_by: List[str] = [],
         limit: int = 50,
     ) -> PagedResult[MinimalOriginDict]:
         """Searches for origins matching the `url_pattern`.
@@ -86,6 +95,11 @@ class SearchInterface:
                 last_revision_date on or after the provided date(ISO format)
             min_last_release_date: Filter origins that have
                 last_release_date on or after the provided date(ISO format)
+            sort_by: Sort results based on a list of fields mentioned in SORT_BY_OPTIONS
+                (nb_visits,last_visit_date, last_eventful_visit_date,
+                last_revision_date, last_release_date).
+                Return results in descending order if "-" is present at the beginning
+                otherwise in ascending order.
             limit: number of results to return
 
         Returns:
