@@ -194,74 +194,94 @@ class ElasticSearch:
         # painless script that will be executed when updating an origin document
         update_script = dedent(
             """
-        // backup current visit_types field value
-        List visit_types = ctx._source.getOrDefault("visit_types", []);
-        int nb_visits = ctx._source.getOrDefault("nb_visits", 0);
-        ZonedDateTime last_visit_date = ZonedDateTime.parse(ctx._source.getOrDefault("last_visit_date", "0001-01-01T00:00:00Z"));
-        String snapshot_id = ctx._source.getOrDefault("snapshot_id", "");
-        ZonedDateTime last_eventful_visit_date = ZonedDateTime.parse(ctx._source.getOrDefault("last_eventful_visit_date", "0001-01-01T00:00:00Z"));
-        ZonedDateTime last_revision_date = ZonedDateTime.parse(ctx._source.getOrDefault("last_revision_date", "0001-01-01T00:00:00Z"));
-        ZonedDateTime last_release_date = ZonedDateTime.parse(ctx._source.getOrDefault("last_release_date", "0001-01-01T00:00:00Z"));
+            // utility function to get and parse date
+            ZonedDateTime getDate(def ctx, String date_field) {
+                String default_date = "0001-01-01T00:00:00Z";
+                String date = ctx._source.getOrDefault(date_field, default_date);
+                return ZonedDateTime.parse(date);
+            }
 
-        // update origin document with new field values
-        ctx._source.putAll(params);
+            // backup current visit_types field value
+            List visit_types = ctx._source.getOrDefault("visit_types", []);
+            int nb_visits = ctx._source.getOrDefault("nb_visits", 0);
 
-        // restore previous visit types after visit_types field overriding
-        if (ctx._source.containsKey("visit_types")) {
-            for (int i = 0; i < visit_types.length; ++i) {
-                if (!ctx._source.visit_types.contains(visit_types[i])) {
-                    ctx._source.visit_types.add(visit_types[i]);
+            ZonedDateTime last_visit_date = getDate(ctx, "last_visit_date");
+
+            String snapshot_id = ctx._source.getOrDefault("snapshot_id", "");
+            ZonedDateTime last_eventful_visit_date =
+                getDate(ctx, "last_eventful_visit_date");
+            ZonedDateTime last_revision_date = getDate(ctx, "last_revision_date");
+            ZonedDateTime last_release_date = getDate(ctx, "last_release_date");
+
+            // update origin document with new field values
+            ctx._source.putAll(params);
+
+            // restore previous visit types after visit_types field overriding
+            if (ctx._source.containsKey("visit_types")) {
+                for (int i = 0; i < visit_types.length; ++i) {
+                    if (!ctx._source.visit_types.contains(visit_types[i])) {
+                        ctx._source.visit_types.add(visit_types[i]);
+                    }
                 }
             }
-        }
 
-        // Undo overwrite if incoming nb_visits is smaller
-        if (ctx._source.containsKey("nb_visits")) {
-            int incoming_nb_visits = ctx._source.getOrDefault("nb_visits", 0);
-            if(incoming_nb_visits < nb_visits){
-                ctx._source.nb_visits = nb_visits;
+            // Undo overwrite if incoming nb_visits is smaller
+            if (ctx._source.containsKey("nb_visits")) {
+                int incoming_nb_visits = ctx._source.getOrDefault("nb_visits", 0);
+                if(incoming_nb_visits < nb_visits){
+                    ctx._source.nb_visits = nb_visits;
+                }
             }
-        }
 
-        // Undo overwrite if incoming last_visit_date is older
-        if (ctx._source.containsKey("last_visit_date")) {
-            ZonedDateTime incoming_last_visit_date = ZonedDateTime.parse(ctx._source.getOrDefault("last_visit_date", "0001-01-01T00:00:00Z"));
-            int difference = incoming_last_visit_date.compareTo(last_visit_date); // returns -1, 0 or 1
-            if(difference < 0){
-                ctx._source.last_visit_date = last_visit_date;
+            // Undo overwrite if incoming last_visit_date is older
+            if (ctx._source.containsKey("last_visit_date")) {
+                ZonedDateTime incoming_last_visit_date = getDate(ctx, "last_visit_date");
+                int difference =
+                    // returns -1, 0 or 1
+                    incoming_last_visit_date.compareTo(last_visit_date);
+                if(difference < 0){
+                    ctx._source.last_visit_date = last_visit_date;
+                }
             }
-        }
 
-        // Undo update of last_eventful_date and snapshot_id if
-        // snapshot_id hasn't changed OR incoming_last_eventful_visit_date is older
-        if (ctx._source.containsKey("snapshot_id")) {
-            String incoming_snapshot_id = ctx._source.getOrDefault("snapshot_id", "");
-            ZonedDateTime incoming_last_eventful_visit_date = ZonedDateTime.parse(ctx._source.getOrDefault("last_eventful_visit_date", "0001-01-01T00:00:00Z"));
-            int difference = incoming_last_eventful_visit_date.compareTo(last_eventful_visit_date); // returns -1, 0 or 1
-            if(snapshot_id == incoming_snapshot_id || difference < 0){
-                ctx._source.snapshot_id = snapshot_id;
-                ctx._source.last_eventful_visit_date = last_eventful_visit_date;
+            // Undo update of last_eventful_date and snapshot_id if
+            // snapshot_id hasn't changed OR incoming_last_eventful_visit_date is older
+            if (ctx._source.containsKey("snapshot_id")) {
+                String incoming_snapshot_id = ctx._source.getOrDefault("snapshot_id", "");
+                ZonedDateTime incoming_last_eventful_visit_date =
+                    getDate(ctx, "last_eventful_visit_date");
+                int difference =
+                    // returns -1, 0 or 1
+                    incoming_last_eventful_visit_date.compareTo(last_eventful_visit_date);
+                if(snapshot_id == incoming_snapshot_id || difference < 0){
+                    ctx._source.snapshot_id = snapshot_id;
+                    ctx._source.last_eventful_visit_date = last_eventful_visit_date;
+                }
             }
-        }
 
-        // Undo overwrite if incoming last_revision_date is older
-        if (ctx._source.containsKey("last_revision_date")) {
-            ZonedDateTime incoming_last_revision_date = ZonedDateTime.parse(ctx._source.getOrDefault("last_revision_date", "0001-01-01T00:00:00Z"));
-            int difference = incoming_last_revision_date.compareTo(last_revision_date); // returns -1, 0 or 1
-            if(difference < 0){
-                ctx._source.last_revision_date = last_revision_date;
+            // Undo overwrite if incoming last_revision_date is older
+            if (ctx._source.containsKey("last_revision_date")) {
+                ZonedDateTime incoming_last_revision_date =
+                    getDate(ctx, "last_revision_date");
+                int difference =
+                    // returns -1, 0 or 1
+                    incoming_last_revision_date.compareTo(last_revision_date);
+                if(difference < 0){
+                    ctx._source.last_revision_date = last_revision_date;
+                }
             }
-        }
 
-        // Undo overwrite if incoming last_release_date is older
-        if (ctx._source.containsKey("last_release_date")) {
-            ZonedDateTime incoming_last_release_date = ZonedDateTime.parse(ctx._source.getOrDefault("last_release_date", "0001-01-01T00:00:00Z"));
-            int difference = incoming_last_release_date.compareTo(last_release_date); // returns -1, 0 or 1
-            if(difference < 0){
-                ctx._source.last_release_date = last_release_date;
+            // Undo overwrite if incoming last_release_date is older
+            if (ctx._source.containsKey("last_release_date")) {
+                ZonedDateTime incoming_last_release_date =
+                    getDate(ctx, "last_release_date");
+                // returns -1, 0 or 1
+                int difference = incoming_last_release_date.compareTo(last_release_date);
+                if(difference < 0){
+                    ctx._source.last_release_date = last_release_date;
+                }
             }
-        }
-        """  # noqa
+            """  # noqa
         )
 
         actions = [
