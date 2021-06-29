@@ -254,6 +254,8 @@ def test_journal_client_origin_metadata_from_journal():
                     "metadata": {
                         "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                         "description": "foo bar",
+                        "programmingLanguage": "python",
+                        "license": "MIT",
                     },
                 },
             ]
@@ -266,6 +268,8 @@ def test_journal_client_origin_metadata_from_journal():
                 "intrinsic_metadata": {
                     "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                     "description": "foo bar",
+                    "programmingLanguage": "python",
+                    "license": "MIT",
                 },
             },
         ]

@@ -333,6 +333,8 @@ class ElasticSearch:
         min_last_eventful_visit_date: str = "",
         min_last_revision_date: str = "",
         min_last_release_date: str = "",
+        programming_languages: List[str] = [],
+        licenses: List[str] = [],
         page_token: Optional[str] = None,
         sort_by: List[str] = [],
         limit: int = 50,
@@ -426,6 +428,57 @@ class ElasticSearch:
                         "last_release_date": {
                             "gte": min_last_release_date.replace("Z", "+00:00"),
                         }
+                    }
+                }
+            )
+
+        if licenses or programming_languages:
+
+            license_filters = []
+            for license in licenses:
+                license_filters.append(
+                    {
+                        "match": {
+                            (
+                                "intrinsic_metadata" ".http://schema.org/license" ".@id"
+                            ): license
+                        }
+                    }
+                )
+
+            language_filters = []
+            for language in programming_languages:
+                language_filters.append(
+                    {
+                        "match": {
+                            (
+                                "intrinsic_metadata"
+                                ".http://schema.org/programmingLanguage"
+                                ".@value"
+                            ): language
+                        }
+                    }
+                )
+
+            intrinsic_metadata_filters = [
+                {"bool": {"should": license_filters}},
+                {"bool": {"should": language_filters}},
+            ]
+
+            query_clauses.append(
+                {
+                    "nested": {
+                        "path": "intrinsic_metadata",
+                        "query": {"bool": {"must": intrinsic_metadata_filters,}},
+                        # "must" is equivalent to "AND"
+                        # "should" is equivalent to "OR"
+                        # Resulting origins must return true for the following:
+                        # (license_1 OR license_2 ..) AND (lang_1 OR lang_2 ..)
+                        # This is equivalent to {"must": [
+                        #   {"should": [license_1,license_2] },
+                        #   {"should": [lang_1,lang_2]}] }
+                        # ]}
+                        # Note: Usage of "bool" has been omitted for readability
                     }
                 }
             )

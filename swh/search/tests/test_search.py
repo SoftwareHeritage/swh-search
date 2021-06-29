@@ -449,6 +449,129 @@ class CommonSearchTest:
         _check_results(["nb_visits", "-last_visit_date"], ORIGINS)
         _check_results(["-last_visit_date", "nb_visits"], ORIGINS[::-1])
 
+    def test_origin_instrinsic_metadata_license_search(self):
+        ORIGINS = [
+            {
+                "url": "http://foobar.1.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "description": "foo bar",
+                    "license": "https://spdx.org/licenses/MIT",
+                },
+            },
+            {
+                "url": "http://foobar.2.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "description": "foo bar",
+                    "license": "BSD-3-Clause",
+                },
+            },
+        ]
+        self.search.origin_update(ORIGINS)
+        self.search.flush()
+
+        def _check_results(licenses, origin_indices):
+            page = self.search.origin_search(url_pattern="foobar", licenses=licenses)
+            results = [r["url"] for r in page.results]
+            assert sorted(results) == sorted(
+                [ORIGINS[i]["url"] for i in origin_indices]
+            )
+
+        _check_results(["MIT"], [0])
+        _check_results(["bsd"], [1])
+        _check_results(["mit", "3-Clause"], [0, 1])
+
+    def test_origin_instrinsic_metadata_programming_language_search(self):
+        ORIGINS = [
+            {
+                "url": "http://foobar.1.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "description": "foo bar",
+                    "programmingLanguage": "python",
+                },
+            },
+            {
+                "url": "http://foobar.2.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "description": "foo bar",
+                    "programmingLanguage": "javascript",
+                },
+            },
+        ]
+        self.search.origin_update(ORIGINS)
+        self.search.flush()
+
+        def _check_results(programming_languages, origin_indices):
+            page = self.search.origin_search(
+                url_pattern="foobar", programming_languages=programming_languages
+            )
+            results = [r["url"] for r in page.results]
+            assert sorted(results) == sorted(
+                [ORIGINS[i]["url"] for i in origin_indices]
+            )
+
+        _check_results(["python"], [0])
+        _check_results(["javascript"], [1])
+        _check_results(["python", "javascript"], [0, 1])
+
+    def test_origin_instrinsic_metadata_multiple_field_search(self):
+        ORIGINS = [
+            {
+                "url": "http://foobar.1.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "description": "foo bar 1",
+                    "programmingLanguage": "python",
+                    "license": "https://spdx.org/licenses/MIT",
+                },
+            },
+            {
+                "url": "http://foobar.2.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "description": "foo bar 2",
+                    "programmingLanguage": ["javascript", "html", "css"],
+                    "license": [
+                        "https://spdx.org/licenses/CC-BY-1.0",
+                        "https://spdx.org/licenses/Apache-1.0",
+                    ],
+                },
+            },
+            {
+                "url": "http://foobar.3.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "description": "foo bar 3",
+                    "programmingLanguage": ["Cpp", "c"],
+                    "license": "https://spdx.org/licenses/LGPL-2.0-only",
+                },
+            },
+        ]
+        self.search.origin_update(ORIGINS)
+        self.search.flush()
+
+        def _check_result(programming_languages, licenses, origin_indices):
+            page = self.search.origin_search(
+                url_pattern="foobar",
+                programming_languages=programming_languages,
+                licenses=licenses,
+            )
+            results = [r["url"] for r in page.results]
+            assert sorted(results) == sorted(
+                [ORIGINS[i]["url"] for i in origin_indices]
+            )
+
+        _check_result(["javascript"], ["CC"], [1])
+        _check_result(["css"], ["CC"], [1])
+        _check_result(["css"], ["CC", "apache"], [1])
+
+        _check_result(["python", "javascript"], ["MIT"], [0])
+
+        _check_result(["c", "python"], ["LGPL", "mit"], [2, 0])
+
     def test_origin_update_with_no_visit_types(self):
         """
         Update an origin with visit types first then with no visit types,

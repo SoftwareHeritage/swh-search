@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 import re
 from typing import Any, Dict, Iterable, Iterator, List, Optional
 
+from swh.indexer import codemeta
 from swh.model.identifiers import origin_identifier
 from swh.search.interface import (
     SORT_BY_OPTIONS,
@@ -35,6 +36,60 @@ def _dict_words_set(d):
         return words
 
     return extract(d, values)
+
+
+def _nested_get(nested_dict, nested_keys):
+    """Extracts values from deeply nested dictionary nested_dict
+    using the nested_keys and returns a list of all of the values
+    discovered in the process.
+
+
+    >>> nested_dict = [
+    ... {"name": [{"@value": {"first": "f1", "last": "l1"}}], "address": "XYZ"},
+    ... {"name": [{"@value": {"first": "f2", "last": "l2"}}], "address": "ABC"},
+    ... ]
+    >>> _nested_get(nested_dict, ["name", "@value", "last"])
+    ['l1', 'l2']
+    >>> _nested_get(nested_dict, ["address"])
+    ['XYZ', 'ABC']
+
+    It doesn't allow fetching intermediate values and returns "" for such cases
+    >>> _nested_get(nested_dict, ["name", "@value"])
+    ['', '']
+    """
+
+    def _nested_get_recursive(nested_dict, nested_keys):
+        try:
+            curr_obj = nested_dict
+            type_curr_obj = type(curr_obj)
+            for i, key in enumerate(nested_keys):
+                if key in curr_obj:
+                    curr_obj = curr_obj[key]
+                    type_curr_obj = type(curr_obj)
+                else:
+                    if type_curr_obj == list:
+                        curr_obj = [
+                            _nested_get_recursive(obj, nested_keys[i:])
+                            for obj in curr_obj
+                        ]
+                    # If value isn't a list or string or integer
+                    elif type_curr_obj != str and type_curr_obj != int:
+                        return ""
+
+            # If only one element is present in the list, take it out
+            # This ensures a flat array every time
+            if type_curr_obj == list and len(curr_obj) == 1:
+                curr_obj = curr_obj[0]
+
+            return curr_obj
+        except Exception:
+            return []
+
+    res = _nested_get_recursive(nested_dict, nested_keys)
+    if type(res) != list:
+        return [res]
+
+    return res
 
 
 def _get_sorting_key(origin, field):
@@ -153,6 +208,26 @@ class InMemorySearch:
                         .replace("Z", "+00:00")
                     ),
                 ).isoformat()
+            if "intrinsic_metadata" in document:
+                document["intrinsic_metadata"] = codemeta.expand(
+                    document["intrinsic_metadata"]
+                )
+
+                if len(document["intrinsic_metadata"]) != 1:
+                    continue
+
+                metadata = document["intrinsic_metadata"][0]
+                if "http://schema.org/license" in metadata:
+                    metadata["http://schema.org/license"] = [
+                        {"@id": license["@id"].lower()}
+                        for license in metadata["http://schema.org/license"]
+                    ]
+                if "http://schema.org/programmingLanguage" in metadata:
+                    metadata["http://schema.org/programmingLanguage"] = [
+                        {"@value": license["@value"].lower()}
+                        for license in metadata["http://schema.org/programmingLanguage"]
+                    ]
+
             self._origins[id_].update(document)
 
             if id_ not in self._origin_ids:
@@ -171,6 +246,8 @@ class InMemorySearch:
         min_last_eventful_visit_date: str = "",
         min_last_revision_date: str = "",
         min_last_release_date: str = "",
+        programming_languages: List[str] = [],
+        licenses: List[str] = [],
         sort_by: List[str] = [],
         limit: int = 50,
     ) -> PagedResult[MinimalOriginDict]:
@@ -265,6 +342,48 @@ class InMemorySearch:
                     )
                 )
                 >= datetime.fromisoformat(min_last_release_date),
+                hits,
+            )
+        if licenses:
+            METADATA_LICENSES = [
+                "intrinsic_metadata",
+                "http://schema.org/license",
+                "@id",
+            ]
+            licenses = [license_keyword.lower() for license_keyword in licenses]
+            hits = filter(
+                lambda o: any(
+                    # If any of the queried licenses are found, include the origin
+                    any(
+                        # returns True if queried_license_keyword is found
+                        # in any of the licenses of the origin
+                        queried_license_keyword in origin_license
+                        for origin_license in _nested_get(o, METADATA_LICENSES)
+                    )
+                    for queried_license_keyword in licenses
+                ),
+                hits,
+            )
+        if programming_languages:
+            METADATA_PROGRAMMING_LANGS = [
+                "intrinsic_metadata",
+                "http://schema.org/programmingLanguage",
+                "@value",
+            ]
+            programming_languages = [
+                lang_keyword.lower() for lang_keyword in programming_languages
+            ]
+            hits = filter(
+                lambda o: any(
+                    # If any of the queried languages are found, include the origin
+                    any(
+                        # returns True if queried_lang_keyword is found
+                        # in any of the langs of the origin
+                        queried_lang_keyword in origin_lang
+                        for origin_lang in _nested_get(o, METADATA_PROGRAMMING_LANGS)
+                    )
+                    for queried_lang_keyword in programming_languages
+                ),
                 hits,
             )
 

@@ -72,6 +72,8 @@ class SearchInterface:
         min_last_eventful_visit_date: str = "",
         min_last_revision_date: str = "",
         min_last_release_date: str = "",
+        programming_languages: List[str] = [],
+        licenses: List[str] = [],
         sort_by: List[str] = [],
         limit: int = 50,
     ) -> PagedResult[MinimalOriginDict]:
@@ -95,6 +97,10 @@ class SearchInterface:
                 last_revision_date on or after the provided date(ISO format)
             min_last_release_date: Filter origins that have
                 last_release_date on or after the provided date(ISO format)
+            licenses: Filter origins with licenses present in the given list
+                (based on instrinsic_metadata)
+            programming_languages: Filter origins with programming languages
+                present in the given list (based on instrinsic_metadata)
             sort_by: Sort results based on a list of fields mentioned in SORT_BY_OPTIONS
                 (nb_visits,last_visit_date, last_eventful_visit_date,
                 last_revision_date, last_release_date).
