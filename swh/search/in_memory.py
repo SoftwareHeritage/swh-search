@@ -15,6 +15,7 @@ from swh.search.interface import (
     MinimalOriginDict,
     OriginDict,
     PagedResult,
+    get_expansion,
 )
 
 _words_regexp = re.compile(r"\w+")
@@ -92,6 +93,10 @@ def _nested_get(nested_dict, nested_keys):
     return res
 
 
+def _tokenize(x):
+    return x.lower().replace(",", " ").split()
+
+
 def _get_sorting_key(origin, field):
     """Get value of the field from an origin for sorting origins.
 
@@ -103,6 +108,12 @@ def _get_sorting_key(origin, field):
     if field[0] == "-":
         field = field[1:]
         reversed = True
+
+    if field == "score":
+        if reversed:
+            return -origin.get(field, 0)
+        else:
+            return origin.get(field, 0)
 
     datetime_max = datetime.max.replace(tzinfo=timezone.utc)
 
@@ -240,15 +251,16 @@ class InMemorySearch:
         metadata_pattern: Optional[str] = None,
         with_visit: bool = False,
         visit_types: Optional[List[str]] = None,
-        page_token: Optional[str] = None,
         min_nb_visits: int = 0,
         min_last_visit_date: str = "",
         min_last_eventful_visit_date: str = "",
         min_last_revision_date: str = "",
         min_last_release_date: str = "",
-        programming_languages: List[str] = [],
-        licenses: List[str] = [],
-        sort_by: List[str] = [],
+        programming_languages: Optional[List[str]] = None,
+        licenses: Optional[List[str]] = None,
+        keywords: Optional[List[str]] = None,
+        sort_by: Optional[List[str]] = None,
+        page_token: Optional[str] = None,
         limit: int = 50,
     ) -> PagedResult[MinimalOriginDict]:
         hits: Iterator[Dict[str, Any]] = (
@@ -344,13 +356,9 @@ class InMemorySearch:
                 >= datetime.fromisoformat(min_last_release_date),
                 hits,
             )
+
         if licenses:
-            METADATA_LICENSES = [
-                "intrinsic_metadata",
-                "http://schema.org/license",
-                "@id",
-            ]
-            licenses = [license_keyword.lower() for license_keyword in licenses]
+            queried_licenses = [license_keyword.lower() for license_keyword in licenses]
             hits = filter(
                 lambda o: any(
                     # If any of the queried licenses are found, include the origin
@@ -358,19 +366,14 @@ class InMemorySearch:
                         # returns True if queried_license_keyword is found
                         # in any of the licenses of the origin
                         queried_license_keyword in origin_license
-                        for origin_license in _nested_get(o, METADATA_LICENSES)
+                        for origin_license in _nested_get(o, get_expansion("licenses"))
                     )
-                    for queried_license_keyword in licenses
+                    for queried_license_keyword in queried_licenses
                 ),
                 hits,
             )
         if programming_languages:
-            METADATA_PROGRAMMING_LANGS = [
-                "intrinsic_metadata",
-                "http://schema.org/programmingLanguage",
-                "@value",
-            ]
-            programming_languages = [
+            queried_programming_languages = [
                 lang_keyword.lower() for lang_keyword in programming_languages
             ]
             hits = filter(
@@ -380,12 +383,46 @@ class InMemorySearch:
                         # returns True if queried_lang_keyword is found
                         # in any of the langs of the origin
                         queried_lang_keyword in origin_lang
-                        for origin_lang in _nested_get(o, METADATA_PROGRAMMING_LANGS)
+                        for origin_lang in _nested_get(
+                            o, get_expansion("programming_languages")
+                        )
                     )
-                    for queried_lang_keyword in programming_languages
+                    for queried_lang_keyword in queried_programming_languages
                 ),
                 hits,
             )
+        if keywords:
+
+            if sort_by:
+                sort_by.append("-score")
+            else:
+                sort_by = ["-score"]
+
+            from copy import deepcopy
+
+            hits_list = deepcopy(list(hits))
+
+            for origin in hits_list:
+                origin_keywords = [
+                    _tokenize(keyword)
+                    for keyword in _nested_get(origin, get_expansion("keywords"))
+                ]
+                origin_descriptions = [
+                    _tokenize(description)
+                    for description in _nested_get(
+                        origin, get_expansion("descriptions")
+                    )
+                ]
+
+                for q_keyword in keywords:
+                    for origin_keyword_tokens in origin_keywords:
+                        if q_keyword in origin_keyword_tokens:
+                            origin["score"] = origin.get("score", 0) + 2
+                    for origin_description_token in origin_descriptions:
+                        if q_keyword in origin_description_token:
+                            origin["score"] = origin.get("score", 0) + 1
+
+            hits = (origin for origin in hits_list if origin.get("score", 0) > 0)
 
         if visit_types is not None:
             visit_types_set = set(visit_types)
@@ -394,9 +431,14 @@ class InMemorySearch:
                 hits,
             )
 
-        hits_list = sorted(
-            hits, key=lambda o: tuple(_get_sorting_key(o, field) for field in sort_by),
-        )
+        hits_list = list(hits)
+        if sort_by:
+            sort_by_list = list(sort_by)
+            hits_list.sort(
+                key=lambda o: tuple(
+                    _get_sorting_key(o, field) for field in sort_by_list
+                )
+            )
 
         start_at_index = int(page_token) if page_token else 0
 

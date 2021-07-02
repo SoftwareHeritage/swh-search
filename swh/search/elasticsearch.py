@@ -18,6 +18,7 @@ from swh.search.interface import (
     MinimalOriginDict,
     OriginDict,
     PagedResult,
+    get_expansion,
 )
 from swh.search.metrics import send_metric, timed
 
@@ -333,10 +334,11 @@ class ElasticSearch:
         min_last_eventful_visit_date: str = "",
         min_last_revision_date: str = "",
         min_last_release_date: str = "",
-        programming_languages: List[str] = [],
-        licenses: List[str] = [],
+        programming_languages: Optional[List[str]] = None,
+        licenses: Optional[List[str]] = None,
+        keywords: Optional[List[str]] = None,
+        sort_by: Optional[List[str]] = None,
         page_token: Optional[str] = None,
-        sort_by: List[str] = [],
         limit: int = 50,
     ) -> PagedResult[MinimalOriginDict]:
         query_clauses: List[Dict[str, Any]] = []
@@ -431,40 +433,46 @@ class ElasticSearch:
                     }
                 }
             )
+        if keywords:
+            query_clauses.append(
+                {
+                    "nested": {
+                        "path": "intrinsic_metadata",
+                        "query": {
+                            "multi_match": {
+                                "query": " ".join(keywords),
+                                "fields": [
+                                    get_expansion("keywords", ".") + "^2",
+                                    get_expansion("descriptions", "."),
+                                    # "^2" boosts an origin's score by 2x
+                                    # if it the queried keywords are
+                                    # found in its intrinsic_metadata.keywords
+                                ],
+                            }
+                        },
+                    }
+                }
+            )
 
-        if licenses or programming_languages:
+        intrinsic_metadata_filters: List[Dict[str, Dict]] = []
 
-            license_filters = []
+        if licenses:
+            license_filters: List[Dict[str, Any]] = []
             for license in licenses:
                 license_filters.append(
-                    {
-                        "match": {
-                            (
-                                "intrinsic_metadata" ".http://schema.org/license" ".@id"
-                            ): license
-                        }
-                    }
+                    {"match": {get_expansion("licenses", "."): license}}
                 )
+            intrinsic_metadata_filters.append({"bool": {"should": license_filters}})
 
-            language_filters = []
+        if programming_languages:
+            language_filters: List[Dict[str, Any]] = []
             for language in programming_languages:
                 language_filters.append(
-                    {
-                        "match": {
-                            (
-                                "intrinsic_metadata"
-                                ".http://schema.org/programmingLanguage"
-                                ".@value"
-                            ): language
-                        }
-                    }
+                    {"match": {get_expansion("programming_languages", "."): language}}
                 )
+            intrinsic_metadata_filters.append({"bool": {"should": language_filters}})
 
-            intrinsic_metadata_filters = [
-                {"bool": {"should": license_filters}},
-                {"bool": {"should": language_filters}},
-            ]
-
+        if intrinsic_metadata_filters:
             query_clauses.append(
                 {
                     "nested": {
@@ -488,14 +496,15 @@ class ElasticSearch:
 
         sorting_params = []
 
-        for field in sort_by:
-            order = "asc"
-            if field and field[0] == "-":
-                field = field[1:]
-                order = "desc"
+        if sort_by:
+            for field in sort_by:
+                order = "asc"
+                if field and field[0] == "-":
+                    field = field[1:]
+                    order = "desc"
 
-            if field in SORT_BY_OPTIONS:
-                sorting_params.append({field: order})
+                if field in SORT_BY_OPTIONS:
+                    sorting_params.append({field: order})
 
         sorting_params.extend(
             [{"_score": "desc"}, {"sha1": "asc"},]

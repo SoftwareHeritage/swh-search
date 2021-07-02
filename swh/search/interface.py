@@ -22,6 +22,28 @@ SORT_BY_OPTIONS = [
 ]
 
 
+def get_expansion(field, sep=None):
+    METADATA_FIELDS = {
+        "licenses": ["intrinsic_metadata", "http://schema.org/license", "@id"],
+        "programming_languages": [
+            "intrinsic_metadata",
+            "http://schema.org/programmingLanguage",
+            "@value",
+        ],
+        "keywords": ["intrinsic_metadata", "http://schema.org/keywords", "@value",],
+        "descriptions": [
+            "intrinsic_metadata",
+            "http://schema.org/description",
+            "@value",
+        ],
+    }
+
+    if sep:
+        return sep.join(METADATA_FIELDS[field])
+
+    return METADATA_FIELDS[field]
+
+
 class MinimalOriginDict(TypedDict):
     """Mandatory keys of an :class:`OriginDict`"""
 
@@ -66,26 +88,28 @@ class SearchInterface:
         metadata_pattern: Optional[str] = None,
         with_visit: bool = False,
         visit_types: Optional[List[str]] = None,
-        page_token: Optional[str] = None,
         min_nb_visits: int = 0,
         min_last_visit_date: str = "",
         min_last_eventful_visit_date: str = "",
         min_last_revision_date: str = "",
         min_last_release_date: str = "",
-        programming_languages: List[str] = [],
-        licenses: List[str] = [],
-        sort_by: List[str] = [],
+        programming_languages: Optional[List[str]] = None,
+        licenses: Optional[List[str]] = None,
+        keywords: Optional[List[str]] = None,
+        sort_by: Optional[List[str]] = None,
+        page_token: Optional[str] = None,
         limit: int = 50,
     ) -> PagedResult[MinimalOriginDict]:
         """Searches for origins matching the `url_pattern`.
 
         Args:
             url_pattern: Part of the URL to search for
+            metadata_pattern: Keywords to look for
+            (across all the fields of intrinsic_metadata)
             with_visit: Whether origins with no visit are to be
               filtered out
             visit_types: Only origins having any of the provided visit types
                 (e.g. git, svn, pypi) will be returned
-            page_token: Opaque value used for pagination
             min_nb_visits: Filter origins that have number of visits >=
                 the provided value
             min_last_visit_date: Filter origins that have
@@ -97,15 +121,18 @@ class SearchInterface:
                 last_revision_date on or after the provided date(ISO format)
             min_last_release_date: Filter origins that have
                 last_release_date on or after the provided date(ISO format)
-            licenses: Filter origins with licenses present in the given list
-                (based on instrinsic_metadata)
             programming_languages: Filter origins with programming languages
                 present in the given list (based on instrinsic_metadata)
+            licenses: Filter origins with licenses present in the given list
+                (based on instrinsic_metadata)
+            keywords: Filter origins having description/keywords
+                (extracted from instrinsic_metadata) that match given values
             sort_by: Sort results based on a list of fields mentioned in SORT_BY_OPTIONS
                 (nb_visits,last_visit_date, last_eventful_visit_date,
                 last_revision_date, last_release_date).
                 Return results in descending order if "-" is present at the beginning
                 otherwise in ascending order.
+            page_token: Opaque value used for pagination
             limit: number of results to return
 
         Returns:

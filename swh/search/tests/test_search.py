@@ -409,6 +409,71 @@ class CommonSearchTest:
             date_type="last_revision_date"
         )
 
+    def test_origin_keywords_search(self):
+        ORIGINS = [
+            {
+                "url": "http://foobar.1.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "description": "Django is a backend framework for applications",
+                    "keywords": "django,backend,server,web,framework",
+                },
+            },
+            {
+                "url": "http://foobar.2.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "description": "Native Android applications are fast",
+                    "keywords": "android,mobile,ui",
+                },
+            },
+            {
+                "url": "http://foobar.3.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "description": "React framework helps you build web applications",
+                    "keywords": "react,web,ui",
+                },
+            },
+        ]
+        self.search.origin_update(ORIGINS)
+        self.search.flush()
+
+        def _check_results(keywords, origin_indices, sorting=False):
+            page = self.search.origin_search(url_pattern="foobar", keywords=keywords)
+            results = [r["url"] for r in page.results]
+            if sorting:
+                assert sorted(results) == sorted(
+                    [ORIGINS[index]["url"] for index in origin_indices]
+                )
+            else:
+                assert results == [ORIGINS[index]["url"] for index in origin_indices]
+
+        _check_results(["build"], [2])
+
+        _check_results(["web"], [2, 0])
+        _check_results(["ui"], [1, 2])
+
+        # Following tests ensure that boosts work properly
+
+        # Baseline: "applications" is common in all origin descriptions
+        _check_results(["applications"], [1, 0, 2], True)
+
+        # ORIGINS[0] has 'framework' in: keyword + description
+        # ORIGINS[2] has 'framework' in: description
+        # ORIGINS[1] has 'framework' in: None
+        _check_results(["framework", "applications"], [0, 2, 1])
+
+        # ORIGINS[1] has 'ui' in: keyword
+        # ORIGINS[1] has 'ui' in: keyword
+        # ORIGINS[0] has 'ui' in: None
+        _check_results(["applications", "ui"], [1, 2, 0])
+
+        # ORIGINS[2] has 'web' in: keyword + description
+        # ORIGINS[0] has 'web' in: keyword
+        # ORIGINS[1] has 'web' in: None
+        _check_results(["web", "applications"], [2, 0, 1])
+
     def test_origin_sort_by_search(self):
 
         now = datetime.now(tz=timezone.utc).isoformat()
