@@ -14,7 +14,7 @@ module.exports = grammar({
     name: 'swh_search_ql',
 
     rules: {
-        query: $ => $.filters,
+        query: $ => seq($.filters, optional($.sortBy) ,optional($.limit)),
 
         filters: $ => choice(
             prec.left(PRECEDENCE.and,
@@ -37,14 +37,30 @@ module.exports = grammar({
             $.filter
         ),
 
+        sortBy: $ => seq($.sortByField, $.sortByOp, $.sortByVal),
+        sortByField: $ => token('sort_by'),
+        sortByOp: $ => $.equalOp,
+        sortByVal: $ => createArray(optionalWrapWith($.sortByOptions, ["'", '"'])),
+        sortByOptions: $ => seq(optional(token.immediate('-')) ,choice(
+            'visits',
+            'last_visit',
+            'last_eventful_visit',
+            'last_revision',
+            'last_release',
+            'created',
+            'modified',
+            'published'
+        )),
+
+        limit: $ => seq('limit', $.equalOp, $.number),
+
         filter: $ => choice(
             $.patternFilter,
             $.booleanFilter,
             $.numericFilter,
             $.boundedListFilter,
             $.unboundedListFilter,
-            $.dateFilter,
-            $.limitFilter
+            $.dateFilter
         ),
 
         patternFilter: $ => seq($.patternField, $.patternOp, $.patternVal),
@@ -62,7 +78,7 @@ module.exports = grammar({
         numericOp: $ => $.rangeOp,
         numberVal: $ => $.number,
 
-        boundedListFilter: $ => choice($.visitTypeFilter, $.sortByFilter),
+        boundedListFilter: $ => choice($.visitTypeFilter),
 
         visitTypeFilter: $ => seq($.visitTypeField, $.visitTypeOp, $.visitTypeVal),
         visitTypeField: $ => token(choice('visit_type')),
@@ -83,7 +99,7 @@ module.exports = grammar({
             "tar"
         ), // TODO: fetch this list dynamically from other swh services?
 
-        sortByFilter: $ => seq($.sortByField, $.sortByOp, $.sortByVal),
+        sortBy: $ => seq($.sortByField, $.sortByOp, $.sortByVal),
         sortByField: $ => token(choice('sort_by')),
         sortByOp: $ => $.equalOp,
         sortByVal: $ => createArray(optionalWrapWith($.sortByOptions, ["'", '"'])),
@@ -119,7 +135,7 @@ module.exports = grammar({
         dateOp: $ => $.rangeOp,
         dateVal: $ => $.isoDateTime,
 
-        limitFilter: $ => seq('limit', $.equalOp, $.number),
+        limit: $ => seq('limit', $.equalOp, $.number),
 
 
         rangeOp: $ => token(choice('<', '<=', '=', '!=', '>=', '>')),
