@@ -409,6 +409,74 @@ class CommonSearchTest:
             date_type="last_revision_date"
         )
 
+    def test_origin_instrinsic_metadata_dates_filter_sorting_search(self):
+
+        DATE_0 = "1999-06-28"
+        DATE_1 = "2001-02-13"
+        DATE_2 = "2005-10-02"
+
+        ORIGINS = [
+            {
+                "url": "http://foobar.0.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "dateCreated": DATE_0,
+                    "dateModified": DATE_1,
+                    "datePublished": DATE_2,
+                },
+            },
+            {
+                "url": "http://foobar.1.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "dateCreated": DATE_1,
+                    "dateModified": DATE_2,
+                    "datePublished": DATE_2,
+                },
+            },
+            {
+                "url": "http://foobar.2.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "dateCreated": DATE_2,
+                    "dateModified": DATE_2,
+                    "datePublished": DATE_2,
+                },
+            },
+        ]
+        self.search.origin_update(ORIGINS)
+        self.search.flush()
+
+        def _check_results(origin_indices, sort_results=True, **kwargs):
+            page = self.search.origin_search(url_pattern="foobar", **kwargs)
+            results = [r["url"] for r in page.results]
+            if sort_results:
+                assert sorted(results) == sorted(
+                    [ORIGINS[index]["url"] for index in origin_indices]
+                )
+            else:
+                assert results == [ORIGINS[index]["url"] for index in origin_indices]
+
+        _check_results(min_date_created=DATE_0, origin_indices=[0, 1, 2])
+        _check_results(min_date_created=DATE_1, origin_indices=[1, 2])
+        _check_results(min_date_created=DATE_2, origin_indices=[2])
+
+        _check_results(min_date_modified=DATE_0, origin_indices=[0, 1, 2])
+        _check_results(min_date_modified=DATE_1, origin_indices=[0, 1, 2])
+        _check_results(min_date_modified=DATE_2, origin_indices=[1, 2])
+
+        _check_results(min_date_published=DATE_0, origin_indices=[0, 1, 2])
+        _check_results(min_date_published=DATE_1, origin_indices=[0, 1, 2])
+        _check_results(min_date_published=DATE_2, origin_indices=[0, 1, 2])
+
+        # Sorting
+        _check_results(
+            sort_by=["-date_created"], origin_indices=[2, 1, 0], sort_results=False
+        )
+        _check_results(
+            sort_by=["date_created"], origin_indices=[0, 1, 2], sort_results=False
+        )
+
     def test_origin_keywords_search(self):
         ORIGINS = [
             {
@@ -914,13 +982,15 @@ class CommonSearchTest:
         )
         self.search.flush()
 
-        actual_page = self.search.origin_search(metadata_pattern="2021")
+        actual_page = self.search.origin_search(metadata_pattern="1.0")
         assert actual_page.next_page_token is None
         assert actual_page.results == [origin1]
 
-        actual_page = self.search.origin_search(metadata_pattern="long time ago")
+        actual_page = self.search.origin_search(metadata_pattern="long")
         assert actual_page.next_page_token is None
-        assert actual_page.results == [origin2]
+        assert (
+            actual_page.results == []
+        )  # "%Y-%m-%d" not followed, so value is rejected
 
         actual_page = self.search.origin_search(metadata_pattern="true")
         assert actual_page.next_page_token is None

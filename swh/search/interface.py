@@ -19,29 +19,10 @@ SORT_BY_OPTIONS = [
     "last_eventful_visit_date",
     "last_revision_date",
     "last_release_date",
+    "date_created",
+    "date_modified",
+    "date_published",
 ]
-
-
-def get_expansion(field, sep=None):
-    METADATA_FIELDS = {
-        "licenses": ["intrinsic_metadata", "http://schema.org/license", "@id"],
-        "programming_languages": [
-            "intrinsic_metadata",
-            "http://schema.org/programmingLanguage",
-            "@value",
-        ],
-        "keywords": ["intrinsic_metadata", "http://schema.org/keywords", "@value",],
-        "descriptions": [
-            "intrinsic_metadata",
-            "http://schema.org/description",
-            "@value",
-        ],
-    }
-
-    if sep:
-        return sep.join(METADATA_FIELDS[field])
-
-    return METADATA_FIELDS[field]
 
 
 class MinimalOriginDict(TypedDict):
@@ -93,6 +74,9 @@ class SearchInterface:
         min_last_eventful_visit_date: str = "",
         min_last_revision_date: str = "",
         min_last_release_date: str = "",
+        min_date_created: str = "",
+        min_date_modified: str = "",
+        min_date_published: str = "",
         programming_languages: Optional[List[str]] = None,
         licenses: Optional[List[str]] = None,
         keywords: Optional[List[str]] = None,
@@ -121,6 +105,12 @@ class SearchInterface:
                 last_revision_date on or after the provided date(ISO format)
             min_last_release_date: Filter origins that have
                 last_release_date on or after the provided date(ISO format)
+            min_date_created: Filter origins that have date_created
+                from intrinsic_metadata on or after the provided date
+            min_date_modified: Filter origins that have date_modified
+                from intrinsic_metadata on or after the provided date
+            min_date_published: Filter origins that have date_published
+                from intrinsic_metadata on or after the provided date
             programming_languages: Filter origins with programming languages
                 present in the given list (based on instrinsic_metadata)
             licenses: Filter origins with licenses present in the given list

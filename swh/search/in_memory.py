@@ -15,8 +15,8 @@ from swh.search.interface import (
     MinimalOriginDict,
     OriginDict,
     PagedResult,
-    get_expansion,
 )
+from swh.search.utils import get_expansion, is_date_parsable
 
 _words_regexp = re.compile(r"\w+")
 
@@ -39,7 +39,7 @@ def _dict_words_set(d):
     return extract(d, values)
 
 
-def _nested_get(nested_dict, nested_keys):
+def _nested_get(nested_dict, nested_keys, default=""):
     """Extracts values from deeply nested dictionary nested_dict
     using the nested_keys and returns a list of all of the values
     discovered in the process.
@@ -75,7 +75,7 @@ def _nested_get(nested_dict, nested_keys):
                         ]
                     # If value isn't a list or string or integer
                     elif type_curr_obj != str and type_curr_obj != int:
-                        return ""
+                        return default
 
             # If only one element is present in the list, take it out
             # This ensures a flat array every time
@@ -84,7 +84,7 @@ def _nested_get(nested_dict, nested_keys):
 
             return curr_obj
         except Exception:
-            return []
+            return default
 
     res = _nested_get_recursive(nested_dict, nested_keys)
     if type(res) != list:
@@ -109,29 +109,41 @@ def _get_sorting_key(origin, field):
         field = field[1:]
         reversed = True
 
+    DATETIME_OBJ_MAX = datetime.max.replace(tzinfo=timezone.utc)
+    DATETIME_MIN = "0001-01-01T00:00:00Z"
+
+    DATE_OBJ_MAX = datetime.max
+    DATE_MIN = "0001-01-01"
+
     if field == "score":
         if reversed:
             return -origin.get(field, 0)
         else:
             return origin.get(field, 0)
 
-    datetime_max = datetime.max.replace(tzinfo=timezone.utc)
+    if field in ["date_created", "date_modified", "date_published"]:
+        date = datetime.strptime(
+            _nested_get(origin, get_expansion(field), DATE_MIN)[0], "%Y-%m-%d"
+        )
+        if reversed:
+            return DATE_OBJ_MAX - date
+        else:
+            return date
 
-    if field in ["nb_visits"]:  # unlike other options, nb_visits is of type integer
+    elif field in ["nb_visits"]:  # unlike other options, nb_visits is of type integer
         if reversed:
             return -origin.get(field, 0)
         else:
             return origin.get(field, 0)
 
     elif field in SORT_BY_OPTIONS:
+        date = datetime.fromisoformat(
+            origin.get(field, DATETIME_MIN).replace("Z", "+00:00")
+        )
         if reversed:
-            return datetime_max - datetime.fromisoformat(
-                origin.get(field, "0001-01-01T00:00:00Z").replace("Z", "+00:00")
-            )
+            return DATETIME_OBJ_MAX - date
         else:
-            return datetime.fromisoformat(
-                origin.get(field, "0001-01-01T00:00:00Z").replace("Z", "+00:00")
-            )
+            return date
 
 
 class InMemorySearch:
@@ -220,9 +232,18 @@ class InMemorySearch:
                     ),
                 ).isoformat()
             if "intrinsic_metadata" in document:
-                document["intrinsic_metadata"] = codemeta.expand(
-                    document["intrinsic_metadata"]
-                )
+                intrinsic_metadata = document["intrinsic_metadata"]
+
+                for date_field in ["dateCreated", "dateModified", "datePublished"]:
+                    if date_field in intrinsic_metadata:
+                        date = intrinsic_metadata[date_field]
+
+                        # If date{Created,Modified,Published} value isn't parsable
+                        # It gets rejected and isn't stored (unlike other fields)
+                        if not is_date_parsable(date):
+                            intrinsic_metadata.pop(date_field)
+
+                document["intrinsic_metadata"] = codemeta.expand(intrinsic_metadata)
 
                 if len(document["intrinsic_metadata"]) != 1:
                     continue
@@ -256,6 +277,9 @@ class InMemorySearch:
         min_last_eventful_visit_date: str = "",
         min_last_revision_date: str = "",
         min_last_release_date: str = "",
+        min_date_created: str = "",
+        min_date_modified: str = "",
+        min_date_published: str = "",
         programming_languages: Optional[List[str]] = None,
         licenses: Optional[List[str]] = None,
         keywords: Optional[List[str]] = None,
@@ -354,6 +378,34 @@ class InMemorySearch:
                     )
                 )
                 >= datetime.fromisoformat(min_last_release_date),
+                hits,
+            )
+
+        if min_date_created:
+            min_date_created_obj = datetime.strptime(min_date_created, "%Y-%m-%d")
+            hits = filter(
+                lambda o: datetime.strptime(
+                    _nested_get(o, get_expansion("date_created"))[0], "%Y-%m-%d"
+                )
+                >= min_date_created_obj,
+                hits,
+            )
+        if min_date_modified:
+            min_date_modified_obj = datetime.strptime(min_date_modified, "%Y-%m-%d")
+            hits = filter(
+                lambda o: datetime.strptime(
+                    _nested_get(o, get_expansion("date_modified"))[0], "%Y-%m-%d"
+                )
+                >= min_date_modified_obj,
+                hits,
+            )
+        if min_date_published:
+            min_date_published_obj = datetime.strptime(min_date_published, "%Y-%m-%d")
+            hits = filter(
+                lambda o: datetime.strptime(
+                    _nested_get(o, get_expansion("date_published"))[0], "%Y-%m-%d"
+                )
+                >= min_date_published_obj,
                 hits,
             )
 

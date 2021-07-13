@@ -18,9 +18,9 @@ from swh.search.interface import (
     MinimalOriginDict,
     OriginDict,
     PagedResult,
-    get_expansion,
 )
 from swh.search.metrics import send_metric, timed
+from swh.search.utils import get_expansion, is_date_parsable
 
 INDEX_NAME_PARAM = "index"
 READ_ALIAS_PARAM = "read_alias"
@@ -66,23 +66,29 @@ def _sanitize_origin(origin):
     # * {"author": [{"@value": "Jane Doe"}]}
     # and JSON-LD expansion will convert them all to the last one.
     if "intrinsic_metadata" in res:
-        res["intrinsic_metadata"] = codemeta.expand(res["intrinsic_metadata"])
+        intrinsic_metadata = res["intrinsic_metadata"]
+        for date_field in ["dateCreated", "dateModified", "datePublished"]:
+            if date_field in intrinsic_metadata:
+                date = intrinsic_metadata[date_field]
+
+                # If date{Created,Modified,Published} value isn't parsable
+                # It gets rejected and isn't stored (unlike other fields)
+                if not is_date_parsable(date):
+                    intrinsic_metadata.pop(date_field)
+
+        res["intrinsic_metadata"] = codemeta.expand(intrinsic_metadata)
 
     return res
 
 
 def token_encode(index_to_tokenize: Dict[bytes, Any]) -> str:
-    """Tokenize as string an index page result from a search
-
-    """
+    """Tokenize as string an index page result from a search"""
     page_token = base64.b64encode(msgpack.dumps(index_to_tokenize))
     return page_token.decode()
 
 
 def token_decode(page_token: str) -> Dict[bytes, Any]:
-    """Read the page_token
-
-    """
+    """Read the page_token"""
     return msgpack.loads(base64.b64decode(page_token.encode()), raw=True)
 
 
@@ -177,7 +183,20 @@ class ElasticSearch:
                                 # don't bother indexing tokens in these URIs, as the
                                 # are used as namespaces
                                 "type": "keyword",
-                            }
+                            },
+                            "http://schema": {
+                                "properties": {
+                                    "org/dateCreated": {
+                                        "properties": {"@value": {"type": "date",}}
+                                    },
+                                    "org/dateModified": {
+                                        "properties": {"@value": {"type": "date",}}
+                                    },
+                                    "org/datePublished": {
+                                        "properties": {"@value": {"type": "date",}}
+                                    },
+                                }
+                            },
                         },
                     },
                     # Has this origin been taken down?
@@ -334,6 +353,9 @@ class ElasticSearch:
         min_last_eventful_visit_date: str = "",
         min_last_revision_date: str = "",
         min_last_release_date: str = "",
+        min_date_created: str = "",
+        min_date_modified: str = "",
+        min_date_published: str = "",
         programming_languages: Optional[List[str]] = None,
         licenses: Optional[List[str]] = None,
         keywords: Optional[List[str]] = None,
@@ -378,6 +400,8 @@ class ElasticSearch:
                                 # Searches on all fields of the intrinsic_metadata dict,
                                 # recursively.
                                 "fields": ["intrinsic_metadata.*"],
+                                # date{Created,Modified,Published} are of type date
+                                "lenient": True,
                             }
                         },
                     }
@@ -472,6 +496,33 @@ class ElasticSearch:
                 )
             intrinsic_metadata_filters.append({"bool": {"should": language_filters}})
 
+        if min_date_created:
+            intrinsic_metadata_filters.append(
+                {
+                    "range": {
+                        get_expansion("date_created", "."): {"gte": min_date_created,}
+                    }
+                }
+            )
+        if min_date_modified:
+            intrinsic_metadata_filters.append(
+                {
+                    "range": {
+                        get_expansion("date_modified", "."): {"gte": min_date_modified,}
+                    }
+                }
+            )
+        if min_date_published:
+            intrinsic_metadata_filters.append(
+                {
+                    "range": {
+                        get_expansion("date_published", "."): {
+                            "gte": min_date_published,
+                        }
+                    }
+                }
+            )
+
         if intrinsic_metadata_filters:
             query_clauses.append(
                 {
@@ -494,7 +545,7 @@ class ElasticSearch:
         if visit_types is not None:
             query_clauses.append({"terms": {"visit_types": visit_types}})
 
-        sorting_params = []
+        sorting_params: List[Dict[str, Any]] = []
 
         if sort_by:
             for field in sort_by:
@@ -503,7 +554,16 @@ class ElasticSearch:
                     field = field[1:]
                     order = "desc"
 
-                if field in SORT_BY_OPTIONS:
+                if field in ["date_created", "date_modified", "date_published"]:
+                    sorting_params.append(
+                        {
+                            get_expansion(field, "."): {
+                                "nested_path": "intrinsic_metadata",
+                                "order": order,
+                            }
+                        }
+                    )
+                elif field in SORT_BY_OPTIONS:
                     sorting_params.append({field: order})
 
         sorting_params.extend(
