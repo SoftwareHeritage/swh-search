@@ -4,3 +4,4 @@
 click
 elasticsearch>=7.0.0,<8.0.0
 typing-extensions
+tree_sitter
