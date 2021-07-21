@@ -201,17 +201,6 @@ def test_journal_client_origin_from_journal():
     )
 
 
-def test_journal_client_origin_visit_from_journal():
-    search_mock = MagicMock()
-
-    worker_fn = functools.partial(process_journal_objects, search=search_mock,)
-
-    worker_fn({"origin_visit": [{"origin": "http://foobar.baz", "type": "git"},]})
-    search_mock.origin_update.assert_called_once_with(
-        [{"url": "http://foobar.baz", "visit_types": ["git"]},]
-    )
-
-
 def test_journal_client_origin_visit_status_from_journal(storage):
     search_mock = MagicMock()
 
@@ -226,6 +215,7 @@ def test_journal_client_origin_visit_status_from_journal(storage):
                 {
                     "origin": "http://foobar.baz",
                     "status": "full",
+                    "type": "git",
                     "visit": 5,
                     "date": current_datetime,
                     "snapshot": SNAPSHOTS[0].id,
@@ -237,6 +227,7 @@ def test_journal_client_origin_visit_status_from_journal(storage):
         [
             {
                 "url": "http://foobar.baz",
+                "visit_types": ["git"],
                 "has_visits": True,
                 "nb_visits": 5,
                 "snapshot_id": SNAPSHOTS[0].id.hex(),
@@ -250,12 +241,13 @@ def test_journal_client_origin_visit_status_from_journal(storage):
 
     search_mock.reset_mock()
 
-    # non-full visits are filtered out
+    # non-full visits only set the visit_types attribute
     worker_fn(
         {
             "origin_visit_status": [
                 {
                     "origin": "http://foobar.baz",
+                    "type": "git",
                     "status": "partial",
                     "visit": 5,
                     "date": current_datetime,
@@ -263,7 +255,9 @@ def test_journal_client_origin_visit_status_from_journal(storage):
             ]
         }
     )
-    search_mock.origin_update.assert_not_called()
+    search_mock.origin_update.assert_called_once_with(
+        [{"url": "http://foobar.baz", "visit_types": ["git"]}]
+    )
 
 
 def test_journal_client_origin_metadata_from_journal():

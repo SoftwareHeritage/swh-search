@@ -112,57 +112,6 @@ def test__journal_client__origin(
     assert actual_page.results == []
 
 
-def test__journal_client__origin_visit(
-    swh_search, elasticsearch_host, kafka_prefix: str, kafka_server
-):
-    """Tests the re-indexing when origin_batch_size*task_batch_size is a
-    divisor of nb_origins."""
-    origin_foobar = {"url": "http://baz.foobar"}
-    producer = Producer(
-        {
-            "bootstrap.servers": kafka_server,
-            "client.id": "test search origin visit producer",
-            "acks": "all",
-        }
-    )
-    topic = f"{kafka_prefix}.origin_visit"
-    value = value_to_kafka({"origin": origin_foobar["url"], "type": "git"})
-    producer.produce(topic=topic, key=b"bogus-origin-visit", value=value)
-
-    journal_objects_config = JOURNAL_OBJECTS_CONFIG_TEMPLATE.format(
-        broker=kafka_server, prefix=kafka_prefix, group_id="test-consumer"
-    )
-    result = invoke(
-        False,
-        [
-            "journal-client",
-            "objects",
-            "--stop-after-objects",
-            "1",
-            "--object-type",
-            "origin_visit",
-        ],
-        journal_objects_config,
-        elasticsearch_host=elasticsearch_host,
-    )
-
-    # Check the output
-    expected_output = "Processed 1 messages.\nDone.\n"
-    assert result.exit_code == 0, result.output
-    assert result.output == expected_output
-
-    swh_search.flush()
-
-    actual_page = swh_search.origin_search(url_pattern="foobar", with_visit=False)
-    assert actual_page.next_page_token is None
-    assert actual_page.results == [origin_foobar]
-
-    # Not considered visited unless the visit is full
-    actual_page = swh_search.origin_search(url_pattern="foobar", with_visit=True)
-    assert actual_page.next_page_token is None
-    assert actual_page.results == []
-
-
 def test__journal_client__origin_visit_status(
     swh_search, elasticsearch_host, kafka_prefix: str, kafka_server
 ):
@@ -182,6 +131,7 @@ def test__journal_client__origin_visit_status(
         {
             "origin": origin_foobar["url"],
             "visit": 1,
+            "type": "git",
             "date": datetime.now(tz=timezone.utc),
             "snapshot": None,
             "status": "full",

@@ -12,7 +12,6 @@ from swh.storage.interface import StorageInterface
 
 EXPECTED_MESSAGE_TYPES = {
     "origin",
-    "origin_visit",
     "origin_visit_status",
     "origin_intrinsic_metadata",
 }
@@ -68,9 +67,6 @@ def process_journal_objects(messages, *, search, storage=None):
     if "origin" in messages:
         process_origins(messages["origin"], search)
 
-    if "origin_visit" in messages:
-        process_origin_visits(messages["origin_visit"], search)
-
     if "origin_visit_status" in messages:
         process_origin_visit_statuses(messages["origin_visit_status"], search, storage)
 
@@ -84,24 +80,6 @@ def process_origins(origins, search):
     search.origin_update(origins)
 
 
-def process_origin_visits(visits, search):
-    logging.debug("processing origin visits %r", visits)
-
-    search.origin_update(
-        [
-            {
-                "url": (
-                    visit["origin"]
-                    if isinstance(visit["origin"], str)
-                    else visit["origin"]["url"]
-                ),
-                "visit_types": [visit["type"]],
-            }
-            for visit in visits
-        ]
-    )
-
-
 def process_origin_visit_statuses(visit_statuses, search, storage):
     logging.debug("processing origin visit statuses %r", visit_statuses)
 
@@ -110,22 +88,29 @@ def process_origin_visit_statuses(visit_statuses, search, storage):
             return None
         return b.hex()
 
-    full_visit_status = [
-        {
+    processed_visit_statuses = []
+    for visit_status in visit_statuses:
+        processed_status = {
             "url": visit_status["origin"],
-            "has_visits": True,
-            "nb_visits": visit_status["visit"],
-            "snapshot_id": hexify(visit_status.get("snapshot")),
-            "last_visit_date": visit_status["date"].isoformat(),
-            "last_eventful_visit_date": visit_status["date"].isoformat(),
-            **fetch_last_revision_release_date(visit_status.get("snapshot"), storage),
+            "visit_types": [visit_status["type"]],
         }
-        for visit_status in visit_statuses
-        if visit_status["status"] == "full"
-    ]
+        if visit_status["status"] == "full":
+            processed_status.update(
+                {
+                    "has_visits": True,
+                    "nb_visits": visit_status["visit"],
+                    "snapshot_id": hexify(visit_status.get("snapshot")),
+                    "last_visit_date": visit_status["date"].isoformat(),
+                    "last_eventful_visit_date": visit_status["date"].isoformat(),
+                    **fetch_last_revision_release_date(
+                        visit_status.get("snapshot"), storage
+                    ),
+                }
+            )
+        processed_visit_statuses.append(processed_status)
 
-    if full_visit_status:
-        search.origin_update(full_visit_status)
+    if processed_visit_statuses:
+        search.origin_update(processed_visit_statuses)
 
 
 def process_origin_intrinsic_metadata(origin_metadata, search):
