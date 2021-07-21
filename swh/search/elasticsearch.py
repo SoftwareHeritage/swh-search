@@ -13,8 +13,14 @@ import msgpack
 from swh.indexer import codemeta
 from swh.model import model
 from swh.model.identifiers import origin_identifier
-from swh.search.interface import MinimalOriginDict, OriginDict, PagedResult
+from swh.search.interface import (
+    SORT_BY_OPTIONS,
+    MinimalOriginDict,
+    OriginDict,
+    PagedResult,
+)
 from swh.search.metrics import send_metric, timed
+from swh.search.utils import get_expansion, is_date_parsable
 
 INDEX_NAME_PARAM = "index"
 READ_ALIAS_PARAM = "read_alias"
@@ -38,7 +44,11 @@ def _sanitize_origin(origin):
         "intrinsic_metadata",
         "visit_types",
         "nb_visits",
+        "snapshot_id",
         "last_visit_date",
+        "last_eventful_visit_date",
+        "last_revision_date",
+        "last_release_date",
     ):
         if field_name in origin:
             res[field_name] = origin.pop(field_name)
@@ -56,23 +66,29 @@ def _sanitize_origin(origin):
     # * {"author": [{"@value": "Jane Doe"}]}
     # and JSON-LD expansion will convert them all to the last one.
     if "intrinsic_metadata" in res:
-        res["intrinsic_metadata"] = codemeta.expand(res["intrinsic_metadata"])
+        intrinsic_metadata = res["intrinsic_metadata"]
+        for date_field in ["dateCreated", "dateModified", "datePublished"]:
+            if date_field in intrinsic_metadata:
+                date = intrinsic_metadata[date_field]
+
+                # If date{Created,Modified,Published} value isn't parsable
+                # It gets rejected and isn't stored (unlike other fields)
+                if not is_date_parsable(date):
+                    intrinsic_metadata.pop(date_field)
+
+        res["intrinsic_metadata"] = codemeta.expand(intrinsic_metadata)
 
     return res
 
 
 def token_encode(index_to_tokenize: Dict[bytes, Any]) -> str:
-    """Tokenize as string an index page result from a search
-
-    """
+    """Tokenize as string an index page result from a search"""
     page_token = base64.b64encode(msgpack.dumps(index_to_tokenize))
     return page_token.decode()
 
 
 def token_decode(page_token: str) -> Dict[bytes, Any]:
-    """Read the page_token
-
-    """
+    """Read the page_token"""
     return msgpack.loads(base64.b64decode(page_token.encode()), raw=True)
 
 
@@ -155,7 +171,11 @@ class ElasticSearch:
                     # used to filter out origins that were never visited
                     "has_visits": {"type": "boolean",},
                     "nb_visits": {"type": "integer"},
+                    "snapshot_id": {"type": "keyword"},
                     "last_visit_date": {"type": "date"},
+                    "last_eventful_visit_date": {"type": "date"},
+                    "last_release_date": {"type": "date"},
+                    "last_revision_date": {"type": "date"},
                     "intrinsic_metadata": {
                         "type": "nested",
                         "properties": {
@@ -163,7 +183,20 @@ class ElasticSearch:
                                 # don't bother indexing tokens in these URIs, as the
                                 # are used as namespaces
                                 "type": "keyword",
-                            }
+                            },
+                            "http://schema": {
+                                "properties": {
+                                    "org/dateCreated": {
+                                        "properties": {"@value": {"type": "date",}}
+                                    },
+                                    "org/dateModified": {
+                                        "properties": {"@value": {"type": "date",}}
+                                    },
+                                    "org/datePublished": {
+                                        "properties": {"@value": {"type": "date",}}
+                                    },
+                                }
+                            },
                         },
                     },
                     # Has this origin been taken down?
@@ -186,40 +219,94 @@ class ElasticSearch:
         # painless script that will be executed when updating an origin document
         update_script = dedent(
             """
-        // backup current visit_types field value
-        List visit_types = ctx._source.getOrDefault("visit_types", []);
-        int nb_visits = ctx._source.getOrDefault("nb_visits", 0);
-        ZonedDateTime last_visit_date = ZonedDateTime.parse(ctx._source.getOrDefault("last_visit_date", "0001-01-01T00:00:00Z"));
+            // utility function to get and parse date
+            ZonedDateTime getDate(def ctx, String date_field) {
+                String default_date = "0001-01-01T00:00:00Z";
+                String date = ctx._source.getOrDefault(date_field, default_date);
+                return ZonedDateTime.parse(date);
+            }
 
-        // update origin document with new field values
-        ctx._source.putAll(params);
+            // backup current visit_types field value
+            List visit_types = ctx._source.getOrDefault("visit_types", []);
+            int nb_visits = ctx._source.getOrDefault("nb_visits", 0);
 
-        // restore previous visit types after visit_types field overriding
-        if (ctx._source.containsKey("visit_types")) {
-            for (int i = 0; i < visit_types.length; ++i) {
-                if (!ctx._source.visit_types.contains(visit_types[i])) {
-                    ctx._source.visit_types.add(visit_types[i]);
+            ZonedDateTime last_visit_date = getDate(ctx, "last_visit_date");
+
+            String snapshot_id = ctx._source.getOrDefault("snapshot_id", "");
+            ZonedDateTime last_eventful_visit_date =
+                getDate(ctx, "last_eventful_visit_date");
+            ZonedDateTime last_revision_date = getDate(ctx, "last_revision_date");
+            ZonedDateTime last_release_date = getDate(ctx, "last_release_date");
+
+            // update origin document with new field values
+            ctx._source.putAll(params);
+
+            // restore previous visit types after visit_types field overriding
+            if (ctx._source.containsKey("visit_types")) {
+                for (int i = 0; i < visit_types.length; ++i) {
+                    if (!ctx._source.visit_types.contains(visit_types[i])) {
+                        ctx._source.visit_types.add(visit_types[i]);
+                    }
                 }
             }
-        }
 
-        // Undo overwrite if incoming nb_visits is smaller
-        if (ctx._source.containsKey("nb_visits")) {
-            int incoming_nb_visits = ctx._source.getOrDefault("nb_visits", 0);
-            if(incoming_nb_visits < nb_visits){
-                ctx._source.nb_visits = nb_visits;
+            // Undo overwrite if incoming nb_visits is smaller
+            if (ctx._source.containsKey("nb_visits")) {
+                int incoming_nb_visits = ctx._source.getOrDefault("nb_visits", 0);
+                if(incoming_nb_visits < nb_visits){
+                    ctx._source.nb_visits = nb_visits;
+                }
             }
-        }
 
-        // Undo overwrite if incoming last_visit_date is older
-        if (ctx._source.containsKey("last_visit_date")) {
-            ZonedDateTime incoming_last_visit_date = ZonedDateTime.parse(ctx._source.getOrDefault("last_visit_date", "0001-01-01T00:00:00Z"));
-            int difference = incoming_last_visit_date.compareTo(last_visit_date); // returns -1, 0 or 1
-            if(difference < 0){
-                ctx._source.last_visit_date = last_visit_date;
+            // Undo overwrite if incoming last_visit_date is older
+            if (ctx._source.containsKey("last_visit_date")) {
+                ZonedDateTime incoming_last_visit_date = getDate(ctx, "last_visit_date");
+                int difference =
+                    // returns -1, 0 or 1
+                    incoming_last_visit_date.compareTo(last_visit_date);
+                if(difference < 0){
+                    ctx._source.last_visit_date = last_visit_date;
+                }
             }
-        }
-        """  # noqa
+
+            // Undo update of last_eventful_date and snapshot_id if
+            // snapshot_id hasn't changed OR incoming_last_eventful_visit_date is older
+            if (ctx._source.containsKey("snapshot_id")) {
+                String incoming_snapshot_id = ctx._source.getOrDefault("snapshot_id", "");
+                ZonedDateTime incoming_last_eventful_visit_date =
+                    getDate(ctx, "last_eventful_visit_date");
+                int difference =
+                    // returns -1, 0 or 1
+                    incoming_last_eventful_visit_date.compareTo(last_eventful_visit_date);
+                if(snapshot_id == incoming_snapshot_id || difference < 0){
+                    ctx._source.snapshot_id = snapshot_id;
+                    ctx._source.last_eventful_visit_date = last_eventful_visit_date;
+                }
+            }
+
+            // Undo overwrite if incoming last_revision_date is older
+            if (ctx._source.containsKey("last_revision_date")) {
+                ZonedDateTime incoming_last_revision_date =
+                    getDate(ctx, "last_revision_date");
+                int difference =
+                    // returns -1, 0 or 1
+                    incoming_last_revision_date.compareTo(last_revision_date);
+                if(difference < 0){
+                    ctx._source.last_revision_date = last_revision_date;
+                }
+            }
+
+            // Undo overwrite if incoming last_release_date is older
+            if (ctx._source.containsKey("last_release_date")) {
+                ZonedDateTime incoming_last_release_date =
+                    getDate(ctx, "last_release_date");
+                // returns -1, 0 or 1
+                int difference = incoming_last_release_date.compareTo(last_release_date);
+                if(difference < 0){
+                    ctx._source.last_release_date = last_release_date;
+                }
+            }
+            """  # noqa
         )
 
         actions = [
@@ -263,6 +350,16 @@ class ElasticSearch:
         visit_types: Optional[List[str]] = None,
         min_nb_visits: int = 0,
         min_last_visit_date: str = "",
+        min_last_eventful_visit_date: str = "",
+        min_last_revision_date: str = "",
+        min_last_release_date: str = "",
+        min_date_created: str = "",
+        min_date_modified: str = "",
+        min_date_published: str = "",
+        programming_languages: Optional[List[str]] = None,
+        licenses: Optional[List[str]] = None,
+        keywords: Optional[List[str]] = None,
+        sort_by: Optional[List[str]] = None,
         page_token: Optional[str] = None,
         limit: int = 50,
     ) -> PagedResult[MinimalOriginDict]:
@@ -303,6 +400,8 @@ class ElasticSearch:
                                 # Searches on all fields of the intrinsic_metadata dict,
                                 # recursively.
                                 "fields": ["intrinsic_metadata.*"],
+                                # date{Created,Modified,Published} are of type date
+                                "lenient": True,
                             }
                         },
                     }
@@ -328,9 +427,148 @@ class ElasticSearch:
                     }
                 }
             )
+        if min_last_eventful_visit_date:
+            query_clauses.append(
+                {
+                    "range": {
+                        "last_eventful_visit_date": {
+                            "gte": min_last_eventful_visit_date.replace("Z", "+00:00"),
+                        }
+                    }
+                }
+            )
+        if min_last_revision_date:
+            query_clauses.append(
+                {
+                    "range": {
+                        "last_revision_date": {
+                            "gte": min_last_revision_date.replace("Z", "+00:00"),
+                        }
+                    }
+                }
+            )
+        if min_last_release_date:
+            query_clauses.append(
+                {
+                    "range": {
+                        "last_release_date": {
+                            "gte": min_last_release_date.replace("Z", "+00:00"),
+                        }
+                    }
+                }
+            )
+        if keywords:
+            query_clauses.append(
+                {
+                    "nested": {
+                        "path": "intrinsic_metadata",
+                        "query": {
+                            "multi_match": {
+                                "query": " ".join(keywords),
+                                "fields": [
+                                    get_expansion("keywords", ".") + "^2",
+                                    get_expansion("descriptions", "."),
+                                    # "^2" boosts an origin's score by 2x
+                                    # if it the queried keywords are
+                                    # found in its intrinsic_metadata.keywords
+                                ],
+                            }
+                        },
+                    }
+                }
+            )
+
+        intrinsic_metadata_filters: List[Dict[str, Dict]] = []
+
+        if licenses:
+            license_filters: List[Dict[str, Any]] = []
+            for license in licenses:
+                license_filters.append(
+                    {"match": {get_expansion("licenses", "."): license}}
+                )
+            intrinsic_metadata_filters.append({"bool": {"should": license_filters}})
+
+        if programming_languages:
+            language_filters: List[Dict[str, Any]] = []
+            for language in programming_languages:
+                language_filters.append(
+                    {"match": {get_expansion("programming_languages", "."): language}}
+                )
+            intrinsic_metadata_filters.append({"bool": {"should": language_filters}})
+
+        if min_date_created:
+            intrinsic_metadata_filters.append(
+                {
+                    "range": {
+                        get_expansion("date_created", "."): {"gte": min_date_created,}
+                    }
+                }
+            )
+        if min_date_modified:
+            intrinsic_metadata_filters.append(
+                {
+                    "range": {
+                        get_expansion("date_modified", "."): {"gte": min_date_modified,}
+                    }
+                }
+            )
+        if min_date_published:
+            intrinsic_metadata_filters.append(
+                {
+                    "range": {
+                        get_expansion("date_published", "."): {
+                            "gte": min_date_published,
+                        }
+                    }
+                }
+            )
+
+        if intrinsic_metadata_filters:
+            query_clauses.append(
+                {
+                    "nested": {
+                        "path": "intrinsic_metadata",
+                        "query": {"bool": {"must": intrinsic_metadata_filters,}},
+                        # "must" is equivalent to "AND"
+                        # "should" is equivalent to "OR"
+                        # Resulting origins must return true for the following:
+                        # (license_1 OR license_2 ..) AND (lang_1 OR lang_2 ..)
+                        # This is equivalent to {"must": [
+                        #   {"should": [license_1,license_2] },
+                        #   {"should": [lang_1,lang_2]}] }
+                        # ]}
+                        # Note: Usage of "bool" has been omitted for readability
+                    }
+                }
+            )
 
         if visit_types is not None:
             query_clauses.append({"terms": {"visit_types": visit_types}})
+
+        sorting_params: List[Dict[str, Any]] = []
+
+        if sort_by:
+            for field in sort_by:
+                order = "asc"
+                if field and field[0] == "-":
+                    field = field[1:]
+                    order = "desc"
+
+                if field in ["date_created", "date_modified", "date_published"]:
+                    sorting_params.append(
+                        {
+                            get_expansion(field, "."): {
+                                "nested_path": "intrinsic_metadata",
+                                "order": order,
+                            }
+                        }
+                    )
+                elif field in SORT_BY_OPTIONS:
+                    sorting_params.append({field: order})
+
+        sorting_params.extend(
+            [{"_score": "desc"}, {"sha1": "asc"},]
+        )
 
         body = {
             "query": {
@@ -339,7 +577,7 @@ class ElasticSearch:
                     "must_not": [{"term": {"blocklisted": True}}],
                 }
             },
-            "sort": [{"_score": "desc"}, {"sha1": "asc"},],
+            "sort": sorting_params,
         }
 
         if page_token:
