@@ -72,6 +72,7 @@ def test__journal_client__origin(
     value = value_to_kafka(origin_foobar_baz)
     topic = f"{kafka_prefix}.origin"
     producer.produce(topic=topic, key=b"bogus-origin", value=value)
+    producer.flush()
 
     journal_objects_config = JOURNAL_OBJECTS_CONFIG_TEMPLATE.format(
         broker=kafka_server, prefix=kafka_prefix, group_id="test-consumer"
@@ -138,6 +139,7 @@ def test__journal_client__origin_visit_status(
         }
     )
     producer.produce(topic=topic, key=b"bogus-origin-visit-status", value=value)
+    producer.flush()
 
     journal_objects_config = JOURNAL_OBJECTS_CONFIG_TEMPLATE.format(
         broker=kafka_server, prefix=kafka_prefix, group_id="test-consumer"
@@ -210,6 +212,7 @@ def test__journal_client__origin_intrinsic_metadata(
     topic = f"{kafka_prefix}.origin_intrinsic_metadata"
     value = value_to_kafka(origin_intrinsic_metadata)
     producer.produce(topic=topic, key=b"bogus-origin-intrinsic-metadata", value=value)
+    producer.flush()
 
     journal_objects_config = JOURNAL_OBJECTS_CONFIG_TEMPLATE.format(
         broker=kafka_server, prefix=kafka_prefix, group_id="test-consumer"
