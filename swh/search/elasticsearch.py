@@ -4,6 +4,8 @@
 # See top-level LICENSE file for more information
 
 import base64
+import logging
+import pprint
 from textwrap import dedent
 from typing import Any, Dict, Iterable, Iterator, List, Optional
 
@@ -21,6 +23,8 @@ from swh.search.interface import (
 )
 from swh.search.metrics import send_metric, timed
 from swh.search.utils import get_expansion, is_date_parsable
+
+logger = logging.getLogger(__name__)
 
 INDEX_NAME_PARAM = "index"
 READ_ALIAS_PARAM = "read_alias"
@@ -587,6 +591,10 @@ class ElasticSearch:
                 page_token_content[b"score"],
                 page_token_content[b"sha1"].decode("ascii"),
             ]
+
+        if logger.isEnabledFor(logging.DEBUG):
+            formatted_body = pprint.pformat(body)
+            logger.debug("Search query body: %s", formatted_body)
 
         res = self._backend.search(
             index=self._get_origin_read_alias(), body=body, size=limit
