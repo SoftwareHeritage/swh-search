@@ -42,6 +42,7 @@ swh/search/interface.py
 swh/search/journal_client.py
 swh/search/metrics.py
 swh/search/py.typed
+swh/search/utils.py
 swh/search/api/__init__.py
 swh/search/api/client.py
 swh/search/api/server.py

@@ -74,6 +74,7 @@ def journal_client_objects(ctx, stop_after_objects, object_type, prefix):
     import functools
 
     from swh.journal.client import get_journal_client
+    from swh.storage import get_storage
 
     from . import get_search
     from .journal_client import process_journal_objects
@@ -95,8 +96,11 @@ def journal_client_objects(ctx, stop_after_objects, object_type, prefix):
 
     client = get_journal_client(cls="kafka", **journal_cfg,)
     search = get_search(**config["search"])
+    storage = get_storage(**config["storage"])
 
-    worker_fn = functools.partial(process_journal_objects, search=search,)
+    worker_fn = functools.partial(
+        process_journal_objects, search=search, storage=storage
+    )
     nb_messages = 0
     try:
         nb_messages = client.process(worker_fn)

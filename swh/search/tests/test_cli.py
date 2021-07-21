@@ -27,6 +27,8 @@ search:
             index: test
             read_alias: test-read
             write_alias: test-write
+storage:
+    cls: memory
 """
 
 JOURNAL_OBJECTS_CONFIG_TEMPLATE = """

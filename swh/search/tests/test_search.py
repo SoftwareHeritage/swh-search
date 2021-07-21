@@ -4,6 +4,7 @@
 # See top-level LICENSE file for more information
 
 from datetime import datetime, timedelta, timezone
+from itertools import permutations
 
 from hypothesis import given, settings, strategies
 import pytest
@@ -257,6 +258,452 @@ class CommonSearchTest:
 
         _check_min_last_visit_date(now_plus_5_hours)  # Works for =
         _check_min_last_visit_date(now)  # Works for <
+
+    def test_journal_client_origin_visit_status_permutation(self):
+        NOW = datetime.now(tz=timezone.utc).isoformat()
+        NOW_MINUS_5_HOURS = (
+            datetime.now(tz=timezone.utc) - timedelta(hours=5)
+        ).isoformat()
+        NOW_PLUS_5_HOURS = (
+            datetime.now(tz=timezone.utc) + timedelta(hours=5)
+        ).isoformat()
+
+        VISIT_STATUSES = [
+            {
+                "url": "http://foobar.baz",
+                "snapshot_id": "SNAPSHOT_1",
+                "last_eventful_visit_date": NOW,
+            },
+            {
+                "url": "http://foobar.baz",
+                "snapshot_id": "SNAPSHOT_1",
+                "last_eventful_visit_date": NOW_MINUS_5_HOURS,
+            },
+            {
+                "url": "http://foobar.baz",
+                "snapshot_id": "SNAPSHOT_2",
+                "last_eventful_visit_date": NOW_PLUS_5_HOURS,
+            },
+        ]
+
+        for visit_statuses in permutations(VISIT_STATUSES, len(VISIT_STATUSES)):
+            self.search.origin_update(visit_statuses)
+            self.search.flush()
+            origin_url = "http://foobar.baz"
+            actual_page = self.search.origin_search(
+                url_pattern=origin_url, min_last_eventful_visit_date=NOW_PLUS_5_HOURS,
+            )
+            assert actual_page.next_page_token is None
+            results = [r["url"] for r in actual_page.results]
+            expected_results = [origin_url]
+            assert sorted(results) == sorted(expected_results)
+
+            self.reset()
+
+    def test_origin_last_eventful_visit_date_update_search(self):
+        origin_url = "http://foobar.baz"
+        self.search.origin_update([{"url": origin_url}])
+        self.search.flush()
+
+        def _update_last_eventful_visit_date(snapshot_id, last_eventful_visit_date):
+            self.search.origin_update(
+                [
+                    {
+                        "url": origin_url,
+                        "snapshot_id": snapshot_id,
+                        "last_eventful_visit_date": last_eventful_visit_date,
+                    }
+                ]
+            )
+            self.search.flush()
+
+        def _check_min_last_eventful_visit_date(min_last_eventful_visit_date):
+            actual_page = self.search.origin_search(
+                url_pattern=origin_url,
+                min_last_eventful_visit_date=min_last_eventful_visit_date,
+            )
+            assert actual_page.next_page_token is None
+            results = [r["url"] for r in actual_page.results]
+            expected_results = [origin_url]
+            assert sorted(results) == sorted(expected_results)
+
+        now = datetime.now(tz=timezone.utc).isoformat()
+        now_minus_5_hours = (
+            datetime.now(tz=timezone.utc) - timedelta(hours=5)
+        ).isoformat()
+        now_plus_5_hours = (
+            datetime.now(tz=timezone.utc) + timedelta(hours=5)
+        ).isoformat()
+
+        snapshot_1 = "SNAPSHOT_1"
+        snapshot_2 = "SNAPSHOT_2"
+
+        _update_last_eventful_visit_date(snapshot_1, now)
+
+        _check_min_last_eventful_visit_date(now)  # Works for =
+        _check_min_last_eventful_visit_date(now_minus_5_hours)  # Works for <
+        with pytest.raises(AssertionError):
+            _check_min_last_eventful_visit_date(now_plus_5_hours)  # Fails for >
+
+        _update_last_eventful_visit_date(
+            snapshot_1, now_plus_5_hours
+        )  # Revisit(not eventful) same origin
+
+        _check_min_last_eventful_visit_date(
+            now
+        )  # Should remain the same because recent visit wasn't eventful
+        with pytest.raises(AssertionError):
+            _check_min_last_eventful_visit_date(now_plus_5_hours)
+
+        _update_last_eventful_visit_date(
+            snapshot_2, now_plus_5_hours
+        )  # Revisit(eventful) same origin
+        _check_min_last_eventful_visit_date(now_plus_5_hours)  # Works for =
+        _check_min_last_eventful_visit_date(now)  # Works for <
+
+    def _test_origin_last_revision_release_date_update_search(self, date_type):
+        origin_url = "http://foobar.baz"
+        self.search.origin_update([{"url": origin_url}])
+        self.search.flush()
+
+        def _update_last_revision_release_date(date):
+            self.search.origin_update([{"url": origin_url, date_type: date,}])
+            self.search.flush()
+
+        def _check_min_last_revision_release_date(date):
+            actual_page = self.search.origin_search(
+                url_pattern=origin_url, **{f"min_{date_type}": date},
+            )
+            assert actual_page.next_page_token is None
+            results = [r["url"] for r in actual_page.results]
+            expected_results = [origin_url]
+            assert sorted(results) == sorted(expected_results)
+
+        now = datetime.now(tz=timezone.utc).isoformat()
+        now_minus_5_hours = (
+            datetime.now(tz=timezone.utc) - timedelta(hours=5)
+        ).isoformat()
+        now_plus_5_hours = (
+            datetime.now(tz=timezone.utc) + timedelta(hours=5)
+        ).isoformat()
+
+        _update_last_revision_release_date(now)
+
+        _check_min_last_revision_release_date(now)
+        _check_min_last_revision_release_date(now_minus_5_hours)
+        with pytest.raises(AssertionError):
+            _check_min_last_revision_release_date(now_plus_5_hours)
+
+        _update_last_revision_release_date(now_plus_5_hours)
+
+        _check_min_last_revision_release_date(now_plus_5_hours)
+        _check_min_last_revision_release_date(now)
+
+    def test_origin_last_revision_date_update_search(self):
+        self._test_origin_last_revision_release_date_update_search(
+            date_type="last_revision_date"
+        )
+
+    def test_origin_last_release_date_update_search(self):
+        self._test_origin_last_revision_release_date_update_search(
+            date_type="last_revision_date"
+        )
+
+    def test_origin_instrinsic_metadata_dates_filter_sorting_search(self):
+
+        DATE_0 = "1999-06-28"
+        DATE_1 = "2001-02-13"
+        DATE_2 = "2005-10-02"
+
+        ORIGINS = [
+            {
+                "url": "http://foobar.0.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "dateCreated": DATE_0,
+                    "dateModified": DATE_1,
+                    "datePublished": DATE_2,
+                },
+            },
+            {
+                "url": "http://foobar.1.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "dateCreated": DATE_1,
+                    "dateModified": DATE_2,
+                    "datePublished": DATE_2,
+                },
+            },
+            {
+                "url": "http://foobar.2.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "dateCreated": DATE_2,
+                    "dateModified": DATE_2,
+                    "datePublished": DATE_2,
+                },
+            },
+        ]
+        self.search.origin_update(ORIGINS)
+        self.search.flush()
+
+        def _check_results(origin_indices, sort_results=True, **kwargs):
+            page = self.search.origin_search(url_pattern="foobar", **kwargs)
+            results = [r["url"] for r in page.results]
+            if sort_results:
+                assert sorted(results) == sorted(
+                    [ORIGINS[index]["url"] for index in origin_indices]
+                )
+            else:
+                assert results == [ORIGINS[index]["url"] for index in origin_indices]
+
+        _check_results(min_date_created=DATE_0, origin_indices=[0, 1, 2])
+        _check_results(min_date_created=DATE_1, origin_indices=[1, 2])
+        _check_results(min_date_created=DATE_2, origin_indices=[2])
+
+        _check_results(min_date_modified=DATE_0, origin_indices=[0, 1, 2])
+        _check_results(min_date_modified=DATE_1, origin_indices=[0, 1, 2])
+        _check_results(min_date_modified=DATE_2, origin_indices=[1, 2])
+
+        _check_results(min_date_published=DATE_0, origin_indices=[0, 1, 2])
+        _check_results(min_date_published=DATE_1, origin_indices=[0, 1, 2])
+        _check_results(min_date_published=DATE_2, origin_indices=[0, 1, 2])
+
+        # Sorting
+        _check_results(
+            sort_by=["-date_created"], origin_indices=[2, 1, 0], sort_results=False
+        )
+        _check_results(
+            sort_by=["date_created"], origin_indices=[0, 1, 2], sort_results=False
+        )
+
+    def test_origin_keywords_search(self):
+        ORIGINS = [
+            {
+                "url": "http://foobar.1.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "description": "Django is a backend framework for applications",
+                    "keywords": "django,backend,server,web,framework",
+                },
+            },
+            {
+                "url": "http://foobar.2.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "description": "Native Android applications are fast",
+                    "keywords": "android,mobile,ui",
+                },
+            },
+            {
+                "url": "http://foobar.3.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "description": "React framework helps you build web applications",
+                    "keywords": "react,web,ui",
+                },
+            },
+        ]
+        self.search.origin_update(ORIGINS)
+        self.search.flush()
+
+        def _check_results(keywords, origin_indices, sorting=False):
+            page = self.search.origin_search(url_pattern="foobar", keywords=keywords)
+            results = [r["url"] for r in page.results]
+            if sorting:
+                assert sorted(results) == sorted(
+                    [ORIGINS[index]["url"] for index in origin_indices]
+                )
+            else:
+                assert results == [ORIGINS[index]["url"] for index in origin_indices]
+
+        _check_results(["build"], [2])
+
+        _check_results(["web"], [2, 0])
+        _check_results(["ui"], [1, 2])
+
+        # Following tests ensure that boosts work properly
+
+        # Baseline: "applications" is common in all origin descriptions
+        _check_results(["applications"], [1, 0, 2], True)
+
+        # ORIGINS[0] has 'framework' in: keyword + description
+        # ORIGINS[2] has 'framework' in: description
+        # ORIGINS[1] has 'framework' in: None
+        _check_results(["framework", "applications"], [0, 2, 1])
+
+        # ORIGINS[1] has 'ui' in: keyword
+        # ORIGINS[1] has 'ui' in: keyword
+        # ORIGINS[0] has 'ui' in: None
+        _check_results(["applications", "ui"], [1, 2, 0])
+
+        # ORIGINS[2] has 'web' in: keyword + description
+        # ORIGINS[0] has 'web' in: keyword
+        # ORIGINS[1] has 'web' in: None
+        _check_results(["web", "applications"], [2, 0, 1])
+
+    def test_origin_sort_by_search(self):
+
+        now = datetime.now(tz=timezone.utc).isoformat()
+        now_minus_5_hours = (
+            datetime.now(tz=timezone.utc) - timedelta(hours=5)
+        ).isoformat()
+        now_plus_5_hours = (
+            datetime.now(tz=timezone.utc) + timedelta(hours=5)
+        ).isoformat()
+
+        ORIGINS = [
+            {
+                "url": "http://foobar.1.com",
+                "nb_visits": 1,
+                "last_visit_date": now_minus_5_hours,
+            },
+            {"url": "http://foobar.2.com", "nb_visits": 2, "last_visit_date": now,},
+            {
+                "url": "http://foobar.3.com",
+                "nb_visits": 3,
+                "last_visit_date": now_plus_5_hours,
+            },
+        ]
+        self.search.origin_update(ORIGINS)
+        self.search.flush()
+
+        def _check_results(sort_by, origins):
+            page = self.search.origin_search(url_pattern="foobar", sort_by=sort_by)
+            results = [r["url"] for r in page.results]
+            assert results == [origin["url"] for origin in origins]
+
+        _check_results(["nb_visits"], ORIGINS)
+        _check_results(["-nb_visits"], ORIGINS[::-1])
+
+        _check_results(["last_visit_date"], ORIGINS)
+        _check_results(["-last_visit_date"], ORIGINS[::-1])
+
+        _check_results(["nb_visits", "-last_visit_date"], ORIGINS)
+        _check_results(["-last_visit_date", "nb_visits"], ORIGINS[::-1])
+
+    def test_origin_instrinsic_metadata_license_search(self):
+        ORIGINS = [
+            {
+                "url": "http://foobar.1.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "description": "foo bar",
+                    "license": "https://spdx.org/licenses/MIT",
+                },
+            },
+            {
+                "url": "http://foobar.2.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "description": "foo bar",
+                    "license": "BSD-3-Clause",
+                },
+            },
+        ]
+        self.search.origin_update(ORIGINS)
+        self.search.flush()
+
+        def _check_results(licenses, origin_indices):
+            page = self.search.origin_search(url_pattern="foobar", licenses=licenses)
+            results = [r["url"] for r in page.results]
+            assert sorted(results) == sorted(
+                [ORIGINS[i]["url"] for i in origin_indices]
+            )
+
+        _check_results(["MIT"], [0])
+        _check_results(["bsd"], [1])
+        _check_results(["mit", "3-Clause"], [0, 1])
+
+    def test_origin_instrinsic_metadata_programming_language_search(self):
+        ORIGINS = [
+            {
+                "url": "http://foobar.1.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "description": "foo bar",
+                    "programmingLanguage": "python",
+                },
+            },
+            {
+                "url": "http://foobar.2.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "description": "foo bar",
+                    "programmingLanguage": "javascript",
+                },
+            },
+        ]
+        self.search.origin_update(ORIGINS)
+        self.search.flush()
+
+        def _check_results(programming_languages, origin_indices):
+            page = self.search.origin_search(
+                url_pattern="foobar", programming_languages=programming_languages
+            )
+            results = [r["url"] for r in page.results]
+            assert sorted(results) == sorted(
+                [ORIGINS[i]["url"] for i in origin_indices]
+            )
+
+        _check_results(["python"], [0])
+        _check_results(["javascript"], [1])
+        _check_results(["python", "javascript"], [0, 1])
+
+    def test_origin_instrinsic_metadata_multiple_field_search(self):
+        ORIGINS = [
+            {
+                "url": "http://foobar.1.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "description": "foo bar 1",
+                    "programmingLanguage": "python",
+                    "license": "https://spdx.org/licenses/MIT",
+                },
+            },
+            {
+                "url": "http://foobar.2.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "description": "foo bar 2",
+                    "programmingLanguage": ["javascript", "html", "css"],
+                    "license": [
+                        "https://spdx.org/licenses/CC-BY-1.0",
+                        "https://spdx.org/licenses/Apache-1.0",
+                    ],
+                },
+            },
+            {
+                "url": "http://foobar.3.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "description": "foo bar 3",
+                    "programmingLanguage": ["Cpp", "c"],
+                    "license": "https://spdx.org/licenses/LGPL-2.0-only",
+                },
+            },
+        ]
+        self.search.origin_update(ORIGINS)
+        self.search.flush()
+
+        def _check_result(programming_languages, licenses, origin_indices):
+            page = self.search.origin_search(
+                url_pattern="foobar",
+                programming_languages=programming_languages,
+                licenses=licenses,
+            )
+            results = [r["url"] for r in page.results]
+            assert sorted(results) == sorted(
+                [ORIGINS[i]["url"] for i in origin_indices]
+            )
+
+        _check_result(["javascript"], ["CC"], [1])
+        _check_result(["css"], ["CC"], [1])
+        _check_result(["css"], ["CC", "apache"], [1])
+
+        _check_result(["python", "javascript"], ["MIT"], [0])
+
+        _check_result(["c", "python"], ["LGPL", "mit"], [2, 0])
 
     def test_origin_update_with_no_visit_types(self):
         """
@@ -535,13 +982,15 @@ class CommonSearchTest:
         )
         self.search.flush()
 
-        actual_page = self.search.origin_search(metadata_pattern="2021")
+        actual_page = self.search.origin_search(metadata_pattern="1.0")
         assert actual_page.next_page_token is None
         assert actual_page.results == [origin1]
 
-        actual_page = self.search.origin_search(metadata_pattern="long time ago")
+        actual_page = self.search.origin_search(metadata_pattern="long")
         assert actual_page.next_page_token is None
-        assert actual_page.results == [origin2]
+        assert (
+            actual_page.results == []
+        )  # "%Y-%m-%d" not followed, so value is rejected
 
         actual_page = self.search.origin_search(metadata_pattern="true")
         assert actual_page.next_page_token is None
