@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 import functools
 from unittest.mock import MagicMock
 
+import pytest
+
 from swh.model.model import (
     ObjectType,
     Person,
@@ -20,7 +22,10 @@ from swh.model.model import (
     TimestampWithTimezone,
     hash_to_bytes,
 )
-from swh.search.journal_client import process_journal_objects
+from swh.search.journal_client import (
+    fetch_last_revision_release_date,
+    process_journal_objects,
+)
 from swh.storage import get_storage
 
 DATES = [
@@ -150,7 +155,32 @@ SNAPSHOTS = [
             ),
         },
     ),
+    Snapshot(
+        branches={
+            b"target/revision1": SnapshotBranch(
+                target_type=TargetType.REVISION, target=REVISIONS[0].id,
+            )
+        },
+    ),
+    Snapshot(
+        branches={
+            b"target/release1": SnapshotBranch(
+                target_type=TargetType.RELEASE, target=RELEASES[0].id
+            )
+        },
+    ),
+    Snapshot(branches={}),
 ]
+
+
+@pytest.fixture
+def storage():
+    storage = get_storage("memory")
+
+    storage.revision_add(REVISIONS)
+    storage.release_add(RELEASES)
+    storage.snapshot_add(SNAPSHOTS)
+    return storage
 
 
 def test_journal_client_origin_from_journal():
@@ -182,13 +212,8 @@ def test_journal_client_origin_visit_from_journal():
     )
 
 
-def test_journal_client_origin_visit_status_from_journal():
+def test_journal_client_origin_visit_status_from_journal(storage):
     search_mock = MagicMock()
-    storage = get_storage("memory")
-
-    storage.revision_add(REVISIONS)
-    storage.release_add(RELEASES)
-    storage.snapshot_add(SNAPSHOTS)
 
     worker_fn = functools.partial(
         process_journal_objects, search=search_mock, storage=storage
@@ -274,3 +299,8 @@ def test_journal_client_origin_metadata_from_journal():
             },
         ]
     )
+
+
+def test_fetch_last_revision_release_date(storage):
+    for snapshot in SNAPSHOTS:
+        assert fetch_last_revision_release_date(snapshot.id, storage) is not None

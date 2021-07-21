@@ -4,9 +4,11 @@
 # See top-level LICENSE file for more information
 
 import logging
+from typing import Dict
 
 from swh.model.model import TargetType
 from swh.storage.algos.snapshot import snapshot_get_all_branches
+from swh.storage.interface import StorageInterface
 
 EXPECTED_MESSAGE_TYPES = {
     "origin",
@@ -16,11 +18,17 @@ EXPECTED_MESSAGE_TYPES = {
 }
 
 
-def fetch_last_revision_release_date(snapshot_id, storage):
+def fetch_last_revision_release_date(
+    snapshot_id: bytes, storage: StorageInterface
+) -> Dict[str, str]:
     if not snapshot_id:
         return {}
 
-    branches = snapshot_get_all_branches(storage, snapshot_id).branches.values()
+    snapshot = snapshot_get_all_branches(storage, snapshot_id)
+    if not snapshot:
+        return {}
+
+    branches = snapshot.branches.values()
 
     tip_revision_ids = []
     tip_release_ids = []
@@ -34,16 +42,22 @@ def fetch_last_revision_release_date(snapshot_id, storage):
     revision_datetimes = [
         revision.date.to_datetime()
         for revision in storage.revision_get(tip_revision_ids)
+        if revision and revision.date
     ]
 
     release_datetimes = [
-        release.date.to_datetime() for release in storage.release_get(tip_release_ids)
+        release.date.to_datetime()
+        for release in storage.release_get(tip_release_ids)
+        if release and release.date
     ]
 
-    return {
-        "last_revision_date": max(revision_datetimes).isoformat(),
-        "last_release_date": max(release_datetimes).isoformat(),
-    }
+    ret = {}
+    if revision_datetimes:
+        ret["last_revision_date"] = max(revision_datetimes).isoformat()
+    if release_datetimes:
+        ret["last_release_date"] = max(release_datetimes).isoformat()
+
+    return ret
 
 
 def process_journal_objects(messages, *, search, storage=None):
