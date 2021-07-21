@@ -4,7 +4,7 @@
 # See top-level LICENSE file for more information
 
 import logging
-from typing import Dict
+from typing import Dict, Optional
 
 from swh.model.model import TargetType
 from swh.storage.algos.snapshot import snapshot_get_all_branches
@@ -105,12 +105,17 @@ def process_origin_visits(visits, search):
 def process_origin_visit_statuses(visit_statuses, search, storage):
     logging.debug("processing origin visit statuses %r", visit_statuses)
 
+    def hexify(b: Optional[bytes]) -> Optional[str]:
+        if b is None:
+            return None
+        return b.hex()
+
     full_visit_status = [
         {
             "url": visit_status["origin"],
             "has_visits": True,
             "nb_visits": visit_status["visit"],
-            "snapshot_id": visit_status.get("snapshot"),
+            "snapshot_id": hexify(visit_status.get("snapshot")),
             "last_visit_date": visit_status["date"].isoformat(),
             "last_eventful_visit_date": visit_status["date"].isoformat(),
             **fetch_last_revision_release_date(visit_status.get("snapshot"), storage),

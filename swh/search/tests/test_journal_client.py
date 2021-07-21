@@ -239,7 +239,7 @@ def test_journal_client_origin_visit_status_from_journal(storage):
                 "url": "http://foobar.baz",
                 "has_visits": True,
                 "nb_visits": 5,
-                "snapshot_id": SNAPSHOTS[0].id,
+                "snapshot_id": SNAPSHOTS[0].id.hex(),
                 "last_visit_date": current_datetime.isoformat(),
                 "last_eventful_visit_date": current_datetime.isoformat(),
                 "last_revision_date": "2009-02-14T01:31:33+02:00",
