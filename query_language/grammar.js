@@ -156,7 +156,7 @@ module.exports = grammar({
             token.immediate(/[^\\"\n]+/),
             $.escape_sequence
         )),
-        singleWord: $ => /[^\s"'\[\]\(\)]+/,
+        singleWord: $ => /[^\s"'\[\]\(\),]+/,
         escape_sequence: $ => token.immediate(seq(
             '\\',
             /(\"|\'|\\|\/|b|n|r|t|u)/
