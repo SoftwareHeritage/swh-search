@@ -3,7 +3,7 @@ import os
 from pkg_resources import resource_filename
 from tree_sitter import Language, Parser
 
-from swh.search.utils import get_expansion
+from swh.search.utils import get_expansion, unescape
 
 
 class Translator:
@@ -70,8 +70,10 @@ class Translator:
                 filters2 = self._traverse(node.children[2])
 
                 if conj_op == "and":
+                    # "must" is equivalent to "AND"
                     return {"bool": {"must": [filters1, filters2]}}
                 if conj_op == "or":
+                    # "should" is equivalent to "OR"
                     return {"bool": {"should": [filters1, filters2]}}
 
         if node.type == "filter":
@@ -104,14 +106,13 @@ class Translator:
         value = self.query[start:end]
 
         if len(value) > 1 and (
-            (value[0] == "'" and value[1] == "'") or (value[0] and value[-1] == '"')
+            (value[0] == "'" and value[-1] == "'") or (value[0] and value[-1] == '"')
         ):
-            return value[1:-1]
+            return unescape(value[1:-1])
 
         if node.type in ["number", "numberVal"]:
             return int(value)
-
-        return value
+        return unescape(value)
 
     def _parse_filter(self, filter):
 
@@ -145,9 +146,18 @@ class Translator:
                         "query": {
                             "multi_match": {
                                 "query": value,
+                                # Makes it so that the "foo bar" query returns
+                                # documents which contain "foo" in a field and "bar"
+                                # in a different field
                                 "type": "cross_fields",
+                                # All keywords must be found in a document for it to
+                                # be considered a match.
+                                # TODO: allow missing keywords?
                                 "operator": "and",
+                                # Searches on all fields of the intrinsic_metadata dict,
+                                # recursively.
                                 "fields": ["intrinsic_metadata.*"],
+                                # date{Created,Modified,Published} are of type date
                                 "lenient": True,
                             }
                         },
@@ -190,6 +200,9 @@ class Translator:
                                 "fields": [
                                     get_expansion("keywords", ".") + "^2",
                                     get_expansion("descriptions", "."),
+                                    # "^2" boosts an origin's score by 2x
+                                    # if it the queried keywords are
+                                    # found in its intrinsic_metadata.keywords
                                 ],
                             }
                         },

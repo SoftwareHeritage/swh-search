@@ -22,7 +22,8 @@ from swh.search.interface import (
     PagedResult,
 )
 from swh.search.metrics import send_metric, timed
-from swh.search.utils import get_expansion, is_date_parsable
+from swh.search.translator import Translator
+from swh.search.utils import escape, get_expansion, is_date_parsable
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +100,7 @@ def token_decode(page_token: str) -> Dict[bytes, Any]:
 class ElasticSearch:
     def __init__(self, hosts: List[str], indexes: Dict[str, Dict[str, str]] = {}):
         self._backend = Elasticsearch(hosts=hosts)
+        self._translator = Translator()
 
         # Merge current configuration with default values
         origin_config = indexes.get("origin", {})
@@ -348,6 +350,7 @@ class ElasticSearch:
     def origin_search(
         self,
         *,
+        query: str = "",
         url_pattern: Optional[str] = None,
         metadata_pattern: Optional[str] = None,
         with_visit: bool = False,
@@ -369,185 +372,89 @@ class ElasticSearch:
     ) -> PagedResult[MinimalOriginDict]:
         query_clauses: List[Dict[str, Any]] = []
 
+        query_filters = []
         if url_pattern:
-            query_clauses.append(
-                {
-                    "multi_match": {
-                        "query": url_pattern,
-                        "type": "bool_prefix",
-                        "operator": "and",
-                        "fields": [
-                            "url.as_you_type",
-                            "url.as_you_type._2gram",
-                            "url.as_you_type._3gram",
-                        ],
-                    }
-                }
-            )
+            query_filters.append(f"origin = {escape(url_pattern)}")
 
         if metadata_pattern:
-            query_clauses.append(
-                {
-                    "nested": {
-                        "path": "intrinsic_metadata",
-                        "query": {
-                            "multi_match": {
-                                "query": metadata_pattern,
-                                # Makes it so that the "foo bar" query returns
-                                # documents which contain "foo" in a field and "bar"
-                                # in a different field
-                                "type": "cross_fields",
-                                # All keywords must be found in a document for it to
-                                # be considered a match.
-                                # TODO: allow missing keywords?
-                                "operator": "and",
-                                # Searches on all fields of the intrinsic_metadata dict,
-                                # recursively.
-                                "fields": ["intrinsic_metadata.*"],
-                                # date{Created,Modified,Published} are of type date
-                                "lenient": True,
-                            }
-                        },
-                    }
-                }
-            )
+            query_filters.append(f"metadata = {escape(metadata_pattern)}")
 
-        if not query_clauses:
-            raise ValueError(
-                "At least one of url_pattern and metadata_pattern must be provided."
-            )
+        # if not query_clauses:
+        #     raise ValueError(
+        #         "At least one of url_pattern and metadata_pattern must be provided."
+        #     )
 
         if with_visit:
-            query_clauses.append({"term": {"has_visits": True,}})
+            query_filters.append(f"visited = {'true' if with_visit else 'false'}")
         if min_nb_visits:
-            query_clauses.append({"range": {"nb_visits": {"gte": min_nb_visits,},}})
+            query_filters.append(f"visits >= {min_nb_visits}")
         if min_last_visit_date:
-            query_clauses.append(
-                {
-                    "range": {
-                        "last_visit_date": {
-                            "gte": min_last_visit_date.replace("Z", "+00:00"),
-                        }
-                    }
-                }
+            query_filters.append(
+                f"last_visit >= {min_last_visit_date.replace('Z', '+00:00')}"
             )
         if min_last_eventful_visit_date:
-            query_clauses.append(
-                {
-                    "range": {
-                        "last_eventful_visit_date": {
-                            "gte": min_last_eventful_visit_date.replace("Z", "+00:00"),
-                        }
-                    }
-                }
+            query_filters.append(
+                "last_eventful_visit >= "
+                f"{min_last_eventful_visit_date.replace('Z', '+00:00')}"
             )
         if min_last_revision_date:
-            query_clauses.append(
-                {
-                    "range": {
-                        "last_revision_date": {
-                            "gte": min_last_revision_date.replace("Z", "+00:00"),
-                        }
-                    }
-                }
+            query_filters.append(
+                f"last_revision >= {min_last_revision_date.replace('Z', '+00:00')}"
             )
         if min_last_release_date:
-            query_clauses.append(
-                {
-                    "range": {
-                        "last_release_date": {
-                            "gte": min_last_release_date.replace("Z", "+00:00"),
-                        }
-                    }
-                }
+            query_filters.append(
+                f"last_release >= {min_last_release_date.replace('Z', '+00:00')}"
             )
         if keywords:
-            query_clauses.append(
-                {
-                    "nested": {
-                        "path": "intrinsic_metadata",
-                        "query": {
-                            "multi_match": {
-                                "query": " ".join(keywords),
-                                "fields": [
-                                    get_expansion("keywords", ".") + "^2",
-                                    get_expansion("descriptions", "."),
-                                    # "^2" boosts an origin's score by 2x
-                                    # if it the queried keywords are
-                                    # found in its intrinsic_metadata.keywords
-                                ],
-                            }
-                        },
-                    }
-                }
-            )
-
-        intrinsic_metadata_filters: List[Dict[str, Dict]] = []
-
+            query_filters.append(f"keyword in {escape(keywords)}")
         if licenses:
-            license_filters: List[Dict[str, Any]] = []
-            for license in licenses:
-                license_filters.append(
-                    {"match": {get_expansion("licenses", "."): license}}
-                )
-            intrinsic_metadata_filters.append({"bool": {"should": license_filters}})
+            query_filters.append(f"license in {escape(licenses)}")
 
         if programming_languages:
-            language_filters: List[Dict[str, Any]] = []
-            for language in programming_languages:
-                language_filters.append(
-                    {"match": {get_expansion("programming_languages", "."): language}}
-                )
-            intrinsic_metadata_filters.append({"bool": {"should": language_filters}})
+            query_filters.append(f"language in {escape(programming_languages)}")
 
         if min_date_created:
-            intrinsic_metadata_filters.append(
-                {
-                    "range": {
-                        get_expansion("date_created", "."): {"gte": min_date_created,}
-                    }
-                }
+            query_filters.append(
+                f"created >= {min_date_created.replace('Z', '+00:00')}"
             )
         if min_date_modified:
-            intrinsic_metadata_filters.append(
-                {
-                    "range": {
-                        get_expansion("date_modified", "."): {"gte": min_date_modified,}
-                    }
-                }
+            query_filters.append(
+                f"modified >= {min_date_modified.replace('Z', '+00:00')}"
             )
         if min_date_published:
-            intrinsic_metadata_filters.append(
-                {
-                    "range": {
-                        get_expansion("date_published", "."): {
-                            "gte": min_date_published,
-                        }
-                    }
-                }
-            )
-
-        if intrinsic_metadata_filters:
-            query_clauses.append(
-                {
-                    "nested": {
-                        "path": "intrinsic_metadata",
-                        "query": {"bool": {"must": intrinsic_metadata_filters,}},
-                        # "must" is equivalent to "AND"
-                        # "should" is equivalent to "OR"
-                        # Resulting origins must return true for the following:
-                        # (license_1 OR license_2 ..) AND (lang_1 OR lang_2 ..)
-                        # This is equivalent to {"must": [
-                        #   {"should": [license_1,license_2] },
-                        #   {"should": [lang_1,lang_2]}] }
-                        # ]}
-                        # Note: Usage of "bool" has been omitted for readability
-                    }
-                }
+            query_filters.append(
+                f"published >= {min_date_published.replace('Z', '+00:00')}"
             )
 
         if visit_types is not None:
-            query_clauses.append({"terms": {"visit_types": visit_types}})
+            query_filters.append(f"visit_type = {escape(visit_types)}")
+
+        combined_filters = f"({' and '.join(query_filters)})"
+        query = f"{combined_filters}{' and ' if query != '' else ' '}{query}"
+        parsed_query = self._translator.parse_query(query)
+        query_clauses.append(parsed_query["filters"])
+
+        field_map = {
+            "visits": "nb_visits",
+            "last_visit": "last_visit_date",
+            "last_eventful_visit": "last_eventful_visit_date",
+            "last_revision": "last_revision_date",
+            "last_release": "last_release_date",
+            "created": "date_created",
+            "modified": "date_modified",
+            "published": "date_published",
+        }
+
+        if "sortBy" in parsed_query:
+            if sort_by is None:
+                sort_by = []
+            for sort_by_option in parsed_query["sortBy"]:
+                if sort_by_option[0] == "-":
+                    sort_by.append("-" + field_map[sort_by_option[1:]])
+                else:
+                    sort_by.append(field_map[sort_by_option])
+        if parsed_query.get("limit", 0):
+            limit = parsed_query["limit"]
 
         sorting_params: List[Dict[str, Any]] = []
 

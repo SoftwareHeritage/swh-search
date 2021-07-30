@@ -268,6 +268,7 @@ class InMemorySearch:
     def origin_search(
         self,
         *,
+        query: str = "",
         url_pattern: Optional[str] = None,
         metadata_pattern: Optional[str] = None,
         with_visit: bool = False,

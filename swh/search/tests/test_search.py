@@ -1151,3 +1151,18 @@ class CommonSearchTest:
         result_page = self.search.origin_search(url_pattern="origin")
         assert result_page.next_page_token is None
         assert result_page.results == []
+
+    def test_filter_keyword_in_filter(self):
+        origin1 = {
+            "url": "foo language in ['foo baz'] bar",
+        }
+        self.search.origin_update([origin1])
+        self.search.flush()
+
+        result_page = self.search.origin_search(url_pattern="language in ['foo bar']")
+        assert result_page.next_page_token is None
+        assert result_page.results == [origin1]
+
+        result_page = self.search.origin_search(url_pattern="baaz")
+        assert result_page.next_page_token is None
+        assert result_page.results == []

@@ -146,14 +146,14 @@ def test_visit_type_filter():
 
 
 def test_keyword_filter():
-    query = r"""keyword in [word1, "word2 \" ' word3"]"""
+    query = r"""keyword in [word1, "word2 \" \' word3"]"""
     expected = {
         "filters": {
             "nested": {
                 "path": "intrinsic_metadata",
                 "query": {
                     "multi_match": {
-                        "query": r"""word1 word2 \" ' word3""",
+                        "query": r"""word1 word2 " ' word3""",
                         "fields": [
                             get_expansion("keywords", ".") + "^2",
                             get_expansion("descriptions", "."),
@@ -306,4 +306,46 @@ def test_last_eventful_visit_less_than_to_filter():
     query = "last_visit < 2020-01-01"
     expected = {"filters": {"range": {"last_visit_date": {"lt": "2020-01-01"}}}}
 
+    _test_results(query, expected)
+
+
+def test_keyword_no_escape_inside_filter():
+    # any keyword (filter name/operator/value) inside a filter
+    # must be considered a string.
+    query = r'''origin = "language in [\'go lang\', python]"'''
+    expected = {
+        "filters": {
+            "multi_match": {
+                "query": r"""language in ['go lang', python]""",
+                "type": "bool_prefix",
+                "operator": "and",
+                "fields": [
+                    "url.as_you_type",
+                    "url.as_you_type._2gram",
+                    "url.as_you_type._3gram",
+                ],
+            }
+        }
+    }
+    _test_results(query, expected)
+
+
+def test_escaped_punctutation_parsing():
+    query = r"""keyword in ["foo \'\" bar"]"""
+    expected = {
+        "filters": {
+            "nested": {
+                "path": "intrinsic_metadata",
+                "query": {
+                    "multi_match": {
+                        "query": r"""foo '" bar""",
+                        "fields": [
+                            get_expansion("keywords", ".") + "^2",
+                            get_expansion("descriptions", "."),
+                        ],
+                    }
+                },
+            }
+        }
+    }
     _test_results(query, expected)

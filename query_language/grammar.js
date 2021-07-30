@@ -14,7 +14,16 @@ module.exports = grammar({
     name: 'swh_search_ql',
 
     rules: {
-        query: $ => seq($.filters, optional($.sortBy) ,optional($.limit)),
+        query: $ => seq(
+            $.filters,
+            optional($.and),
+            choice(
+                seq(optional($.sortBy), optional($.and), optional($.limit)),
+                seq(optional($.limit), optional($.and), optional($.sortBy)),
+            ),
+        ),
+
+
 
         filters: $ => choice(
             prec.left(PRECEDENCE.and,
@@ -41,7 +50,7 @@ module.exports = grammar({
         sortByField: $ => token('sort_by'),
         sortByOp: $ => $.equalOp,
         sortByVal: $ => createArray(optionalWrapWith($.sortByOptions, ["'", '"'])),
-        sortByOptions: $ => seq(optional(token.immediate('-')) ,choice(
+        sortByOptions: $ => seq(optional(token.immediate('-')), choice(
             'visits',
             'last_visit',
             'last_eventful_visit',
@@ -104,17 +113,18 @@ module.exports = grammar({
         sortByOp: $ => $.equalOp,
         sortByVal: $ => createArray(optionalWrapWith($.sortByOptions, ["'", '"'])),
         sortByOptions: $ => seq(
-            optional(token.immediate('-')),
+            optional('-'),
             choice(
-            'visits',
-            'last_visit',
-            'last_eventful_visit',
-            'last_revision',
-            'last_release',
-            'created',
-            'modified',
-            'published'
-        )),
+                'visits',
+                'last_visit',
+                'last_eventful_visit',
+                'last_revision',
+                'last_release',
+                'created',
+                'modified',
+                'published'
+            )
+        ),
 
         unboundedListFilter: $ => seq($.listField, $.listOp, $.listVal),
         listField: $ => token(choice('language', 'license', 'keyword')),
@@ -142,7 +152,13 @@ module.exports = grammar({
         equalOp: $ => token('='),
         choiceOp: $ => token(choice('in', 'not in')),
 
-        isoDateTime: $ => /\d{4}[-]\d{2}[-]\d{2}(\s|T)*(\d{2}:\d{2}(:\d{2})?)?(Z)?/,
+        isoDateTime: $ => {
+            const dateRegex = (/\d{4}[-]\d{2}[-]\d{2}/).source
+            const dateTimeSepRegex = (/(\s|T)*/).source
+            const timeRegex = (/(\d{2}:\d{2}(:\d{2}(\.\d{6})?)?)?/).source
+            const timezoneRegex = (/(\+\d{2}:\d{2}|Z)?/).source
+            return new RegExp(dateRegex + dateTimeSepRegex + timeRegex + timezoneRegex)
+        },
 
         string: $ => choice(wrapWith($.stringContent, ["'", '"']), $.singleWord),
         number: $ => /\d+/,
@@ -153,7 +169,7 @@ module.exports = grammar({
         and: $ => "and",
 
         stringContent: $ => repeat1(choice(
-            token.immediate(/[^\\"\n]+/),
+            token.immediate(/[^\\'"\n]+/),
             $.escape_sequence
         )),
         singleWord: $ => /[^\s"'\[\]\(\),]+/,
