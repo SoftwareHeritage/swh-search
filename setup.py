@@ -103,8 +103,14 @@ class TSBuildExportCommand(TSCommand):
         self.run_command("ts_build")
 
         system("echo 'static files generated. copying them to package dir'")
-        system(f"cp query_language/swh_ql.so {self.build_lib}/swh/search/swh_ql.so")
-        system(f"cp query_language/swh_ql.wasm {self.build_lib}/swh/search/swh_ql.wasm")
+        system(f"mkdir {self.build_lib}/swh/search/static")
+        system(
+            f"cp query_language/swh_ql.so {self.build_lib}/swh/search/static/swh_ql.so"
+        )
+        system(
+            f"cp query_language/swh_ql.wasm "
+            f"{self.build_lib}/swh/search/static/swh_ql.wasm"
+        )
 
 
 class custom_build(build_py):
@@ -125,8 +131,14 @@ class custom_sdist(sdist):
             self.run_command("ts_build")
 
             system("echo 'static files generated. copying them to package dir'")
-            system(f"cp query_language/swh_ql.so {base_dir}/swh/search/swh_ql.so")
-            system(f"cp query_language/swh_ql.wasm {base_dir}/swh/search/swh_ql.wasm")
+            system(f"mkdir {base_dir}/swh/search/static")
+            system(
+                f"cp query_language/swh_ql.so {base_dir}/swh/search/static/swh_ql.so"
+            )
+            system(
+                f"cp query_language/swh_ql.wasm "
+                f"{base_dir}/swh/search/static/swh_ql.wasm"
+            )
 
 
 setup(
