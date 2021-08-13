@@ -4,23 +4,37 @@
 # See top-level LICENSE file for more information
 
 import logging
+import sys
+from typing import Dict, Optional
 
 from swh.model.model import TargetType
 from swh.storage.algos.snapshot import snapshot_get_all_branches
+from swh.storage.interface import StorageInterface
 
 EXPECTED_MESSAGE_TYPES = {
     "origin",
-    "origin_visit",
     "origin_visit_status",
     "origin_intrinsic_metadata",
 }
 
 
-def fetch_last_revision_release_date(snapshot_id, storage):
+def fetch_last_revision_release_date(
+    snapshot_id: bytes, storage: StorageInterface
+) -> Dict[str, str]:
+    if "pytest" not in sys.modules:
+        # FIXME: This function is too slow to be reasonably used in the journal-client
+        # (at least the main one), we need to figure out a solution before this can
+        # be enabled again.
+        return {}
+
     if not snapshot_id:
         return {}
 
-    branches = snapshot_get_all_branches(storage, snapshot_id).branches.values()
+    snapshot = snapshot_get_all_branches(storage, snapshot_id)
+    if not snapshot:
+        return {}
+
+    branches = snapshot.branches.values()
 
     tip_revision_ids = []
     tip_release_ids = []
@@ -34,16 +48,22 @@ def fetch_last_revision_release_date(snapshot_id, storage):
     revision_datetimes = [
         revision.date.to_datetime()
         for revision in storage.revision_get(tip_revision_ids)
+        if revision and revision.date
     ]
 
     release_datetimes = [
-        release.date.to_datetime() for release in storage.release_get(tip_release_ids)
+        release.date.to_datetime()
+        for release in storage.release_get(tip_release_ids)
+        if release and release.date
     ]
 
-    return {
-        "last_revision_date": max(revision_datetimes).isoformat(),
-        "last_release_date": max(release_datetimes).isoformat(),
-    }
+    ret = {}
+    if revision_datetimes:
+        ret["last_revision_date"] = max(revision_datetimes).isoformat()
+    if release_datetimes:
+        ret["last_release_date"] = max(release_datetimes).isoformat()
+
+    return ret
 
 
 def process_journal_objects(messages, *, search, storage=None):
@@ -53,9 +73,6 @@ def process_journal_objects(messages, *, search, storage=None):
 
     if "origin" in messages:
         process_origins(messages["origin"], search)
-
-    if "origin_visit" in messages:
-        process_origin_visits(messages["origin_visit"], search)
 
     if "origin_visit_status" in messages:
         process_origin_visit_statuses(messages["origin_visit_status"], search, storage)
@@ -70,43 +87,37 @@ def process_origins(origins, search):
     search.origin_update(origins)
 
 
-def process_origin_visits(visits, search):
-    logging.debug("processing origin visits %r", visits)
-
-    search.origin_update(
-        [
-            {
-                "url": (
-                    visit["origin"]
-                    if isinstance(visit["origin"], str)
-                    else visit["origin"]["url"]
-                ),
-                "visit_types": [visit["type"]],
-            }
-            for visit in visits
-        ]
-    )
-
-
 def process_origin_visit_statuses(visit_statuses, search, storage):
     logging.debug("processing origin visit statuses %r", visit_statuses)
 
-    full_visit_status = [
-        {
-            "url": visit_status["origin"],
-            "has_visits": True,
-            "nb_visits": visit_status["visit"],
-            "snapshot_id": visit_status.get("snapshot"),
-            "last_visit_date": visit_status["date"].isoformat(),
-            "last_eventful_visit_date": visit_status["date"].isoformat(),
-            **fetch_last_revision_release_date(visit_status.get("snapshot"), storage),
-        }
-        for visit_status in visit_statuses
-        if visit_status["status"] == "full"
-    ]
+    def hexify(b: Optional[bytes]) -> Optional[str]:
+        if b is None:
+            return None
+        return b.hex()
 
-    if full_visit_status:
-        search.origin_update(full_visit_status)
+    processed_visit_statuses = []
+    for visit_status in visit_statuses:
+        processed_status = {
+            "url": visit_status["origin"],
+            "visit_types": [visit_status["type"]],
+        }
+        if visit_status["status"] == "full":
+            processed_status.update(
+                {
+                    "has_visits": True,
+                    "nb_visits": visit_status["visit"],
+                    "snapshot_id": hexify(visit_status.get("snapshot")),
+                    "last_visit_date": visit_status["date"].isoformat(),
+                    "last_eventful_visit_date": visit_status["date"].isoformat(),
+                    **fetch_last_revision_release_date(
+                        visit_status.get("snapshot"), storage
+                    ),
+                }
+            )
+        processed_visit_statuses.append(processed_status)
+
+    if processed_visit_statuses:
+        search.origin_update(processed_visit_statuses)
 
 
 def process_origin_intrinsic_metadata(origin_metadata, search):

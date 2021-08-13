@@ -1,0 +1,6 @@
+(origin = django/django and language in ["python"] or visits >= 5) or
+(last_revision > 2020-01-01 and limit = 10) or
+(last_visit > 2021-01-01 or last_visit < 2020-01-01) or
+(visited = false and metadata = "gitlab") or
+(keyword in ["orchestration", "kubectl"] and language in ["go", "rust"]) or
+(visit_type = [deb] and license in ["GPL-3"])
