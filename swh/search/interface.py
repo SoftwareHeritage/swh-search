@@ -65,6 +65,7 @@ class SearchInterface:
     def origin_search(
         self,
         *,
+        query: str = "",
         url_pattern: Optional[str] = None,
         metadata_pattern: Optional[str] = None,
         with_visit: bool = False,
@@ -87,11 +88,12 @@ class SearchInterface:
         """Searches for origins matching the `url_pattern`.
 
         Args:
+            query: Find origins according the queries written as per the
+                swh-search query language syntax.
             url_pattern: Part of the URL to search for
             metadata_pattern: Keywords to look for
             (across all the fields of intrinsic_metadata)
-            with_visit: Whether origins with no visit are to be
-              filtered out
+            with_visit: Whether origins with no visits are to be filtered out
             visit_types: Only origins having any of the provided visit types
                 (e.g. git, svn, pypi) will be returned
             min_nb_visits: Filter origins that have number of visits >=

@@ -12,3 +12,7 @@ version.txt
 .mypy_cache/
 .hypothesis/
 .vscode/
+node_modules/
+static/
+*.wasm
+*.so

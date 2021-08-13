@@ -26,6 +26,7 @@ It is kept in sync with :ref:`the main SWH storage <swh-storage>` via
    :caption: Contents:
 
    cli
+   query-language
 
 Reference Documentation
 -----------------------
