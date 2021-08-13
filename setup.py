@@ -6,16 +6,18 @@
 
 from distutils.cmd import Command
 from io import open
-from os import environ, path, system
+import os
+import shutil
+import subprocess
 
 from setuptools import find_packages, setup
 from setuptools.command.build_py import build_py
 from setuptools.command.sdist import sdist
 
-here = path.abspath(path.dirname(__file__))
+here = os.path.abspath(os.path.dirname(__file__))
 
 # Get the long description from the README file
-with open(path.join(here, "README.md"), encoding="utf-8") as f:
+with open(os.path.join(here, "README.md"), encoding="utf-8") as f:
     long_description = f.read()
 
 
@@ -26,7 +28,7 @@ def parse_requirements(name=None):
         reqf = "requirements.txt"
 
     requirements = []
-    if not path.exists(reqf):
+    if not os.path.exists(reqf):
         return requirements
 
     with open(reqf) as f:
@@ -38,7 +40,7 @@ def parse_requirements(name=None):
     return requirements
 
 
-yarn = environ.get("YARN", "yarn")
+yarn = os.environ.get("YARN", "yarn")
 
 
 class TSCommand(Command):
@@ -55,28 +57,30 @@ class TSInstallCommand(TSCommand):
     description = "Installs node_modules related to query language"
 
     def run(self):
-        system(f"{yarn} install")
+        subprocess.run([yarn, "install"], check=True)
 
 
 class TSGenerateCommand(TSCommand):
     description = "Generates parser related files from grammar.js"
 
     def run(self):
-        system(f"{yarn} generate")
+        subprocess.run([yarn, "generate"], check=True)
 
 
 class TSBuildSoCommand(TSCommand):
     description = "Builds swh_ql.so"
 
     def run(self):
-        system(f"{yarn} build-so && echo 'swh_ql.so file generated'")
+        subprocess.run([yarn, "build-so"], check=True)
+        print("swh_ql.so file generated")
 
 
 class TSBuildWasmCommand(TSCommand):
     description = "Builds swh_ql.wasm"
 
     def run(self):
-        system(f"{yarn} build-wasm && echo 'swh_ql.wasm file generated'")
+        subprocess.run([yarn, "build-wasm"], check=True)
+        print("swh_ql.wasm file generated")
 
 
 class TSBuildCommand(TSCommand):
@@ -102,14 +106,15 @@ class TSBuildExportCommand(TSCommand):
         self.run_command("ts_install")
         self.run_command("ts_build")
 
-        system("echo 'static files generated. copying them to package dir'")
-        system(f"mkdir {self.build_lib}/swh/search/static")
-        system(
-            f"cp query_language/swh_ql.so {self.build_lib}/swh/search/static/swh_ql.so"
+        print("static files generated. copying them to package dir")
+        os.makedirs(os.path.join(self.build_lib, "swh/search/static"), exist_ok=True)
+        shutil.copyfile(
+            "query_language/swh_ql.so",
+            os.path.join(self.build_lib, "swh/search/static/swh_ql.so"),
         )
-        system(
-            f"cp query_language/swh_ql.wasm "
-            f"{self.build_lib}/swh/search/static/swh_ql.wasm"
+        shutil.copyfile(
+            "query_language/swh_ql.wasm",
+            os.path.join(self.build_lib, "swh/search/static/swh_ql.wasm"),
         )
 
 
@@ -130,14 +135,15 @@ class custom_sdist(sdist):
             self.run_command("ts_install")
             self.run_command("ts_build")
 
-            system("echo 'static files generated. copying them to package dir'")
-            system(f"mkdir {base_dir}/swh/search/static")
-            system(
-                f"cp query_language/swh_ql.so {base_dir}/swh/search/static/swh_ql.so"
+            print("static files generated. copying them to package dir")
+            os.makedirs(os.path.join(base_dir, "swh/search/static"), exist_ok=True)
+            shutil.copyfile(
+                "query_language/swh_ql.so",
+                os.path.join(base_dir, "swh/search/static/swh_ql.so"),
             )
-            system(
-                f"cp query_language/swh_ql.wasm "
-                f"{base_dir}/swh/search/static/swh_ql.wasm"
+            shutil.copyfile(
+                "query_language/swh_ql.wasm",
+                os.path.join(base_dir, "swh/search/static/swh_ql.wasm"),
             )
 
 
