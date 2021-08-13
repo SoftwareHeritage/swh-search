@@ -28,10 +28,6 @@ machine (no need to have a running ElasticSearch server).
         The tests expect:
         - `/usr/share/elasticsearch/jdk/bin/java` to exist.
         - `org.elasticsearch.bootstrap.Elasticsearch` to be in java's classpath.
-- The `tree-sitter` module is required in the python venv to launch the yarn build. To install it, run:
-```bash
-pip install tree-sitter==0.19.0
-```
 - Emscripten is required for generating tree-sitter WASM module. The following commands need to be executed for the setup:
     ```bash
     cd /opt && git clone https://github.com/emscripten-core/emsdk.git && cd emsdk && \

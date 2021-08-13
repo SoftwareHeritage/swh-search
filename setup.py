@@ -9,6 +9,7 @@ from io import open
 import os
 import shutil
 import subprocess
+import sys
 
 from setuptools import find_packages, setup
 from setuptools.command.build_py import build_py
@@ -71,7 +72,13 @@ class TSBuildSoCommand(TSCommand):
     description = "Builds swh_ql.so"
 
     def run(self):
-        subprocess.run([yarn, "build-so"], check=True)
+        # setup_requires changes sys.path so the build dependencies
+        # can be imported even though they are in a temporary
+        # directory (usually `.eggs`). We need to pass this updated sys.path to
+        # 'yarn build-so', as it invokes a Python script that needs to import
+        # tree_sitter
+        env = {**os.environ, "PYTHONPATH": os.pathsep.join(sys.path)}
+        subprocess.run([yarn, "build-so"], check=True, env=env)
         print("swh_ql.so file generated")
 
 
@@ -163,7 +170,7 @@ setup(
         [swh.cli.subcommands]
         search=swh.search.cli
     """,
-    setup_requires=["setuptools-scm"],
+    setup_requires=["setuptools-scm", "tree-sitter==0.19.0"],
     use_scm_version=True,
     extras_require={"testing": parse_requirements("test")},
     include_package_data=True,
