@@ -8,7 +8,7 @@
     "test": "yarn generate && cd query_language && tree-sitter test",
     "build-so": "yarn generate && cd query_language && python3 build.py",
     "build-wasm": "yarn generate && cd query_language && tree-sitter build-wasm . && mv tree-sitter-swh_search_ql.wasm swh_ql.wasm",
-    "build": "yarn build-so && yarn build-wasm",
+    "build": "echo 'use `pip3 install .` or `pip3 wheel .` instead.'",
     "repl": "yarn generate && cd query_language && tree-sitter build-wasm && tree-sitter playground"
   },
   "repository": {

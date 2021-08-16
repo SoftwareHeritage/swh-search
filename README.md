@@ -62,4 +62,3 @@ of **ts-dev** using `sed` to achieve the desired format.
 * **ts-build-so**: Generates `swh_ql.wasm` file from the previously generated parser using emscripten
 
 * **ts-build**: Executes both **ts-build-so** and **ts-build-so**
-

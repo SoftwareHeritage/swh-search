@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: swh.search
-Version: 0.11.0
+Version: 0.11.1
 Summary: Software Heritage search service
 Home-page: https://forge.softwareheritage.org/diffusion/DSEA
 Author: Software Heritage developers
@@ -86,6 +86,5 @@ of **ts-dev** using `sed` to achieve the desired format.
 * **ts-build-so**: Generates `swh_ql.wasm` file from the previously generated parser using emscripten
 
 * **ts-build**: Executes both **ts-build-so** and **ts-build-so**
-
 
 
