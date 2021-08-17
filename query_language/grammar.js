@@ -1,8 +1,19 @@
-// Copyright (C) 2019-2021  The Software Heritage developers
+// Copyright (C) 2021  The Software Heritage developers
 // See the AUTHORS file at the top-level directory of this distribution
 // License: GNU General Public License version 3, or any later version
 // See top-level LICENSE file for more information
 
+const { visitTypeField, sortByField, limitField } = require("./tokens.js");
+const {
+    patternFields,
+    booleanFields,
+    numericFields,
+    listFields,
+    dateFields
+} = require("./tokens.js");
+const { equalOp, rangeOp, choiceOp } = require("./tokens.js");
+const { sortByOptions, visitTypeOptions } = require("./tokens.js");
+const { OR, AND, TRUE, FALSE } = require("./tokens.js");
 
 const PRECEDENCE = {
     or: 2,
@@ -16,14 +27,14 @@ module.exports = grammar({
     rules: {
         query: $ => seq(
             $.filters,
-            optional($.and),
-            choice(
-                seq(optional($.sortBy), optional($.and), optional($.limit)),
-                seq(optional($.limit), optional($.and), optional($.sortBy)),
-            ),
+            optional(seq(
+                optional($.and),
+                choice(
+                    seq($.sortBy, optional($.and), optional($.limit)),
+                    seq($.limit, optional($.and), optional($.sortBy)),
+                ),
+            ))
         ),
-
-
 
         filters: $ => choice(
             prec.left(PRECEDENCE.and,
@@ -46,111 +57,66 @@ module.exports = grammar({
             $.filter
         ),
 
-        sortBy: $ => seq($.sortByField, $.sortByOp, $.sortByVal),
-        sortByField: $ => token('sort_by'),
+        sortBy: $ => annotateFilter($.sortByField, $.sortByOp, $.sortByVal),
+        sortByField: $ => token(sortByField),
         sortByOp: $ => $.equalOp,
         sortByVal: $ => createArray(optionalWrapWith($.sortByOptions, ["'", '"'])),
-        sortByOptions: $ => seq(optional(token.immediate('-')), choice(
-            'visits',
-            'last_visit',
-            'last_eventful_visit',
-            'last_revision',
-            'last_release',
-            'created',
-            'modified',
-            'published'
-        )),
+        sortByOptions: $ => seq(
+            optional('-'),
+            choice(...sortByOptions)
+        ),
 
-        limit: $ => seq('limit', $.equalOp, $.number),
+        limit: $ => annotateFilter($.limitField, $.equalOp, $.number),
+        limitField: $ => token(limitField),
 
-        filter: $ => choice(
+        filter: $ => field('category', choice(
             $.patternFilter,
             $.booleanFilter,
             $.numericFilter,
             $.boundedListFilter,
             $.unboundedListFilter,
             $.dateFilter
-        ),
+        )),
 
-        patternFilter: $ => seq($.patternField, $.patternOp, $.patternVal),
-        patternField: $ => token(choice('origin', 'metadata')),
+        patternFilter: $ => annotateFilter($.patternField, $.patternOp, $.patternVal),
+        patternField: $ => token(choice(...patternFields)),
         patternOp: $ => $.equalOp,
         patternVal: $ => $.string,
 
-        booleanFilter: $ => seq($.booleanField, $.booleanOp, $.booleanVal),
-        booleanField: $ => token(choice('visited')),
+        booleanFilter: $ => annotateFilter($.booleanField, $.booleanOp, $.booleanVal),
+        booleanField: $ => token(choice(...booleanFields)),
         booleanOp: $ => $.equalOp,
         booleanVal: $ => choice($.booleanTrue, $.booleanFalse),
 
-        numericFilter: $ => seq($.numericField, $.numericOp, $.numberVal),
-        numericField: $ => token(choice('visits')),
+        numericFilter: $ => annotateFilter($.numericField, $.numericOp, $.numberVal),
+        numericField: $ => token(choice(...numericFields)),
         numericOp: $ => $.rangeOp,
         numberVal: $ => $.number,
 
+        // Array members must be from the given options
         boundedListFilter: $ => choice($.visitTypeFilter),
 
-        visitTypeFilter: $ => seq($.visitTypeField, $.visitTypeOp, $.visitTypeVal),
-        visitTypeField: $ => token(choice('visit_type')),
+        visitTypeFilter: $ => annotateFilter($.visitTypeField, $.visitTypeOp, $.visitTypeVal),
+        visitTypeField: $ => token(visitTypeField),
         visitTypeOp: $ => $.equalOp,
         visitTypeVal: $ => createArray(optionalWrapWith($.visitTypeOptions, ["'", '"'])),
-        visitTypeOptions: $ => choice(
-            "any",
-            "cran",
-            "deb",
-            "deposit",
-            "ftp",
-            "hg",
-            "git",
-            "nixguix",
-            "npm",
-            "pypi",
-            "svn",
-            "tar"
-        ), // TODO: fetch this list dynamically from other swh services?
+        visitTypeOptions: $ => choice(...visitTypeOptions),
+        // TODO: fetch visitTypeOptions choices dynamically from other swh services?
 
-        sortBy: $ => seq($.sortByField, $.sortByOp, $.sortByVal),
-        sortByField: $ => token(choice('sort_by')),
-        sortByOp: $ => $.equalOp,
-        sortByVal: $ => createArray(optionalWrapWith($.sortByOptions, ["'", '"'])),
-        sortByOptions: $ => seq(
-            optional('-'),
-            choice(
-                'visits',
-                'last_visit',
-                'last_eventful_visit',
-                'last_revision',
-                'last_release',
-                'created',
-                'modified',
-                'published'
-            )
-        ),
-
-        unboundedListFilter: $ => seq($.listField, $.listOp, $.listVal),
-        listField: $ => token(choice('language', 'license', 'keyword')),
+        // Array members can be any string
+        unboundedListFilter: $ => annotateFilter($.listField, $.listOp, $.listVal),
+        listField: $ => token(choice(...listFields)),
         listOp: $ => $.choiceOp,
         listVal: $ => createArray($.string),
 
-
-        dateFilter: $ => seq($.dateField, $.dateOp, $.dateVal),
-        dateField: $ => token(choice(
-            'last_visit',
-            'last_eventful_visit',
-            'last_revision',
-            'last_release',
-            'created',
-            'modified',
-            'published'
-        )),
+        dateFilter: $ => annotateFilter($.dateField, $.dateOp, $.dateVal),
+        dateField: $ => token(choice(...dateFields)),
         dateOp: $ => $.rangeOp,
         dateVal: $ => $.isoDateTime,
 
-        limit: $ => seq('limit', $.equalOp, $.number),
-
-
-        rangeOp: $ => token(choice('<', '<=', '=', '!=', '>=', '>')),
-        equalOp: $ => token('='),
-        choiceOp: $ => token(choice('in', 'not in')),
+        rangeOp: $ => token(choice(...rangeOp)),
+        equalOp: $ => token(choice(...equalOp)),
+        choiceOp: $ => token(choice(...choiceOp)),
 
         isoDateTime: $ => {
             const dateRegex = (/\d{4}[-]\d{2}[-]\d{2}/).source
@@ -162,17 +128,19 @@ module.exports = grammar({
 
         string: $ => choice(wrapWith($.stringContent, ["'", '"']), $.singleWord),
         number: $ => /\d+/,
-        booleanTrue: $ => "true",
-        booleanFalse: $ => "false",
+        booleanTrue: $ => TRUE,
+        booleanFalse: $ => FALSE,
 
-        or: $ => "or",
-        and: $ => "and",
+        or: $ => OR,
+        and: $ => AND,
 
+        singleWord: $ => /[^\s"'\[\]\(\),]+/,
+
+        // Based on tree-sitter-json grammar:
         stringContent: $ => repeat1(choice(
             token.immediate(/[^\\'"\n]+/),
             $.escape_sequence
         )),
-        singleWord: $ => /[^\s"'\[\]\(\),]+/,
         escape_sequence: $ => token.immediate(seq(
             '\\',
             /(\"|\'|\\|\/|b|n|r|t|u)/
@@ -213,4 +181,12 @@ function wrapWith(rule, wrappers = ["'", '"']) {
 function optionalWrapWith(rule, wrappers = ["'", '"']) {
     // The rule may or may not be wrapped with the wrappers
     return choice(wrapWith(rule, wrappers), rule)
+}
+
+function annotateFilter(filterField, filterOp, filterVal) {
+    return seq(
+        field('field', filterField),
+        field('op', filterOp),
+        field('value', filterVal)
+    );
 }
