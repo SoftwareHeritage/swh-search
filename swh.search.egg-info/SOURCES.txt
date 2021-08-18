@@ -35,6 +35,7 @@ query_language/.gitignore
 query_language/build.py
 query_language/grammar.js
 query_language/sample_query
+query_language/tokens.js
 query_language/test/corpus/combinations.txt
 swh/__init__.py
 swh.search.egg-info/PKG-INFO
