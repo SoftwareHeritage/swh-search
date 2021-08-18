@@ -21,7 +21,7 @@ origin = django and language in ["python"] and visits >= 5
 ==================
 last_revision > 2020-01-01 limit = 10
 ---
-(query (filters (filter (dateFilter (dateField) (dateOp (rangeOp)) (dateVal (isoDateTime))))) (limit (equalOp) (number)))
+(query (filters (filter (dateFilter (dateField) (dateOp (rangeOp)) (dateVal (isoDateTime))))) (limit (limitField) (equalOp) (number)))
 
 ==================
 Origins with last visit date not in 2020-2021 (sorted by number of visits)
@@ -73,3 +73,10 @@ Origins with `'` and `"` inside filter values
 ---
 
 (query (filters (filters (filter (patternFilter (patternField) (patternOp (equalOp)) (patternVal (string (stringContent (escape_sequence) (escape_sequence) (escape_sequence) (escape_sequence) (escape_sequence)))))))))
+
+==================
+Incomplete conjunction operators should throw error
+==================
+visits > 5 and
+---
+(query (filters (filter (numericFilter (numericField) (numericOp (rangeOp)) (numberVal (number))))) (ERROR (and)))

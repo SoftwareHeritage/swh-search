@@ -18,7 +18,7 @@ class Translator:
     def __init__(self):
         ql_rel_paths = [
             "static/swh_ql.so",  # installed
-            "../../query_language/static/swh_ql.so",  # development
+            "../../query_language/swh_ql.so",  # development
         ]
         for ql_rel_path in ql_rel_paths:
             ql_path = resource_filename("swh.search", ql_rel_path)
