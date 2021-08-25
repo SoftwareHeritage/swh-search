@@ -3,6 +3,7 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+from collections import Counter
 from typing import Iterable, List, Optional, TypeVar
 
 from typing_extensions import TypedDict
@@ -131,5 +132,11 @@ class SearchInterface:
             PagedResult of origin dicts matching the search criteria. If next_page_token
             is None, there is no longer data to retrieve.
 
+        """
+        ...
+
+    @remote_api_endpoint("visit_types_count")
+    def visit_types_count(self) -> Counter:
+        """Returns origin counts per visit type (git, hg, svn, ...).
         """
         ...

@@ -4,6 +4,7 @@
 # See top-level LICENSE file for more information
 
 import base64
+from collections import Counter
 import logging
 import pprint
 from textwrap import dedent
@@ -527,3 +528,27 @@ class ElasticSearch:
             results=[{"url": hit["_source"]["url"]} for hit in hits],
             next_page_token=next_page_token,
         )
+
+    def visit_types_count(self) -> Counter:
+        body = {
+            "aggs": {
+                "not_blocklisted": {
+                    "filter": {"bool": {"must_not": [{"term": {"blocklisted": True}}]}},
+                    "aggs": {
+                        "visit_types": {"terms": {"field": "visit_types", "size": 1000}}
+                    },
+                }
+            }
+        }
+
+        res = self._backend.search(
+            index=self._get_origin_read_alias(), body=body, size=0
+        )
+
+        buckets = (
+            res.get("aggregations", {})
+            .get("not_blocklisted", {})
+            .get("visit_types", {})
+            .get("buckets", [])
+        )
+        return Counter({bucket["key"]: bucket["doc_count"] for bucket in buckets})
