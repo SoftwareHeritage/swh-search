@@ -12,6 +12,7 @@ import shutil
 import subprocess
 
 from setuptools import find_packages, setup
+from setuptools.command.develop import develop
 from setuptools.command.sdist import sdist
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -76,7 +77,7 @@ class TSBuildSoCommand(TSCommand):
 
         ql_dir = os.path.join(self.build_lib, "swh/search/query_language")
         if not os.path.exists(os.path.join(ql_dir, "src/parser.c")):
-            generate_parser(ql_dir)
+            generate_parser(ql_dir, copy_tree=True)
 
         static_dir = os.path.join(self.build_lib, "swh/search/static")
         os.makedirs(static_dir, exist_ok=True)
@@ -87,14 +88,6 @@ class TSBuildSoCommand(TSCommand):
 
         Language.build_library(os.path.join(static_dir, "swh_ql.so"), [ql_dir])
         print("swh_ql.so file generated")
-
-
-class TSBuildWasmCommand(TSCommand):
-    description = "Builds swh_ql.wasm"
-
-    def run(self):
-        subprocess.run([yarn, "build-wasm"], check=True)
-        print("swh_ql.wasm file generated")
 
 
 class TSBuildCommand(TSCommand):
@@ -121,15 +114,24 @@ class custom_sdist(sdist):
         if not self.dry_run:
             self.run_command("ts_install")
 
-            generate_parser(dist_ql_path)
+            generate_parser(dist_ql_path, copy_tree=True)
 
 
-def generate_parser(dest_path):
-    # FIXME: setuptools should copy this itself...
-    print("Copying parser files")
-    if os.path.exists(dest_path):
-        shutil.rmtree(dest_path)
-    shutil.copytree("swh/search/query_language", dest_path)
+class custom_develop(develop):
+    def run(self):
+        super().run()
+
+        if not self.dry_run:
+            generate_parser("swh/search/query_language", copy_tree=False)
+
+
+def generate_parser(dest_path, copy_tree):
+    if copy_tree:
+        # FIXME: setuptools should copy this itself...
+        print("Copying parser files")
+        if os.path.exists(dest_path):
+            shutil.rmtree(dest_path)
+        shutil.copytree("swh/search/query_language", dest_path)
 
     print("Getting path")
     path = subprocess.check_output([yarn, "bin"]).decode().strip()
@@ -174,6 +176,7 @@ setup(
     cmdclass={
         "build": custom_build,
         "sdist": custom_sdist,
+        "develop": custom_develop,
         "ts_install": TSInstallCommand,
         "ts_build_so": TSBuildSoCommand,
         "ts_build": TSBuildCommand,
