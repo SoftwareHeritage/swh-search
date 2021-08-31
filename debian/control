@@ -21,6 +21,6 @@ Standards-Version: 3.9.6
 Homepage: https://forge.softwareheritage.org/source/swh-search/
 
 Package: python3-swh.search
-Architecture: all
+Architecture: any
 Depends: ${misc:Depends}, ${python3:Depends}
 Description: Software Heritage search infrastructure
