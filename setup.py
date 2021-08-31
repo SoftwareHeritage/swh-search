@@ -73,11 +73,12 @@ class TSBuildSoCommand(TSCommand):
         super().finalize_options()
 
     def run(self):
-        self.run_command("ts_install")
-
         ql_dir = os.path.join(self.build_lib, "swh/search/query_language")
+        copy_ql_tree(ql_dir)
         if not os.path.exists(os.path.join(ql_dir, "src/parser.c")):
-            generate_parser(ql_dir, copy_tree=True)
+            print("parser.c missing from build dir.")
+            self.run_command("ts_install")
+            generate_parser(ql_dir)
 
         static_dir = os.path.join(self.build_lib, "swh/search/static")
         os.makedirs(static_dir, exist_ok=True)
@@ -114,7 +115,8 @@ class custom_sdist(sdist):
         if not self.dry_run:
             self.run_command("ts_install")
 
-            generate_parser(dist_ql_path, copy_tree=True)
+            copy_ql_tree(dist_ql_path)
+            generate_parser(dist_ql_path)
 
 
 class custom_develop(develop):
@@ -122,17 +124,18 @@ class custom_develop(develop):
         super().run()
 
         if not self.dry_run:
-            generate_parser("swh/search/query_language", copy_tree=False)
+            generate_parser("swh/search/query_language")
 
 
-def generate_parser(dest_path, copy_tree):
-    if copy_tree:
-        # FIXME: setuptools should copy this itself...
-        print("Copying parser files")
-        if os.path.exists(dest_path):
-            shutil.rmtree(dest_path)
-        shutil.copytree("swh/search/query_language", dest_path)
+def copy_ql_tree(dest_path):
+    # FIXME: setuptools should copy this itself...
+    print("Copying parser files")
+    if os.path.exists(dest_path):
+        shutil.rmtree(dest_path)
+    shutil.copytree("swh/search/query_language", dest_path)
 
+
+def generate_parser(dest_path):
     print("Getting path")
     path = subprocess.check_output([yarn, "bin"]).decode().strip()
     env = {**os.environ, "PATH": os.pathsep.join([path, os.environ["PATH"]])}
