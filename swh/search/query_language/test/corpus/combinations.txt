@@ -1,0 +1,82 @@
+==============================
+Empty query (should throw error)
+==============================
+
+---
+
+(ERROR)
+
+
+==================
+Origins with django as keyword, python language, and more than 5 visits
+==================
+
+origin = django and language in ["python"] and visits >= 5
+
+---
+(query (filters (filters (filters (filter (patternFilter (patternField) (patternOp (equalOp)) (patternVal (string (singleWord)))))) (and) (filters (filter (unboundedListFilter (listField) (listOp (choiceOp)) (listVal (string (stringContent))))))) (and) (filters (filter (numericFilter (numericField) (numericOp (rangeOp)) (numberVal (number)))))))
+
+==================
+10 origins with latest revision after 2020-01-01
+==================
+last_revision > 2020-01-01 limit = 10
+---
+(query (filters (filter (dateFilter (dateField) (dateOp (rangeOp)) (dateVal (isoDateTime))))) (limit (limitField) (equalOp) (number)))
+
+==================
+Origins with last visit date not in 2020-2021 (sorted by number of visits)
+==================
+
+last_visit > 2021-01-01 or last_visit < 2020-01-01 sort_by = ["visits"]
+---
+(query (filters (filters (filter (dateFilter (dateField) (dateOp (rangeOp)) (dateVal (isoDateTime))))) (or) (filters (filter (dateFilter (dateField) (dateOp (rangeOp)) (dateVal (isoDateTime)))))) (sortBy (sortByField) (sortByOp (equalOp)) (sortByVal (sortByOptions))))
+
+==================
+Unvisited origins with kubernetes in metadata or minikube in url
+==================
+
+visited = false and metadata = "kubernetes" or origin = "minikube"
+
+---
+(query (filters (filters (filters (filter (booleanFilter (booleanField) (booleanOp (equalOp)) (booleanVal (booleanFalse))))) (and) (filters (filter (patternFilter (patternField) (patternOp (equalOp)) (patternVal (string (stringContent))))))) (or) (filters (filter (patternFilter (patternField) (patternOp (equalOp)) (patternVal (string (stringContent))))))))
+
+==================
+Origins with "orchestration" or "kubectl" as keywords and language as "go" or "rust"
+==================
+
+keyword in ["orchestration", "kubectl"] and language in ["go", "rust"]
+
+---
+(query (filters (filters (filter (unboundedListFilter (listField) (listOp (choiceOp)) (listVal (string (stringContent)) (string (stringContent)))))) (and) (filters (filter (unboundedListFilter (listField) (listOp (choiceOp)) (listVal (string (stringContent)) (string (stringContent))))))))
+
+==================
+Origins with a GPL-3 license that have "debian" in their url or have visit type as "deb"
+==================
+(origin = debian or visit_type = ["deb"]) and license in ["GPL-3"]
+---
+
+(query (filters (filters (filters (filters (filter (patternFilter (patternField) (patternOp (equalOp)) (patternVal (string (singleWord)))))) (or) (filters (filter (boundedListFilter (visitTypeFilter (visitTypeField) (visitTypeOp (equalOp)) (visitTypeVal (visitTypeOptions)))))))) (and) (filters (filter (unboundedListFilter (listField) (listOp (choiceOp)) (listVal (string (stringContent))))))))
+
+==================
+Origins with `and` and `or` inside filter values
+==================
+(origin = "foo and bar or baz")
+---
+
+(query (filters (filters (filter (patternFilter (patternField) (patternOp (equalOp)) (patternVal (string (stringContent))))))))
+
+
+==================
+Origins with `'` and `"` inside filter values
+==================
+(origin = "foo \\ \'bar\' \"baz\" ")
+---
+
+(query (filters (filters (filter (patternFilter (patternField) (patternOp (equalOp)) (patternVal (string (stringContent (escape_sequence) (escape_sequence) (escape_sequence) (escape_sequence) (escape_sequence)))))))))
+
+==================
+Incomplete conjunction operators should throw error
+==================
+visits > 5 and
+---
+(query (filters (filter (numericFilter (numericField) (numericOp (rangeOp)) (numberVal (number))))) (ERROR (and)))

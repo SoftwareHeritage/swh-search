@@ -4,15 +4,21 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+from distutils.cmd import Command
+from distutils.command.build import build
 from io import open
-from os import path
+import os
+import shutil
+import subprocess
 
 from setuptools import find_packages, setup
+from setuptools.command.develop import develop
+from setuptools.command.sdist import sdist
 
-here = path.abspath(path.dirname(__file__))
+here = os.path.abspath(os.path.dirname(__file__))
 
 # Get the long description from the README file
-with open(path.join(here, "README.md"), encoding="utf-8") as f:
+with open(os.path.join(here, "README.md"), encoding="utf-8") as f:
     long_description = f.read()
 
 
@@ -23,7 +29,7 @@ def parse_requirements(name=None):
         reqf = "requirements.txt"
 
     requirements = []
-    if not path.exists(reqf):
+    if not os.path.exists(reqf):
         return requirements
 
     with open(reqf) as f:
@@ -33,6 +39,108 @@ def parse_requirements(name=None):
                 continue
             requirements.append(line)
     return requirements
+
+
+yarn = os.environ.get("YARN", "yarn")
+
+
+class TSCommand(Command):
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+
+class TSInstallCommand(TSCommand):
+    description = "Installs node_modules related to query language"
+
+    def run(self):
+        subprocess.run([yarn, "install"], check=True)
+
+
+class TSBuildSoCommand(TSCommand):
+    description = "Builds swh_ql.so"
+
+    def initialize_options(self):
+        self.build_lib = None
+        super().initialize_options()
+
+    def finalize_options(self):
+        self.set_undefined_options("build", ("build_lib", "build_lib"))
+        super().finalize_options()
+
+    def run(self):
+        ql_dir = os.path.join(self.build_lib, "swh/search/query_language")
+        copy_ql_tree(ql_dir)
+        if not os.path.exists(os.path.join(ql_dir, "src/parser.c")):
+            print("parser.c missing from build dir.")
+            self.run_command("ts_install")
+            generate_parser(ql_dir)
+
+        static_dir = os.path.join(self.build_lib, "swh/search/static")
+        os.makedirs(static_dir, exist_ok=True)
+
+        # This import cannot be toplevel, as setuptools installs it after the script
+        # starts running
+        from tree_sitter import Language
+
+        Language.build_library(os.path.join(static_dir, "swh_ql.so"), [ql_dir])
+        print("swh_ql.so file generated")
+
+
+class TSBuildCommand(TSCommand):
+    description = "Builds swh_ql.so and swh_ql.wasm"
+
+    def run(self):
+        self.run_command("ts_build_so")
+
+
+class custom_build(build):
+    def run(self):
+        super().run()
+
+        if not self.dry_run:
+            self.run_command("ts_build")
+
+
+class custom_sdist(sdist):
+    def make_release_tree(self, base_dir, files):
+        super().make_release_tree(base_dir, files)
+
+        dist_ql_path = os.path.join(base_dir, "swh/search/query_language")
+
+        if not self.dry_run:
+            self.run_command("ts_install")
+
+            copy_ql_tree(dist_ql_path)
+            generate_parser(dist_ql_path)
+
+
+class custom_develop(develop):
+    def run(self):
+        super().run()
+
+        if not self.dry_run:
+            generate_parser("swh/search/query_language")
+
+
+def copy_ql_tree(dest_path):
+    # FIXME: setuptools should copy this itself...
+    print("Copying parser files")
+    if os.path.exists(dest_path):
+        shutil.rmtree(dest_path)
+    shutil.copytree("swh/search/query_language", dest_path)
+
+
+def generate_parser(dest_path):
+    print("Getting path")
+    path = subprocess.check_output([yarn, "bin"]).decode().strip()
+    env = {**os.environ, "PATH": os.pathsep.join([path, os.environ["PATH"]])}
+    print("Generating")
+    subprocess.run(["tree-sitter", "generate", "--no-bindings"], cwd=dest_path, env=env)
 
 
 setup(
@@ -51,7 +159,7 @@ setup(
         [swh.cli.subcommands]
         search=swh.search.cli
     """,
-    setup_requires=["setuptools-scm"],
+    setup_requires=["setuptools-scm", "tree-sitter==0.19.0"],
     use_scm_version=True,
     extras_require={"testing": parse_requirements("test")},
     include_package_data=True,
@@ -68,4 +176,13 @@ setup(
         "Source": "https://forge.softwareheritage.org/source/swh-search",
         "Documentation": "https://docs.softwareheritage.org/devel/swh-search/",
     },
+    cmdclass={
+        "build": custom_build,
+        "sdist": custom_sdist,
+        "develop": custom_develop,
+        "ts_install": TSInstallCommand,
+        "ts_build_so": TSBuildSoCommand,
+        "ts_build": TSBuildCommand,
+    },
+    zip_safe=False,
 )

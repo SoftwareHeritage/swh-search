@@ -5,6 +5,8 @@
 
 # WARNING: do not import unnecessary things here to keep cli startup time under
 # control
+import logging
+
 import click
 
 from swh.core.cli import CONTEXT_SETTINGS
@@ -38,6 +40,41 @@ def initialize(ctx):
     search = get_search(**ctx.obj["config"]["search"])
     search.initialize()
     print("Done.")
+
+
+@search_cli_group.command(name="rpc-serve")
+@click.option(
+    "--host",
+    default="0.0.0.0",
+    metavar="IP",
+    show_default=True,
+    help="Host ip address to bind the server on",
+)
+@click.option(
+    "--port",
+    default=5010,
+    type=click.INT,
+    metavar="PORT",
+    show_default=True,
+    help="Binding port of the server",
+)
+@click.option(
+    "--debug/--no-debug",
+    default=True,
+    help="Indicates if the server should run in debug mode",
+)
+@click.pass_context
+def serve(ctx, host, port, debug):
+    """Software Heritage Storage RPC server.
+
+    Do NOT use this in a production environment.
+    """
+    from swh.search.api.server import app
+
+    if "log_level" in ctx.obj:
+        logging.getLogger("werkzeug").setLevel(ctx.obj["log_level"])
+    app.config.update(ctx.obj["config"])
+    app.run(host, port=int(port), debug=bool(debug))
 
 
 @search_cli_group.group("journal-client")

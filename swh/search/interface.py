@@ -3,6 +3,7 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+from collections import Counter
 from typing import Iterable, List, Optional, TypeVar
 
 from typing_extensions import TypedDict
@@ -65,6 +66,7 @@ class SearchInterface:
     def origin_search(
         self,
         *,
+        query: str = "",
         url_pattern: Optional[str] = None,
         metadata_pattern: Optional[str] = None,
         with_visit: bool = False,
@@ -87,11 +89,12 @@ class SearchInterface:
         """Searches for origins matching the `url_pattern`.
 
         Args:
+            query: Find origins according the queries written as per the
+                swh-search query language syntax.
             url_pattern: Part of the URL to search for
             metadata_pattern: Keywords to look for
             (across all the fields of intrinsic_metadata)
-            with_visit: Whether origins with no visit are to be
-              filtered out
+            with_visit: Whether origins with no visits are to be filtered out
             visit_types: Only origins having any of the provided visit types
                 (e.g. git, svn, pypi) will be returned
             min_nb_visits: Filter origins that have number of visits >=
@@ -129,5 +132,11 @@ class SearchInterface:
             PagedResult of origin dicts matching the search criteria. If next_page_token
             is None, there is no longer data to retrieve.
 
+        """
+        ...
+
+    @remote_api_endpoint("visit_types_count")
+    def visit_types_count(self) -> Counter:
+        """Returns origin counts per visit type (git, hg, svn, ...).
         """
         ...

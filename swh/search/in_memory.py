@@ -3,8 +3,9 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import datetime, timezone
+from itertools import chain
 import re
 from typing import Any, Dict, Iterable, Iterator, List, Optional
 
@@ -268,6 +269,7 @@ class InMemorySearch:
     def origin_search(
         self,
         *,
+        query: str = "",
         url_pattern: Optional[str] = None,
         metadata_pattern: Optional[str] = None,
         with_visit: bool = False,
@@ -287,11 +289,7 @@ class InMemorySearch:
         page_token: Optional[str] = None,
         limit: int = 50,
     ) -> PagedResult[MinimalOriginDict]:
-        hits: Iterator[Dict[str, Any]] = (
-            self._origins[id_]
-            for id_ in self._origin_ids
-            if not self._origins[id_].get("blocklisted")
-        )
+        hits = self._get_hits()
 
         if url_pattern:
             tokens = set(self._url_splitter.split(url_pattern))
@@ -505,3 +503,14 @@ class InMemorySearch:
         assert len(origins) <= limit
 
         return PagedResult(results=origins, next_page_token=next_page_token,)
+
+    def visit_types_count(self) -> Counter:
+        hits = self._get_hits()
+        return Counter(chain(*[hit.get("visit_types", []) for hit in hits]))
+
+    def _get_hits(self) -> Iterator[Dict[str, Any]]:
+        return (
+            self._origins[id_]
+            for id_ in self._origin_ids
+            if not self._origins[id_].get("blocklisted")
+        )

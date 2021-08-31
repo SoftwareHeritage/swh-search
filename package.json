@@ -1,0 +1,34 @@
+{
+  "name": "swh-search-query-language-parser",
+  "version": "1.0.0",
+  "description": "Parser for Software Heritage archive search query language",
+  "scripts": {
+    "generate": "cd swh/search/query_language && tree-sitter generate --no-bindings && echo 'Generated parser files '",
+    "dev": "yarn generate && cd swh/search/query_language && tree-sitter parse sample_query",
+    "test": "yarn generate && cd swh/search/query_language && tree-sitter test",
+    "build": "echo 'use `pip3 install .` or `pip3 wheel .` instead.'",
+    "repl": "yarn generate && cd swh/search/query_language && tree-sitter build-wasm && tree-sitter playground"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://forge.softwareheritage.org/source/swh-search.git"
+  },
+  "keywords": [
+    "swh",
+    "Software Heritage",
+    "treesitter",
+    "parser",
+    "custom",
+    "search",
+    "query",
+    "language"
+  ],
+  "author": "The Software Heritage developers",
+  "license": "GPL-3.0-only",
+  "dependencies": {
+    "nan": "^2.14.2"
+  },
+  "devDependencies": {
+    "tree-sitter-cli": "^0.20.0"
+  }
+}

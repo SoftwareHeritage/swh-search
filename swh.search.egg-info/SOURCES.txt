@@ -6,8 +6,10 @@ CONTRIBUTORS
 LICENSE
 MANIFEST.in
 Makefile
+Makefile.local
 README.md
 mypy.ini
+package.json
 pyproject.toml
 pytest.ini
 requirements-swh.txt
@@ -16,11 +18,13 @@ requirements.txt
 setup.cfg
 setup.py
 tox.ini
+yarn.lock
 docs/.gitignore
 docs/Makefile
 docs/cli.rst
 docs/conf.py
 docs/index.rst
+docs/query-language.rst
 docs/_static/.placeholder
 docs/_templates/.placeholder
 es_config/elasticsearch.keystore
@@ -32,6 +36,7 @@ swh.search.egg-info/PKG-INFO
 swh.search.egg-info/SOURCES.txt
 swh.search.egg-info/dependency_links.txt
 swh.search.egg-info/entry_points.txt
+swh.search.egg-info/not-zip-safe
 swh.search.egg-info/requires.txt
 swh.search.egg-info/top_level.txt
 swh/search/__init__.py
@@ -42,10 +47,16 @@ swh/search/interface.py
 swh/search/journal_client.py
 swh/search/metrics.py
 swh/search/py.typed
+swh/search/translator.py
 swh/search/utils.py
 swh/search/api/__init__.py
 swh/search/api/client.py
 swh/search/api/server.py
+swh/search/query_language/.gitignore
+swh/search/query_language/grammar.js
+swh/search/query_language/sample_query
+swh/search/query_language/tokens.js
+swh/search/query_language/test/corpus/combinations.txt
 swh/search/tests/__init__.py
 swh/search/tests/conftest.py
 swh/search/tests/test_api_client.py
@@ -56,3 +67,4 @@ swh/search/tests/test_init.py
 swh/search/tests/test_journal_client.py
 swh/search/tests/test_search.py
 swh/search/tests/test_server.py
+swh/search/tests/test_translator.py

@@ -1,0 +1,887 @@
+[
+  {
+    "type": "booleanFilter",
+    "named": true,
+    "fields": {
+      "field": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "booleanField",
+            "named": true
+          }
+        ]
+      },
+      "op": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "booleanOp",
+            "named": true
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "booleanVal",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "booleanOp",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "equalOp",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "booleanVal",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "booleanFalse",
+          "named": true
+        },
+        {
+          "type": "booleanTrue",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "boundedListFilter",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "visitTypeFilter",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "dateFilter",
+    "named": true,
+    "fields": {
+      "field": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "dateField",
+            "named": true
+          }
+        ]
+      },
+      "op": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "dateOp",
+            "named": true
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "dateVal",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "dateOp",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "rangeOp",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "dateVal",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "isoDateTime",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "filter",
+    "named": true,
+    "fields": {
+      "category": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "booleanFilter",
+            "named": true
+          },
+          {
+            "type": "boundedListFilter",
+            "named": true
+          },
+          {
+            "type": "dateFilter",
+            "named": true
+          },
+          {
+            "type": "numericFilter",
+            "named": true
+          },
+          {
+            "type": "patternFilter",
+            "named": true
+          },
+          {
+            "type": "unboundedListFilter",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "filters",
+    "named": true,
+    "fields": {
+      "left": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "filters",
+            "named": true
+          }
+        ]
+      },
+      "operator": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "and",
+            "named": true
+          },
+          {
+            "type": "or",
+            "named": true
+          }
+        ]
+      },
+      "right": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "filters",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "filter",
+          "named": true
+        },
+        {
+          "type": "filters",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "limit",
+    "named": true,
+    "fields": {
+      "field": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "limitField",
+            "named": true
+          }
+        ]
+      },
+      "op": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "equalOp",
+            "named": true
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "number",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "listOp",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "choiceOp",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "listVal",
+    "named": true,
+    "fields": {
+      "array_member": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "string",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "numberVal",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "number",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "numericFilter",
+    "named": true,
+    "fields": {
+      "field": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "numericField",
+            "named": true
+          }
+        ]
+      },
+      "op": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "numericOp",
+            "named": true
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "numberVal",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "numericOp",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "rangeOp",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "patternFilter",
+    "named": true,
+    "fields": {
+      "field": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "patternField",
+            "named": true
+          }
+        ]
+      },
+      "op": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "patternOp",
+            "named": true
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "patternVal",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "patternOp",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "equalOp",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "patternVal",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "query",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "and",
+          "named": true
+        },
+        {
+          "type": "filters",
+          "named": true
+        },
+        {
+          "type": "limit",
+          "named": true
+        },
+        {
+          "type": "sortBy",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "sortBy",
+    "named": true,
+    "fields": {
+      "field": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "sortByField",
+            "named": true
+          }
+        ]
+      },
+      "op": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "sortByOp",
+            "named": true
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "sortByVal",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "sortByOp",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "equalOp",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "sortByOptions",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "sortByVal",
+    "named": true,
+    "fields": {
+      "array_member": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "\"",
+            "named": false
+          },
+          {
+            "type": "'",
+            "named": false
+          },
+          {
+            "type": "sortByOptions",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "string",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "singleWord",
+          "named": true
+        },
+        {
+          "type": "stringContent",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "stringContent",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "escape_sequence",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "unboundedListFilter",
+    "named": true,
+    "fields": {
+      "field": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "listField",
+            "named": true
+          }
+        ]
+      },
+      "op": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "listOp",
+            "named": true
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "listVal",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "visitTypeFilter",
+    "named": true,
+    "fields": {
+      "field": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "visitTypeField",
+            "named": true
+          }
+        ]
+      },
+      "op": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "visitTypeOp",
+            "named": true
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "visitTypeVal",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "visitTypeOp",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "equalOp",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "visitTypeOptions",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "visitTypeVal",
+    "named": true,
+    "fields": {
+      "array_member": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "\"",
+            "named": false
+          },
+          {
+            "type": "'",
+            "named": false
+          },
+          {
+            "type": "visitTypeOptions",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "\"",
+    "named": false
+  },
+  {
+    "type": "'",
+    "named": false
+  },
+  {
+    "type": "(",
+    "named": false
+  },
+  {
+    "type": ")",
+    "named": false
+  },
+  {
+    "type": ",",
+    "named": false
+  },
+  {
+    "type": "-",
+    "named": false
+  },
+  {
+    "type": "[",
+    "named": false
+  },
+  {
+    "type": "]",
+    "named": false
+  },
+  {
+    "type": "and",
+    "named": true
+  },
+  {
+    "type": "any",
+    "named": false
+  },
+  {
+    "type": "booleanFalse",
+    "named": true
+  },
+  {
+    "type": "booleanField",
+    "named": true
+  },
+  {
+    "type": "booleanTrue",
+    "named": true
+  },
+  {
+    "type": "choiceOp",
+    "named": true
+  },
+  {
+    "type": "cran",
+    "named": false
+  },
+  {
+    "type": "created",
+    "named": false
+  },
+  {
+    "type": "dateField",
+    "named": true
+  },
+  {
+    "type": "deb",
+    "named": false
+  },
+  {
+    "type": "deposit",
+    "named": false
+  },
+  {
+    "type": "equalOp",
+    "named": true
+  },
+  {
+    "type": "escape_sequence",
+    "named": true
+  },
+  {
+    "type": "ftp",
+    "named": false
+  },
+  {
+    "type": "git",
+    "named": false
+  },
+  {
+    "type": "hg",
+    "named": false
+  },
+  {
+    "type": "isoDateTime",
+    "named": true
+  },
+  {
+    "type": "last_eventful_visit",
+    "named": false
+  },
+  {
+    "type": "last_release",
+    "named": false
+  },
+  {
+    "type": "last_revision",
+    "named": false
+  },
+  {
+    "type": "last_visit",
+    "named": false
+  },
+  {
+    "type": "limitField",
+    "named": true
+  },
+  {
+    "type": "listField",
+    "named": true
+  },
+  {
+    "type": "modified",
+    "named": false
+  },
+  {
+    "type": "nixguix",
+    "named": false
+  },
+  {
+    "type": "npm",
+    "named": false
+  },
+  {
+    "type": "number",
+    "named": true
+  },
+  {
+    "type": "numericField",
+    "named": true
+  },
+  {
+    "type": "or",
+    "named": true
+  },
+  {
+    "type": "patternField",
+    "named": true
+  },
+  {
+    "type": "published",
+    "named": false
+  },
+  {
+    "type": "pypi",
+    "named": false
+  },
+  {
+    "type": "rangeOp",
+    "named": true
+  },
+  {
+    "type": "singleWord",
+    "named": true
+  },
+  {
+    "type": "sortByField",
+    "named": true
+  },
+  {
+    "type": "svn",
+    "named": false
+  },
+  {
+    "type": "tar",
+    "named": false
+  },
+  {
+    "type": "visitTypeField",
+    "named": true
+  },
+  {
+    "type": "visits",
+    "named": false
+  }
+]

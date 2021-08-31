@@ -3,6 +3,7 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+from datetime import datetime, timedelta, timezone
 from textwrap import dedent
 import types
 import unittest
@@ -117,3 +118,50 @@ class TestElasticsearchSearch(CommonSearchTest, BaseElasticsearchTest):
         self.search.origin_search(url_pattern="foobar.baz")
 
         assert mock.call_args[1]["index"] == "test-read"
+
+    def test_sort_by_and_limit_query(self):
+        now = datetime.now(tz=timezone.utc).isoformat()
+        now_minus_5_hours = (
+            datetime.now(tz=timezone.utc) - timedelta(hours=5)
+        ).isoformat()
+        now_plus_5_hours = (
+            datetime.now(tz=timezone.utc) + timedelta(hours=5)
+        ).isoformat()
+
+        ORIGINS = [
+            {
+                "url": "http://foobar.1.com",
+                "nb_visits": 1,
+                "last_visit_date": now_minus_5_hours,
+                "last_eventful_visit_date": now_minus_5_hours,
+            },
+            {
+                "url": "http://foobar.2.com",
+                "nb_visits": 2,
+                "last_visit_date": now,
+                "last_eventful_visit_date": now,
+            },
+            {
+                "url": "http://foobar.3.com",
+                "nb_visits": 3,
+                "last_visit_date": now_plus_5_hours,
+                "last_eventful_visit_date": now_minus_5_hours,
+            },
+        ]
+
+        self.search.origin_update(ORIGINS)
+        self.search.flush()
+
+        def _check_results(query, origin_indices):
+            page = self.search.origin_search(url_pattern="foobar", query=query)
+            results = [r["url"] for r in page.results]
+            assert results == [ORIGINS[index]["url"] for index in origin_indices]
+
+        _check_results("sort_by = [-visits]", [2, 1, 0])
+        _check_results("sort_by = [last_visit]", [0, 1, 2])
+        _check_results("sort_by = [-last_eventful_visit, visits]", [1, 0, 2])
+        _check_results("sort_by = [last_eventful_visit,-last_visit]", [2, 0, 1])
+
+        _check_results("sort_by = [-visits] limit = 1", [2])
+        _check_results("sort_by = [last_visit] and limit = 2", [0, 1])
+        _check_results("sort_by = [-last_eventful_visit, visits] limit = 3", [1, 0, 2])
