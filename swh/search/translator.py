@@ -1,9 +1,18 @@
+# Copyright (C) 2021  The Software Heritage developers
+# See the AUTHORS file at the top-level directory of this distribution
+# License: GNU General Public License version 3, or any later version
+# See top-level LICENSE file for more information
+
+import logging
 import os
+import tempfile
 
 from pkg_resources import resource_filename
 from tree_sitter import Language, Parser
 
 from swh.search.utils import get_expansion, unescape
+
+logger = logging.getLogger(__name__)
 
 
 class Translator:
@@ -16,16 +25,13 @@ class Translator:
     }
 
     def __init__(self):
-        ql_rel_paths = [
-            "static/swh_ql.so",  # installed
-            "../../query_language/swh_ql.so",  # development
-        ]
-        for ql_rel_path in ql_rel_paths:
-            ql_path = resource_filename("swh.search", ql_rel_path)
-            if os.path.exists(ql_path):
-                break
-        else:
-            assert False, "swh_ql.so was not found in any of the expected paths"
+        ql_path = resource_filename("swh.search", "static/swh_ql.so")
+        if not os.path.exists(ql_path):
+            logging.info("%s does not exist, building in temporary directory", ql_path)
+            self._build_dir = tempfile.TemporaryDirectory(prefix="swh.search-build")
+            source_path = resource_filename("swh.search", "query_language")
+            ql_path = os.path.join(self._build_dir.name, "swh_ql.so")
+            Language.build_library(ql_path, [source_path])
 
         search_ql = Language(ql_path, "swh_search_ql")
 

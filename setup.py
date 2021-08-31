@@ -5,14 +5,14 @@
 # See top-level LICENSE file for more information
 
 from distutils.cmd import Command
+from distutils.command.build import build
 from io import open
 import os
 import shutil
 import subprocess
-import sys
 
 from setuptools import find_packages, setup
-from setuptools.command.build_py import build_py
+from setuptools.command.develop import develop
 from setuptools.command.sdist import sdist
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -61,45 +61,8 @@ class TSInstallCommand(TSCommand):
         subprocess.run([yarn, "install"], check=True)
 
 
-class TSGenerateCommand(TSCommand):
-    description = "Generates parser related files from grammar.js"
-
-    def run(self):
-        subprocess.run([yarn, "generate"], check=True)
-
-
 class TSBuildSoCommand(TSCommand):
     description = "Builds swh_ql.so"
-
-    def run(self):
-        # setup_requires changes sys.path so the build dependencies
-        # can be imported even though they are in a temporary
-        # directory (usually `.eggs`). We need to pass this updated sys.path to
-        # 'yarn build-so', as it invokes a Python script that needs to import
-        # tree_sitter
-        env = {**os.environ, "PYTHONPATH": os.pathsep.join(sys.path)}
-        subprocess.run([yarn, "build-so"], check=True, env=env)
-        print("swh_ql.so file generated")
-
-
-class TSBuildWasmCommand(TSCommand):
-    description = "Builds swh_ql.wasm"
-
-    def run(self):
-        subprocess.run([yarn, "build-wasm"], check=True)
-        print("swh_ql.wasm file generated")
-
-
-class TSBuildCommand(TSCommand):
-    description = "Builds swh_ql.so and swh_ql.wasm"
-
-    def run(self):
-        self.run_command("ts_build_so")
-        self.run_command("ts_build_wasm")
-
-
-class TSBuildExportCommand(TSCommand):
-    description = "Builds swh_ql.so and swh_ql.wasm and exports them to static/"
 
     def initialize_options(self):
         self.build_lib = None
@@ -111,47 +74,70 @@ class TSBuildExportCommand(TSCommand):
 
     def run(self):
         self.run_command("ts_install")
-        self.run_command("ts_build")
 
-        print("static files generated. copying them to package dir")
-        os.makedirs(os.path.join(self.build_lib, "swh/search/static"), exist_ok=True)
-        shutil.copyfile(
-            "query_language/swh_ql.so",
-            os.path.join(self.build_lib, "swh/search/static/swh_ql.so"),
-        )
-        shutil.copyfile(
-            "query_language/swh_ql.wasm",
-            os.path.join(self.build_lib, "swh/search/static/swh_ql.wasm"),
-        )
+        ql_dir = os.path.join(self.build_lib, "swh/search/query_language")
+        if not os.path.exists(os.path.join(ql_dir, "src/parser.c")):
+            generate_parser(ql_dir, copy_tree=True)
+
+        static_dir = os.path.join(self.build_lib, "swh/search/static")
+        os.makedirs(static_dir, exist_ok=True)
+
+        # This import cannot be toplevel, as setuptools installs it after the script
+        # starts running
+        from tree_sitter import Language
+
+        Language.build_library(os.path.join(static_dir, "swh_ql.so"), [ql_dir])
+        print("swh_ql.so file generated")
 
 
-class custom_build(build_py):
+class TSBuildCommand(TSCommand):
+    description = "Builds swh_ql.so and swh_ql.wasm"
+
+    def run(self):
+        self.run_command("ts_build_so")
+
+
+class custom_build(build):
     def run(self):
         super().run()
 
         if not self.dry_run:
-            self.run_command("ts_build_export")
+            self.run_command("ts_build")
 
 
 class custom_sdist(sdist):
     def make_release_tree(self, base_dir, files):
         super().make_release_tree(base_dir, files)
-        # TODO: build the .c file and .wasm but not .so, because it's architecture-
-        # dependent, and shouldn't be in a sdist (aka *source* distribution)
+
+        dist_ql_path = os.path.join(base_dir, "swh/search/query_language")
+
         if not self.dry_run:
             self.run_command("ts_install")
-            self.run_command("ts_build")
 
-            print("static files generated. copying them to package dir")
-            os.makedirs(os.path.join(base_dir, "swh/search/static"), exist_ok=True)
-            shutil.copyfile(
-                "query_language/swh_ql.so",
-                os.path.join(base_dir, "swh/search/static/swh_ql.so"),
-            )
-            shutil.copyfile(
-                "query_language/swh_ql.wasm",
-                os.path.join(base_dir, "swh/search/static/swh_ql.wasm"),
-            )
+            generate_parser(dist_ql_path, copy_tree=True)
+
+
+class custom_develop(develop):
+    def run(self):
+        super().run()
+
+        if not self.dry_run:
+            generate_parser("swh/search/query_language", copy_tree=False)
+
+
+def generate_parser(dest_path, copy_tree):
+    if copy_tree:
+        # FIXME: setuptools should copy this itself...
+        print("Copying parser files")
+        if os.path.exists(dest_path):
+            shutil.rmtree(dest_path)
+        shutil.copytree("swh/search/query_language", dest_path)
+
+    print("Getting path")
+    path = subprocess.check_output([yarn, "bin"]).decode().strip()
+    env = {**os.environ, "PATH": os.pathsep.join([path, os.environ["PATH"]])}
+    print("Generating")
+    subprocess.run(["tree-sitter", "generate", "--no-bindings"], cwd=dest_path, env=env)
 
 
 setup(
@@ -188,14 +174,12 @@ setup(
         "Documentation": "https://docs.softwareheritage.org/devel/swh-search/",
     },
     cmdclass={
-        "build_py": custom_build,
+        "build": custom_build,
         "sdist": custom_sdist,
+        "develop": custom_develop,
         "ts_install": TSInstallCommand,
-        "ts_generate": TSGenerateCommand,
         "ts_build_so": TSBuildSoCommand,
-        "ts_build_wasm": TSBuildWasmCommand,
         "ts_build": TSBuildCommand,
-        "ts_build_export": TSBuildExportCommand,
     },
     zip_safe=False,
 )
