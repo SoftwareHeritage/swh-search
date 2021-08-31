@@ -73,8 +73,6 @@ class TSBuildSoCommand(TSCommand):
         super().finalize_options()
 
     def run(self):
-        self.run_command("ts_install")
-
         ql_dir = os.path.join(self.build_lib, "swh/search/query_language")
         if not os.path.exists(os.path.join(ql_dir, "src/parser.c")):
             generate_parser(ql_dir, copy_tree=True)
