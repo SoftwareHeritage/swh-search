@@ -3,6 +3,7 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+from collections import Counter
 from datetime import datetime, timedelta, timezone
 from itertools import permutations
 
@@ -1166,3 +1167,23 @@ class CommonSearchTest:
         result_page = self.search.origin_search(url_pattern="baaz")
         assert result_page.next_page_token is None
         assert result_page.results == []
+
+    def test_visit_types_count(self):
+        assert self.search.visit_types_count() == Counter()
+
+        origins = [
+            {"url": "http://foobar.baz", "visit_types": ["git"], "blocklisted": True}
+        ]
+
+        for idx, visit_type in enumerate(["git", "hg", "svn"]):
+            for i in range(idx + 1):
+                origins.append(
+                    {
+                        "url": f"http://{visit_type}.foobar.baz.{i}",
+                        "visit_types": [visit_type],
+                    }
+                )
+        self.search.origin_update(origins)
+        self.search.flush()
+
+        assert self.search.visit_types_count() == Counter(git=1, hg=2, svn=3)

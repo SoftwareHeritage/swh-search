@@ -1,7 +1,6 @@
 YARN ?= yarn
 PYTHON ?= python3
 
-
 ts-install: package.json
 	$(PYTHON) setup.py ts_install
 
@@ -29,3 +28,5 @@ ts-build-wasm: ts-generate query_language/src/
 
 ts-build: ts-build-so ts-build-wasm
 	@echo 'Build completed'
+
+test: ts-build-so

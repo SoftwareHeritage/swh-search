@@ -31,12 +31,6 @@ es_config/elasticsearch.keystore
 es_config/elasticsearch.yml
 es_config/jvm.options
 es_config/log4j2.properties
-query_language/.gitignore
-query_language/build.py
-query_language/grammar.js
-query_language/sample_query
-query_language/tokens.js
-query_language/test/corpus/combinations.txt
 swh/__init__.py
 swh.search.egg-info/PKG-INFO
 swh.search.egg-info/SOURCES.txt
@@ -58,6 +52,11 @@ swh/search/utils.py
 swh/search/api/__init__.py
 swh/search/api/client.py
 swh/search/api/server.py
+swh/search/query_language/.gitignore
+swh/search/query_language/grammar.js
+swh/search/query_language/sample_query
+swh/search/query_language/tokens.js
+swh/search/query_language/test/corpus/combinations.txt
 swh/search/tests/__init__.py
 swh/search/tests/conftest.py
 swh/search/tests/test_api_client.py
