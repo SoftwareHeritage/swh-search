@@ -1,8 +1,8 @@
-swh-search (0.11.4-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-search (0.11.4-2~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * Use --no-ext-rename in dh_python3 to avoid renaming swh_ql.so
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 31 Aug 2021 13:18:53 +0000
+ -- Nicolas Dandrimont <olasd@debian.org>  Wed, 01 Sep 2021 17:12:49 +0200
 
 swh-search (0.11.4-1~swh1) unstable-swh; urgency=medium
 
