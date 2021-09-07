@@ -323,6 +323,7 @@ class ElasticSearch:
                 "_index": write_index,
                 "scripted_upsert": True,
                 "upsert": {**document, "sha1": sha1,},
+                "retry_on_conflict": 10,
                 "script": {
                     "source": update_script,
                     "lang": "painless",
