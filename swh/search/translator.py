@@ -40,8 +40,8 @@ class Translator:
         self.query = ""
 
     def parse_query(self, query):
-        self.query = query
-        tree = self.parser.parse(query.encode("utf8"))
+        self.query = query.encode()
+        tree = self.parser.parse(self.query)
         self.query_node = tree.root_node
 
         if self.query_node.has_error:
@@ -109,7 +109,7 @@ class Translator:
         start = node.start_point[1]
         end = node.end_point[1]
 
-        value = self.query[start:end]
+        value = self.query[start:end].decode()
 
         if len(value) > 1 and (
             (value[0] == "'" and value[-1] == "'") or (value[0] and value[-1] == '"')
