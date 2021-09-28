@@ -10,7 +10,8 @@ import re
 from typing import Any, Dict, Iterable, Iterator, List, Optional
 
 from swh.indexer import codemeta
-from swh.model.identifiers import origin_identifier
+from swh.model import model
+from swh.model.hashutil import hash_to_hex
 from swh.search.interface import (
     SORT_BY_OPTIONS,
     MinimalOriginDict,
@@ -171,7 +172,7 @@ class InMemorySearch:
     def origin_update(self, documents: Iterable[OriginDict]) -> None:
         for source_document in documents:
             document: Dict[str, Any] = dict(source_document)
-            id_ = origin_identifier(document)
+            id_ = hash_to_hex(model.Origin(url=document["url"]).id)
             if "url" in document:
                 document["_url_tokens"] = set(
                     self._url_splitter.split(source_document["url"])

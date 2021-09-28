@@ -15,7 +15,7 @@ import msgpack
 
 from swh.indexer import codemeta
 from swh.model import model
-from swh.model.identifiers import origin_identifier
+from swh.model.hashutil import hash_to_hex
 from swh.search.interface import (
     SORT_BY_OPTIONS,
     MinimalOriginDict,
@@ -221,7 +221,8 @@ class ElasticSearch:
         write_index = self._get_origin_write_alias()
         documents = map(_sanitize_origin, documents)
         documents_with_sha1 = (
-            (origin_identifier(document), document) for document in documents
+            (hash_to_hex(model.Origin(url=document["url"]).id), document)
+            for document in documents
         )
         # painless script that will be executed when updating an origin document
         update_script = dedent(
