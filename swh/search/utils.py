@@ -1,3 +1,9 @@
+# Copyright (C) 2021  The Software Heritage developers
+# See the AUTHORS file at the top-level directory of this distribution
+# License: GNU General Public License version 3, or any later version
+# See top-level LICENSE file for more information
+
+import codecs
 from datetime import datetime
 
 import iso8601  # type: ignore
@@ -100,6 +106,7 @@ def unescape(string):
     True
     >>> unescape(r'''foo \\\\" bar''') == r'''foo \\" bar'''
     True
+    >>> unescape(r'''café \" foo''') == r'''café " foo'''
+    True
     """
-
-    return bytes(string, "utf-8").decode("unicode_escape")
+    return codecs.escape_decode(string.encode())[0].decode()

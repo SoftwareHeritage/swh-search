@@ -8,14 +8,14 @@ from collections import Counter
 import logging
 import pprint
 from textwrap import dedent
-from typing import Any, Dict, Iterable, Iterator, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 from elasticsearch import Elasticsearch, helpers
 import msgpack
 
 from swh.indexer import codemeta
 from swh.model import model
-from swh.model.identifiers import origin_identifier
+from swh.model.hashutil import hash_to_hex
 from swh.search.interface import (
     SORT_BY_OPTIONS,
     MinimalOriginDict,
@@ -130,12 +130,12 @@ class ElasticSearch:
         if not self._backend.indices.exists(index=self._get_origin_index()):
             self._backend.indices.create(index=self._get_origin_index())
 
-        if not self._backend.indices.exists_alias(self._get_origin_read_alias()):
+        if not self._backend.indices.exists_alias(name=self._get_origin_read_alias()):
             self._backend.indices.put_alias(
                 index=self._get_origin_index(), name=self._get_origin_read_alias()
             )
 
-        if not self._backend.indices.exists_alias(self._get_origin_write_alias()):
+        if not self._backend.indices.exists_alias(name=self._get_origin_write_alias()):
             self._backend.indices.put_alias(
                 index=self._get_origin_index(), name=self._get_origin_write_alias()
             )
@@ -221,7 +221,8 @@ class ElasticSearch:
         write_index = self._get_origin_write_alias()
         documents = map(_sanitize_origin, documents)
         documents_with_sha1 = (
-            (origin_identifier(document), document) for document in documents
+            (hash_to_hex(model.Origin(url=document["url"]).id), document)
+            for document in documents
         )
         # painless script that will be executed when updating an origin document
         update_script = dedent(
@@ -323,6 +324,7 @@ class ElasticSearch:
                 "_index": write_index,
                 "scripted_upsert": True,
                 "upsert": {**document, "sha1": sha1,},
+                "retry_on_conflict": 10,
                 "script": {
                     "source": update_script,
                     "lang": "painless",
@@ -339,13 +341,6 @@ class ElasticSearch:
         send_metric(
             "document:index_error", count=len(errors), method_name="origin_update"
         )
-
-    def origin_dump(self) -> Iterator[model.Origin]:
-        results = helpers.scan(self._backend, index=self._get_origin_read_alias())
-        for hit in results:
-            yield self._backend.termvectors(
-                index=self._get_origin_read_alias(), id=hit["_id"], fields=["*"]
-            )
 
     @timed
     def origin_search(
