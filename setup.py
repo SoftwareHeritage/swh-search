@@ -92,7 +92,7 @@ class TSBuildSoCommand(TSCommand):
 
 
 class TSBuildCommand(TSCommand):
-    description = "Builds swh_ql.so and swh_ql.wasm"
+    description = "Builds swh_ql.so"
 
     def run(self):
         self.run_command("ts_build_so")
@@ -122,8 +122,8 @@ class custom_sdist(sdist):
 class custom_develop(develop):
     def run(self):
         super().run()
-
         if not self.dry_run:
+            self.run_command("ts_install")
             generate_parser("swh/search/query_language")
 
 

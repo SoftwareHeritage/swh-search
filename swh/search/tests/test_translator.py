@@ -330,7 +330,7 @@ def test_keyword_no_escape_inside_filter():
     _test_results(query, expected)
 
 
-def test_escaped_punctutation_parsing():
+def test_escaped_punctuation_parsing():
     query = r"""keyword in ["foo \'\" bar"]"""
     expected = {
         "filters": {
@@ -345,6 +345,55 @@ def test_escaped_punctutation_parsing():
                         ],
                     }
                 },
+            }
+        }
+    }
+    _test_results(query, expected)
+
+
+def test_nonascii():
+    query = r"""keyword in ["café"]"""
+    expected = {
+        "filters": {
+            "nested": {
+                "path": "intrinsic_metadata",
+                "query": {
+                    "multi_match": {
+                        "query": r"""café""",
+                        "fields": [
+                            get_expansion("keywords", ".") + "^2",
+                            get_expansion("descriptions", "."),
+                        ],
+                    }
+                },
+            }
+        }
+    }
+    _test_results(query, expected)
+
+
+def test_nonascii_before_operator():
+    query = r"""keyword in ["🐍"] and visited = true"""
+    expected = {
+        "filters": {
+            "bool": {
+                "must": [
+                    {
+                        "nested": {
+                            "path": "intrinsic_metadata",
+                            "query": {
+                                "multi_match": {
+                                    "query": r"""🐍""",
+                                    "fields": [
+                                        get_expansion("keywords", ".") + "^2",
+                                        get_expansion("descriptions", "."),
+                                    ],
+                                }
+                            },
+                        },
+                    },
+                    {"term": {"has_visits": True,},},
+                ],
             }
         }
     }

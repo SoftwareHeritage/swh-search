@@ -6,7 +6,6 @@ CONTRIBUTORS
 LICENSE
 MANIFEST.in
 Makefile
-Makefile.local
 README.md
 mypy.ini
 package.json

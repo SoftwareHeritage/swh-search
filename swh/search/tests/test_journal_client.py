@@ -9,6 +9,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
     ObjectType,
     Person,
@@ -20,7 +21,6 @@ from swh.model.model import (
     TargetType,
     Timestamp,
     TimestampWithTimezone,
-    hash_to_bytes,
 )
 from swh.search.journal_client import (
     fetch_last_revision_release_date,
