@@ -130,12 +130,12 @@ class ElasticSearch:
         if not self._backend.indices.exists(index=self._get_origin_index()):
             self._backend.indices.create(index=self._get_origin_index())
 
-        if not self._backend.indices.exists_alias(self._get_origin_read_alias()):
+        if not self._backend.indices.exists_alias(name=self._get_origin_read_alias()):
             self._backend.indices.put_alias(
                 index=self._get_origin_index(), name=self._get_origin_read_alias()
             )
 
-        if not self._backend.indices.exists_alias(self._get_origin_write_alias()):
+        if not self._backend.indices.exists_alias(name=self._get_origin_write_alias()):
             self._backend.indices.put_alias(
                 index=self._get_origin_index(), name=self._get_origin_write_alias()
             )
