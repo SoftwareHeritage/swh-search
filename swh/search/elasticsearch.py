@@ -8,7 +8,7 @@ from collections import Counter
 import logging
 import pprint
 from textwrap import dedent
-from typing import Any, Dict, Iterable, Iterator, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 from elasticsearch import Elasticsearch, helpers
 import msgpack
@@ -341,13 +341,6 @@ class ElasticSearch:
         send_metric(
             "document:index_error", count=len(errors), method_name="origin_update"
         )
-
-    def origin_dump(self) -> Iterator[model.Origin]:
-        results = helpers.scan(self._backend, index=self._get_origin_read_alias())
-        for hit in results:
-            yield self._backend.termvectors(
-                index=self._get_origin_read_alias(), id=hit["_id"], fields=["*"]
-            )
 
     @timed
     def origin_search(
