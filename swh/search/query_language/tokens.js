@@ -53,7 +53,9 @@ const sortByOptions = [
 
 const visitTypeOptions = [
     "any",
+    "bzr",
     "cran",
+    "cvs",
     "deb",
     "deposit",
     "ftp",
@@ -61,6 +63,7 @@ const visitTypeOptions = [
     "git",
     "nixguix",
     "npm",
+    "opam",
     "pypi",
     "svn",
     "tar"
