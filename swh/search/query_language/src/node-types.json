@@ -749,6 +749,10 @@
     "named": true
   },
   {
+    "type": "bzr",
+    "named": false
+  },
+  {
     "type": "choiceOp",
     "named": true
   },
@@ -758,6 +762,10 @@
   },
   {
     "type": "created",
+    "named": false
+  },
+  {
+    "type": "cvs",
     "named": false
   },
   {
@@ -839,6 +847,10 @@
   {
     "type": "numericField",
     "named": true
+  },
+  {
+    "type": "opam",
+    "named": false
   },
   {
     "type": "or",

@@ -883,7 +883,15 @@
         },
         {
           "type": "STRING",
+          "value": "bzr"
+        },
+        {
+          "type": "STRING",
           "value": "cran"
+        },
+        {
+          "type": "STRING",
+          "value": "cvs"
         },
         {
           "type": "STRING",
@@ -912,6 +920,10 @@
         {
           "type": "STRING",
           "value": "npm"
+        },
+        {
+          "type": "STRING",
+          "value": "opam"
         },
         {
           "type": "STRING",
