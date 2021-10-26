@@ -5,6 +5,7 @@
 
 import codecs
 from datetime import datetime
+from typing import Optional
 
 import iso8601  # type: ignore
 
@@ -46,21 +47,19 @@ def get_expansion(field, sep=None):
     return METADATA_FIELDS[field]
 
 
-def is_date_parsable(date_str):
+def parse_and_format_date(date_str: str) -> Optional[str]:
     """
-    Return True if date_str is in the format
-    %Y-%m-%d or the standard ISO format.
-    Otherwise return False.
+    Parses a string date in the format %Y-%m-%d or ISO8601 and returns
+    a new string date in the format YYYY-mm-dd if the parsing succeeded
+    otherwise None.
     """
     try:
-        datetime.strptime(date_str, "%Y-%m-%d")
-        return True
+        return datetime.strptime(date_str, "%Y-%m-%d").strftime("%Y-%m-%d")
     except Exception:
         try:
-            iso8601.parse_date(date_str)
-            return True
+            return iso8601.parse_date(date_str).strftime("%Y-%m-%d")
         except Exception:
-            return False
+            return None
 
 
 def escape(obj):

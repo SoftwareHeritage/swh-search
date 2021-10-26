@@ -18,7 +18,7 @@ from swh.search.interface import (
     OriginDict,
     PagedResult,
 )
-from swh.search.utils import get_expansion, is_date_parsable
+from swh.search.utils import get_expansion, parse_and_format_date
 
 _words_regexp = re.compile(r"\w+")
 
@@ -242,8 +242,11 @@ class InMemorySearch:
 
                         # If date{Created,Modified,Published} value isn't parsable
                         # It gets rejected and isn't stored (unlike other fields)
-                        if not is_date_parsable(date):
+                        formatted_date = parse_and_format_date(date)
+                        if formatted_date is None:
                             intrinsic_metadata.pop(date_field)
+                        else:
+                            intrinsic_metadata[date_field] = formatted_date
 
                 document["intrinsic_metadata"] = codemeta.expand(intrinsic_metadata)
 

@@ -478,6 +478,52 @@ class CommonSearchTest:
             sort_by=["date_created"], origin_indices=[0, 1, 2], sort_results=False
         )
 
+    def test_origin_instrinsic_metadata_dates_processing(self):
+
+        DATE_0 = "foo"  # will be discarded
+        DATE_1 = "2001-2-13"  # will be formatted to 2001-02-13
+        DATE_2 = "2005-10-2"  # will be formatted to 2005-10-02
+
+        ORIGINS = [
+            {
+                "url": "http://foobar.0.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "dateCreated": DATE_0,
+                    "dateModified": DATE_1,
+                    "datePublished": DATE_2,
+                },
+            },
+            {
+                "url": "http://foobar.1.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "dateCreated": DATE_1,
+                    "dateModified": DATE_2,
+                    "datePublished": DATE_2,
+                },
+            },
+            {
+                "url": "http://foobar.2.com",
+                "intrinsic_metadata": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "dateCreated": DATE_2,
+                    "dateModified": DATE_2,
+                    "datePublished": DATE_2,
+                },
+            },
+        ]
+        self.search.origin_update(ORIGINS)
+        self.search.flush()
+
+        # check origins have been successfully processed
+        page = self.search.origin_search(url_pattern="foobar")
+        assert {r["url"] for r in page.results} == {
+            "http://foobar.0.com",
+            "http://foobar.2.com",
+            "http://foobar.1.com",
+        }
+
     def test_origin_keywords_search(self):
         ORIGINS = [
             {
