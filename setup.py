@@ -41,7 +41,7 @@ def parse_requirements(name=None):
     return requirements
 
 
-yarn = os.environ.get("YARN", "yarn")
+yarn = os.environ.get("YARN", "yarnpkg" if shutil.which("yarnpkg") else "yarn")
 
 
 class TSCommand(Command):
