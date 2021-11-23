@@ -7,7 +7,7 @@ import codecs
 from datetime import datetime
 from typing import Optional
 
-import iso8601  # type: ignore
+import iso8601
 
 
 def get_expansion(field, sep=None):
