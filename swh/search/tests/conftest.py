@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2020  The Software Heritage developers
+# Copyright (C) 2019-2021  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -46,7 +46,9 @@ transport.port: {transport_port}
 """
 
 
-def _run_elasticsearch(conf_dir, data_dir, logs_dir, http_port, transport_port):
+def _run_elasticsearch(
+    conf_dir, data_dir, logs_dir, http_port, transport_port, libffi_tmpdir
+):
     es_home = "/usr/share/elasticsearch"
 
     with open(conf_dir + "/elasticsearch.yml", "w") as fd:
@@ -76,7 +78,7 @@ def _run_elasticsearch(conf_dir, data_dir, logs_dir, http_port, transport_port):
     host = "127.0.0.1:{}".format(http_port)
 
     with open(logs_dir + "/output.txt", "w") as fd:
-        p = subprocess.Popen(cmd)
+        p = subprocess.Popen(cmd, env={"LIBFFI_TMPDIR": libffi_tmpdir})
 
     wait_for_peer("127.0.0.1", http_port)
 
@@ -100,6 +102,7 @@ def elasticsearch_session(tmpdir_factory):
         logs_dir=str(tmpdir.mkdir("logs")),
         http_port=http_port,
         transport_port=transport_port,
+        libffi_tmpdir=str(tmpdir.mkdir("libffi")),
     )
 
     yield "127.0.0.1:{}".format(http_port)
