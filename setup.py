@@ -159,7 +159,7 @@ setup(
         [swh.cli.subcommands]
         search=swh.search.cli
     """,
-    setup_requires=["setuptools-scm", "tree-sitter==0.19.0"],
+    setup_requires=["setuptools-scm", "tree-sitter"],
     use_scm_version=True,
     extras_require={"testing": parse_requirements("test")},
     include_package_data=True,
