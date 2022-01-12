@@ -67,3 +67,4 @@ swh/search/tests/test_journal_client.py
 swh/search/tests/test_search.py
 swh/search/tests/test_server.py
 swh/search/tests/test_translator.py
+swh/search/tests/test_utils.py
