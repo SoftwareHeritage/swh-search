@@ -3,7 +3,7 @@
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import functools
 from unittest.mock import MagicMock
 
@@ -19,7 +19,6 @@ from swh.model.model import (
     Snapshot,
     SnapshotBranch,
     TargetType,
-    Timestamp,
     TimestampWithTimezone,
 )
 from swh.search.journal_client import (
@@ -29,25 +28,17 @@ from swh.search.journal_client import (
 from swh.storage import get_storage
 
 DATES = [
-    TimestampWithTimezone(
-        timestamp=Timestamp(seconds=1234567891, microseconds=0,),
-        offset=120,
-        negative_utc=False,
+    TimestampWithTimezone.from_datetime(
+        datetime(2009, 2, 14, 1, 31, 31, tzinfo=timezone(timedelta(hours=2)))
     ),
-    TimestampWithTimezone(
-        timestamp=Timestamp(seconds=1234567892, microseconds=0,),
-        offset=120,
-        negative_utc=False,
+    TimestampWithTimezone.from_datetime(
+        datetime(2009, 2, 14, 1, 31, 32, tzinfo=timezone(timedelta(hours=2)))
     ),
-    TimestampWithTimezone(
-        timestamp=Timestamp(seconds=1234567893, microseconds=0,),
-        offset=120,
-        negative_utc=False,
+    TimestampWithTimezone.from_datetime(
+        datetime(2009, 2, 14, 1, 31, 33, tzinfo=timezone(timedelta(hours=2)))
     ),
-    TimestampWithTimezone(
-        timestamp=Timestamp(seconds=1234567894, microseconds=0,),
-        offset=120,
-        negative_utc=False,
+    TimestampWithTimezone.from_datetime(
+        datetime(2009, 2, 14, 1, 31, 34, tzinfo=timezone(timedelta(hours=2)))
     ),
 ]
 
