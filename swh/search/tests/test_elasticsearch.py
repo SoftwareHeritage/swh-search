@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021  The Software Heritage developers
+# Copyright (C) 2019-2022  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -11,6 +11,7 @@ import unittest
 from elasticsearch.helpers.errors import BulkIndexError
 import pytest
 
+from swh.search.exc import SearchQuerySyntaxError
 from swh.search.metrics import OPERATIONS_METRIC
 
 from .test_search import CommonSearchTest
@@ -165,3 +166,14 @@ class TestElasticsearchSearch(CommonSearchTest, BaseElasticsearchTest):
         _check_results("sort_by = [-visits] limit = 1", [2])
         _check_results("sort_by = [last_visit] and limit = 2", [0, 1])
         _check_results("sort_by = [-last_eventful_visit, visits] limit = 3", [1, 0, 2])
+
+    def test_query_syntax_error(self):
+        ORIGINS = [
+            {"url": "http://foobar.1.com",},
+        ]
+
+        self.search.origin_update(ORIGINS)
+        self.search.flush()
+
+        with pytest.raises(SearchQuerySyntaxError):
+            self.search.origin_search(query="foobar")
