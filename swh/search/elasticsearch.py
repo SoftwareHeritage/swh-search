@@ -428,8 +428,11 @@ class ElasticSearch:
         if visit_types is not None:
             query_filters.append(f"visit_type = {escape(visit_types)}")
 
-        combined_filters = f"({' and '.join(query_filters)})"
-        query = f"{combined_filters}{' and ' if query != '' else ' '}{query}"
+        combined_filters = " and ".join(query_filters)
+        if combined_filters and query:
+            query = f"{combined_filters} and {query}"
+        else:
+            query = combined_filters or query
         parsed_query = self._translator.parse_query(query)
         query_clauses.append(parsed_query["filters"])
 
