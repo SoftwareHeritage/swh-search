@@ -1,3 +1,13 @@
+swh-search (0.12.1-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.12.1     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2022-02-14 15:26:46 +0100)
+  * Upstream changes:     - v0.12.1     - * Make RemoteSearch reraise
+    specific exceptions instead of generic RemoteException     - * Fix
+    crash when no filter but the main query is given
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Mon, 14 Feb 2022 14:31:40 +0000
+
 swh-search (0.12.0-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.12.0     - (tagged by Valentin Lorentz
