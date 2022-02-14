@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021  The Software Heritage developers
+# Copyright (C) 2019-2022  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -11,9 +11,41 @@ import unittest
 from elasticsearch.helpers.errors import BulkIndexError
 import pytest
 
+from swh.search.exc import SearchQuerySyntaxError
 from swh.search.metrics import OPERATIONS_METRIC
 
 from .test_search import CommonSearchTest
+
+now = datetime.now(tz=timezone.utc).isoformat()
+now_minus_5_hours = (datetime.now(tz=timezone.utc) - timedelta(hours=5)).isoformat()
+now_plus_5_hours = (datetime.now(tz=timezone.utc) + timedelta(hours=5)).isoformat()
+
+ORIGINS = [
+    {
+        "url": "http://foobar.1.com",
+        "nb_visits": 1,
+        "last_visit_date": now_minus_5_hours,
+        "last_eventful_visit_date": now_minus_5_hours,
+    },
+    {
+        "url": "http://foobar.2.com",
+        "nb_visits": 2,
+        "last_visit_date": now,
+        "last_eventful_visit_date": now,
+    },
+    {
+        "url": "http://foobar.3.com",
+        "nb_visits": 3,
+        "last_visit_date": now_plus_5_hours,
+        "last_eventful_visit_date": now_minus_5_hours,
+    },
+    {
+        "url": "http://barbaz.4.com",
+        "nb_visits": 3,
+        "last_visit_date": now_plus_5_hours,
+        "last_eventful_visit_date": now_minus_5_hours,
+    },
+]
 
 
 class BaseElasticsearchTest(unittest.TestCase):
@@ -120,34 +152,6 @@ class TestElasticsearchSearch(CommonSearchTest, BaseElasticsearchTest):
         assert mock.call_args[1]["index"] == "test-read"
 
     def test_sort_by_and_limit_query(self):
-        now = datetime.now(tz=timezone.utc).isoformat()
-        now_minus_5_hours = (
-            datetime.now(tz=timezone.utc) - timedelta(hours=5)
-        ).isoformat()
-        now_plus_5_hours = (
-            datetime.now(tz=timezone.utc) + timedelta(hours=5)
-        ).isoformat()
-
-        ORIGINS = [
-            {
-                "url": "http://foobar.1.com",
-                "nb_visits": 1,
-                "last_visit_date": now_minus_5_hours,
-                "last_eventful_visit_date": now_minus_5_hours,
-            },
-            {
-                "url": "http://foobar.2.com",
-                "nb_visits": 2,
-                "last_visit_date": now,
-                "last_eventful_visit_date": now,
-            },
-            {
-                "url": "http://foobar.3.com",
-                "nb_visits": 3,
-                "last_visit_date": now_plus_5_hours,
-                "last_eventful_visit_date": now_minus_5_hours,
-            },
-        ]
 
         self.search.origin_update(ORIGINS)
         self.search.flush()
@@ -165,3 +169,24 @@ class TestElasticsearchSearch(CommonSearchTest, BaseElasticsearchTest):
         _check_results("sort_by = [-visits] limit = 1", [2])
         _check_results("sort_by = [last_visit] and limit = 2", [0, 1])
         _check_results("sort_by = [-last_eventful_visit, visits] limit = 3", [1, 0, 2])
+
+    def test_search_ql_simple(self):
+        self.search.origin_update(ORIGINS)
+        self.search.flush()
+
+        results = {
+            r["url"]
+            for r in self.search.origin_search(query='origin = "foobar"').results
+        }
+        assert results == {
+            "http://foobar.1.com",
+            "http://foobar.2.com",
+            "http://foobar.3.com",
+        }
+
+    def test_query_syntax_error(self):
+        self.search.origin_update(ORIGINS)
+        self.search.flush()
+
+        with pytest.raises(SearchQuerySyntaxError):
+            self.search.origin_search(query="foobar")
