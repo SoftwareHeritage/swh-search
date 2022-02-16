@@ -1,3 +1,14 @@
+swh-search (0.13.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.13.0     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2022-02-16 13:12:20 +0100)
+  * Upstream changes:     - v0.13.0     - * Use ':' for substring
+    matching instead of '='     - * translator: Fix 'visited = false'
+    queries to actually return results.     - * grammar: Prevent
+    'isoDateTime' rule from being too greedy
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 16 Feb 2022 12:17:38 +0000
+
 swh-search (0.12.1-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.12.1     - (tagged by Valentin Lorentz
