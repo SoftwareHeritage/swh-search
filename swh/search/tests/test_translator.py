@@ -93,7 +93,7 @@ def test_deeply_nested_filters():
 
 
 def test_origin_and_metadata_filters():
-    query = 'origin = django or metadata = "framework and web"'
+    query = 'origin : django or metadata : "framework and web"'
     expected = {
         "filters": {
             "bool": {
@@ -317,7 +317,7 @@ def test_last_eventful_visit_less_than_to_filter():
 def test_keyword_no_escape_inside_filter():
     # any keyword (filter name/operator/value) inside a filter
     # must be considered a string.
-    query = r'''origin = "language in [\'go lang\', python]"'''
+    query = r'''origin : "language in [\'go lang\', python]"'''
     expected = {
         "filters": {
             "multi_match": {

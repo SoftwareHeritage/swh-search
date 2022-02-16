@@ -11,7 +11,7 @@ const {
     listFields,
     dateFields
 } = require("./tokens.js");
-const { equalOp, rangeOp, choiceOp } = require("./tokens.js");
+const { equalOp, containOp, rangeOp, choiceOp } = require("./tokens.js");
 const { sortByOptions, visitTypeOptions } = require("./tokens.js");
 const { OR, AND, TRUE, FALSE } = require("./tokens.js");
 
@@ -80,7 +80,7 @@ module.exports = grammar({
 
         patternFilter: $ => annotateFilter($.patternField, $.patternOp, $.patternVal),
         patternField: $ => token(choice(...patternFields)),
-        patternOp: $ => $.equalOp,
+        patternOp: $ => $.containOp,
         patternVal: $ => $.string,
 
         booleanFilter: $ => annotateFilter($.booleanField, $.booleanOp, $.booleanVal),
@@ -116,6 +116,7 @@ module.exports = grammar({
 
         rangeOp: $ => token(choice(...rangeOp)),
         equalOp: $ => token(choice(...equalOp)),
+        containOp: $ => token(choice(...containOp)),
         choiceOp: $ => token(choice(...choiceOp)),
 
         isoDateTime: $ => {

@@ -176,7 +176,7 @@ class TestElasticsearchSearch(CommonSearchTest, BaseElasticsearchTest):
 
         results = {
             r["url"]
-            for r in self.search.origin_search(query='origin = "foobar"').results
+            for r in self.search.origin_search(query='origin : "foobar"').results
         }
         assert results == {
             "http://foobar.1.com",
