@@ -6,6 +6,7 @@
 
 from distutils.cmd import Command
 from distutils.command.build import build
+import glob
 from io import open
 import os
 import shutil
@@ -39,6 +40,20 @@ def parse_requirements(name=None):
                 continue
             requirements.append(line)
     return requirements
+
+
+def needs_regen(dest, sources) -> bool:
+    """Returns whether any of the 'sources' files was modified after 'dst'."""
+    if not os.path.exists(dest):
+        return True
+
+    dest_mtime = os.stat(dest).st_mtime
+
+    for source in sources:
+        if os.stat(source).st_mtime > dest_mtime:
+            return True
+
+    return False
 
 
 yarn = os.environ.get("YARN", "yarnpkg" if shutil.which("yarnpkg") else "yarn")
@@ -75,7 +90,10 @@ class TSBuildSoCommand(TSCommand):
     def run(self):
         ql_dir = os.path.join(self.build_lib, "swh/search/query_language")
         copy_ql_tree(ql_dir)
-        if not os.path.exists(os.path.join(ql_dir, "src/parser.c")):
+        if needs_regen(
+            os.path.join(ql_dir, "src/parser.c"),
+            glob.glob("swh/search/query_language/**/*"),
+        ):
             print("parser.c missing from build dir.")
             self.run_command("ts_install")
             generate_parser(ql_dir)

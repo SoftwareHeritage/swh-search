@@ -35,6 +35,7 @@ const fields = [].concat(
 
 // Operators
 const equalOp = ['='];
+const containOp = [':'];
 const rangeOp = ['<', '<=', '=', '!=', '>=', '>'];
 const choiceOp = ['in', 'not in'];
 
@@ -93,6 +94,7 @@ module.exports = {
 
     // Operators
     equalOp,
+    containOp,
     rangeOp,
     choiceOp,
 

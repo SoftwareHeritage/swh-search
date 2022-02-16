@@ -42,8 +42,29 @@ def test_conjunction_operators():
     _test_results(query, expected)
 
 
+def test_visited():
+    query = "visited = true"
+    expected = {
+        "filters": {"term": {"has_visits": True}},
+    }
+    _test_results(query, expected)
+
+    query = "visited = false"
+    expected = {
+        "filters": {
+            "bool": {
+                "should": [
+                    {"term": {"has_visits": False}},
+                    {"bool": {"must_not": {"exists": {"field": "has_visits"}}}},
+                ]
+            }
+        }
+    }
+    _test_results(query, expected)
+
+
 def test_conjunction_op_precedence_override():
-    query = "(visited = false or visits > 2) and visits < 5"
+    query = "(visited = true or visits > 2) and visits < 5"
     expected = {
         "filters": {
             "bool": {
@@ -51,7 +72,7 @@ def test_conjunction_op_precedence_override():
                     {
                         "bool": {
                             "should": [
-                                {"term": {"has_visits": False}},
+                                {"term": {"has_visits": True}},
                                 {"range": {"nb_visits": {"gt": 2}}},
                             ]
                         }
@@ -93,7 +114,7 @@ def test_deeply_nested_filters():
 
 
 def test_origin_and_metadata_filters():
-    query = 'origin = django or metadata = "framework and web"'
+    query = 'origin : django or metadata : "framework and web"'
     expected = {
         "filters": {
             "bool": {
@@ -285,6 +306,22 @@ def test_date_created_greater_than_filter():
     _test_results(query, expected)
 
 
+def test_visit_date_range():
+    query = "last_visit >= 2020-01-01 and last_visit < 2021-01-01"
+    expected = {
+        "filters": {
+            "bool": {
+                "must": [
+                    {"range": {"last_visit_date": {"gte": "2020-01-01"}}},
+                    {"range": {"last_visit_date": {"lt": "2021-01-01"}}},
+                ]
+            }
+        },
+    }
+
+    _test_results(query, expected)
+
+
 def test_last_eventful_visit_not_equal_to_filter():
     query = "last_visit != 2020-01-01"
     expected = {
@@ -317,7 +354,7 @@ def test_last_eventful_visit_less_than_to_filter():
 def test_keyword_no_escape_inside_filter():
     # any keyword (filter name/operator/value) inside a filter
     # must be considered a string.
-    query = r'''origin = "language in [\'go lang\', python]"'''
+    query = r'''origin : "language in [\'go lang\', python]"'''
     expected = {
         "filters": {
             "multi_match": {
