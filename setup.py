@@ -6,6 +6,7 @@
 
 from distutils.cmd import Command
 from distutils.command.build import build
+import glob
 from io import open
 import os
 import shutil
@@ -41,7 +42,21 @@ def parse_requirements(name=None):
     return requirements
 
 
-yarn = os.environ.get("YARN", "yarn")
+def needs_regen(dest, sources) -> bool:
+    """Returns whether any of the 'sources' files was modified after 'dst'."""
+    if not os.path.exists(dest):
+        return True
+
+    dest_mtime = os.stat(dest).st_mtime
+
+    for source in sources:
+        if os.stat(source).st_mtime > dest_mtime:
+            return True
+
+    return False
+
+
+yarn = os.environ.get("YARN", "yarnpkg" if shutil.which("yarnpkg") else "yarn")
 
 
 class TSCommand(Command):
@@ -75,7 +90,10 @@ class TSBuildSoCommand(TSCommand):
     def run(self):
         ql_dir = os.path.join(self.build_lib, "swh/search/query_language")
         copy_ql_tree(ql_dir)
-        if not os.path.exists(os.path.join(ql_dir, "src/parser.c")):
+        if needs_regen(
+            os.path.join(ql_dir, "src/parser.c"),
+            glob.glob("swh/search/query_language/**/*"),
+        ):
             print("parser.c missing from build dir.")
             self.run_command("ts_install")
             generate_parser(ql_dir)
@@ -159,7 +177,7 @@ setup(
         [swh.cli.subcommands]
         search=swh.search.cli
     """,
-    setup_requires=["setuptools-scm", "tree-sitter==0.19.0"],
+    setup_requires=["setuptools-scm", "tree-sitter"],
     use_scm_version=True,
     extras_require={"testing": parse_requirements("test")},
     include_package_data=True,

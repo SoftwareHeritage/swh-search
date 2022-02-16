@@ -24,7 +24,7 @@ from swh.search.interface import (
 )
 from swh.search.metrics import send_metric, timed
 from swh.search.translator import Translator
-from swh.search.utils import escape, get_expansion, is_date_parsable
+from swh.search.utils import escape, get_expansion, parse_and_format_date
 
 logger = logging.getLogger(__name__)
 
@@ -79,8 +79,11 @@ def _sanitize_origin(origin):
 
                 # If date{Created,Modified,Published} value isn't parsable
                 # It gets rejected and isn't stored (unlike other fields)
-                if not is_date_parsable(date):
+                formatted_date = parse_and_format_date(date)
+                if formatted_date is None:
                     intrinsic_metadata.pop(date_field)
+                else:
+                    intrinsic_metadata[date_field] = formatted_date
 
         res["intrinsic_metadata"] = codemeta.expand(intrinsic_metadata)
 
@@ -370,10 +373,10 @@ class ElasticSearch:
 
         query_filters = []
         if url_pattern:
-            query_filters.append(f"origin = {escape(url_pattern)}")
+            query_filters.append(f"origin : {escape(url_pattern)}")
 
         if metadata_pattern:
-            query_filters.append(f"metadata = {escape(metadata_pattern)}")
+            query_filters.append(f"metadata : {escape(metadata_pattern)}")
 
         # if not query_clauses:
         #     raise ValueError(
@@ -425,8 +428,11 @@ class ElasticSearch:
         if visit_types is not None:
             query_filters.append(f"visit_type = {escape(visit_types)}")
 
-        combined_filters = f"({' and '.join(query_filters)})"
-        query = f"{combined_filters}{' and ' if query != '' else ' '}{query}"
+        combined_filters = " and ".join(query_filters)
+        if combined_filters and query:
+            query = f"{combined_filters} and {query}"
+        else:
+            query = combined_filters or query
         parsed_query = self._translator.parse_query(query)
         query_clauses.append(parsed_query["filters"])
 

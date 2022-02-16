@@ -1,8 +1,36 @@
-swh-search (0.11.6-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-search (0.13.0-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.13.0     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2022-02-16 13:12:20 +0100)
+  * Upstream changes:     - v0.13.0     - * Use ':' for substring
+    matching instead of '='     - * translator: Fix 'visited = false'
+    queries to actually return results.     - * grammar: Prevent
+    'isoDateTime' rule from being too greedy
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 29 Sep 2021 13:56:57 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 16 Feb 2022 12:17:38 +0000
+
+swh-search (0.12.1-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.12.1     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2022-02-14 15:26:46 +0100)
+  * Upstream changes:     - v0.12.1     - * Make RemoteSearch reraise
+    specific exceptions instead of generic RemoteException     - * Fix
+    crash when no filter but the main query is given
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Mon, 14 Feb 2022 14:31:40 +0000
+
+swh-search (0.12.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.12.0     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2022-01-12 13:55:44 +0100)
+  * Upstream changes:     - v0.12.0     - * search: Ensure CodeMeta
+    dates are properly formatted     - * setup.py: use yarnpkg instead
+    of yarn if present in PATH     - * swh.search.utils: Fix type     -
+    * conftest: Fix tests hang since elasticsearch 7.16 release     - *
+    Unpin tree-sitter dependency     - * tests: Use
+    TimestampWithTimezone.from_datetime() instead of the constructor
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Wed, 12 Jan 2022 13:00:33 +0000
 
 swh-search (0.11.6-1~swh1) unstable-swh; urgency=medium
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2021  The Software Heritage developers
+# Copyright (C) 2021-2022  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -10,6 +10,7 @@ import tempfile
 from pkg_resources import resource_filename
 from tree_sitter import Language, Parser
 
+from swh.search.exc import SearchQuerySyntaxError
 from swh.search.utils import get_expansion, unescape
 
 logger = logging.getLogger(__name__)
@@ -45,7 +46,7 @@ class Translator:
         self.query_node = tree.root_node
 
         if self.query_node.has_error:
-            raise Exception("Invalid query")
+            raise SearchQuerySyntaxError("Invalid query")
 
         return self._traverse(self.query_node)
 
@@ -172,7 +173,23 @@ class Translator:
 
         if category == "booleanFilter":
             if name == "visited":
-                return {"term": {"has_visits": value == "true"}}
+                if value == "true":
+                    return {"term": {"has_visits": True}}
+                else:
+                    # non-visited origins will typically not have "has_visits" set
+                    # at all
+                    return {
+                        "bool": {
+                            "should": [
+                                {"term": {"has_visits": False}},
+                                {
+                                    "bool": {
+                                        "must_not": {"exists": {"field": "has_visits"}}
+                                    }
+                                },
+                            ]
+                        }
+                    }
 
         if category == "numericFilter":
             if name == "visits":
@@ -304,4 +321,4 @@ class Translator:
         if category == "limit":
             return value
 
-        raise Exception(f"Unknown filter {category}.{name}")
+        raise SearchQuerySyntaxError(f"Unknown filter {category}.{name}")
