@@ -306,6 +306,22 @@ def test_date_created_greater_than_filter():
     _test_results(query, expected)
 
 
+def test_visit_date_range():
+    query = "last_visit >= 2020-01-01 and last_visit < 2021-01-01"
+    expected = {
+        "filters": {
+            "bool": {
+                "must": [
+                    {"range": {"last_visit_date": {"gte": "2020-01-01"}}},
+                    {"range": {"last_visit_date": {"lt": "2021-01-01"}}},
+                ]
+            }
+        },
+    }
+
+    _test_results(query, expected)
+
+
 def test_last_eventful_visit_not_equal_to_filter():
     query = "last_visit != 2020-01-01"
     expected = {

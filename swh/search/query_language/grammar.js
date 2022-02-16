@@ -122,9 +122,9 @@ module.exports = grammar({
         isoDateTime: $ => {
             const dateRegex = (/\d{4}[-]\d{2}[-]\d{2}/).source
             const dateTimeSepRegex = (/(\s|T)*/).source
-            const timeRegex = (/(\d{2}:\d{2}(:\d{2}(\.\d{6})?)?)?/).source
-            const timezoneRegex = (/(\+\d{2}:\d{2}|Z)?/).source
-            return new RegExp(dateRegex + dateTimeSepRegex + timeRegex + timezoneRegex)
+            const timeRegex = (/\d{2}:\d{2}(:\d{2}(\.\d{6})?)?/).source
+            const timezoneRegex = (/\+\d{2}:\d{2}|Z/).source
+            return new RegExp(`${dateRegex}(${dateTimeSepRegex}${timeRegex}(${timezoneRegex})?)?`)
         },
 
         string: $ => choice(wrapWith($.stringContent, ["'", '"']), $.singleWord),

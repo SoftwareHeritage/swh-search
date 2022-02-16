@@ -17,15 +17,15 @@ from swh.search.metrics import OPERATIONS_METRIC
 from .test_search import CommonSearchTest
 
 now = datetime.now(tz=timezone.utc).isoformat()
-now_minus_5_hours = (datetime.now(tz=timezone.utc) - timedelta(hours=5)).isoformat()
-now_plus_5_hours = (datetime.now(tz=timezone.utc) + timedelta(hours=5)).isoformat()
+now_minus_5_days = (datetime.now(tz=timezone.utc) - timedelta(days=5)).isoformat()
+now_plus_5_days = (datetime.now(tz=timezone.utc) + timedelta(days=5)).isoformat()
 
 ORIGINS = [
     {
         "url": "http://foobar.1.com",
         "nb_visits": 1,
-        "last_visit_date": now_minus_5_hours,
-        "last_eventful_visit_date": now_minus_5_hours,
+        "last_visit_date": now_minus_5_days,
+        "last_eventful_visit_date": now_minus_5_days,
     },
     {
         "url": "http://foobar.2.com",
@@ -36,14 +36,14 @@ ORIGINS = [
     {
         "url": "http://foobar.3.com",
         "nb_visits": 3,
-        "last_visit_date": now_plus_5_hours,
-        "last_eventful_visit_date": now_minus_5_hours,
+        "last_visit_date": now_plus_5_days,
+        "last_eventful_visit_date": now_minus_5_days,
     },
     {
         "url": "http://barbaz.4.com",
         "nb_visits": 3,
-        "last_visit_date": now_plus_5_hours,
-        "last_eventful_visit_date": now_minus_5_hours,
+        "last_visit_date": now_plus_5_days,
+        "last_eventful_visit_date": now_minus_5_days,
     },
 ]
 
@@ -184,6 +184,58 @@ class TestElasticsearchSearch(CommonSearchTest, BaseElasticsearchTest):
             "http://foobar.3.com",
         }
 
+    def test_search_ql_datetimes(self):
+        self.search.origin_update(ORIGINS)
+        self.search.flush()
+
+        now_minus_5_minutes = (
+            datetime.now(tz=timezone.utc) - timedelta(minutes=5)
+        ).isoformat()
+        now_plus_5_minutes = (
+            datetime.now(tz=timezone.utc) + timedelta(minutes=5)
+        ).isoformat()
+
+        results = {
+            r["url"]
+            for r in self.search.origin_search(
+                query=(
+                    f"last_visit < {now_minus_5_minutes} "
+                    f"or last_visit > {now_plus_5_minutes}"
+                )
+            ).results
+        }
+        assert results == {
+            "http://foobar.1.com",
+            "http://foobar.3.com",
+            "http://barbaz.4.com",
+        }
+
+    def test_search_ql_dates(self):
+        self.search.origin_update(ORIGINS)
+        self.search.flush()
+
+        now_minus_2_days = (
+            (datetime.now(tz=timezone.utc) - timedelta(days=2)).date().isoformat()
+        )
+        now_plus_2_days = (
+            (datetime.now(tz=timezone.utc) + timedelta(days=2)).date().isoformat()
+        )
+
+        results = {
+            r["url"]
+            for r in self.search.origin_search(
+                query=(
+                    f"last_visit < {now_minus_2_days} "
+                    f"or last_visit > {now_plus_2_days}"
+                )
+            ).results
+        }
+        assert results == {
+            "http://foobar.1.com",
+            "http://foobar.3.com",
+            "http://barbaz.4.com",
+        }
+
     def test_search_ql_visited(self):
         self.search.origin_update(
             [
@@ -191,8 +243,8 @@ class TestElasticsearchSearch(CommonSearchTest, BaseElasticsearchTest):
                     "url": "http://foobar.1.com",
                     "has_visits": True,
                     "nb_visits": 1,
-                    "last_visit_date": now_minus_5_hours,
-                    "last_eventful_visit_date": now_minus_5_hours,
+                    "last_visit_date": now_minus_5_days,
+                    "last_eventful_visit_date": now_minus_5_days,
                 },
                 {"url": "http://foobar.2.com",},
                 {"url": "http://foobar.3.com", "has_visits": False,},
