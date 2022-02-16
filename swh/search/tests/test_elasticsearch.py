@@ -184,6 +184,40 @@ class TestElasticsearchSearch(CommonSearchTest, BaseElasticsearchTest):
             "http://foobar.3.com",
         }
 
+    def test_search_ql_visited(self):
+        self.search.origin_update(
+            [
+                {
+                    "url": "http://foobar.1.com",
+                    "has_visits": True,
+                    "nb_visits": 1,
+                    "last_visit_date": now_minus_5_hours,
+                    "last_eventful_visit_date": now_minus_5_hours,
+                },
+                {"url": "http://foobar.2.com",},
+                {"url": "http://foobar.3.com", "has_visits": False,},
+            ]
+        )
+        self.search.flush()
+
+        assert {
+            r["url"] for r in self.search.origin_search(query="visited = true").results
+        } == {"http://foobar.1.com"}
+        assert {
+            r["url"] for r in self.search.origin_search(query="visited = false").results
+        } == {"http://foobar.2.com", "http://foobar.3.com"}
+
+        assert (
+            self.search.origin_search(
+                query="visited = true and visited = false"
+            ).results
+            == []
+        )
+        assert (
+            self.search.origin_search(query="visited = false", with_visit=True).results
+            == []
+        )
+
     def test_query_syntax_error(self):
         self.search.origin_update(ORIGINS)
         self.search.flush()

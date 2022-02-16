@@ -42,8 +42,29 @@ def test_conjunction_operators():
     _test_results(query, expected)
 
 
+def test_visited():
+    query = "visited = true"
+    expected = {
+        "filters": {"term": {"has_visits": True}},
+    }
+    _test_results(query, expected)
+
+    query = "visited = false"
+    expected = {
+        "filters": {
+            "bool": {
+                "should": [
+                    {"term": {"has_visits": False}},
+                    {"bool": {"must_not": {"exists": {"field": "has_visits"}}}},
+                ]
+            }
+        }
+    }
+    _test_results(query, expected)
+
+
 def test_conjunction_op_precedence_override():
-    query = "(visited = false or visits > 2) and visits < 5"
+    query = "(visited = true or visits > 2) and visits < 5"
     expected = {
         "filters": {
             "bool": {
@@ -51,7 +72,7 @@ def test_conjunction_op_precedence_override():
                     {
                         "bool": {
                             "should": [
-                                {"term": {"has_visits": False}},
+                                {"term": {"has_visits": True}},
                                 {"range": {"nb_visits": {"gt": 2}}},
                             ]
                         }
