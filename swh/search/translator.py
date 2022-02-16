@@ -173,7 +173,23 @@ class Translator:
 
         if category == "booleanFilter":
             if name == "visited":
-                return {"term": {"has_visits": value == "true"}}
+                if value == "true":
+                    return {"term": {"has_visits": True}}
+                else:
+                    # non-visited origins will typically not have "has_visits" set
+                    # at all
+                    return {
+                        "bool": {
+                            "should": [
+                                {"term": {"has_visits": False}},
+                                {
+                                    "bool": {
+                                        "must_not": {"exists": {"field": "has_visits"}}
+                                    }
+                                },
+                            ]
+                        }
+                    }
 
         if category == "numericFilter":
             if name == "visits":

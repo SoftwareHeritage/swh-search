@@ -373,10 +373,10 @@ class ElasticSearch:
 
         query_filters = []
         if url_pattern:
-            query_filters.append(f"origin = {escape(url_pattern)}")
+            query_filters.append(f"origin : {escape(url_pattern)}")
 
         if metadata_pattern:
-            query_filters.append(f"metadata = {escape(metadata_pattern)}")
+            query_filters.append(f"metadata : {escape(metadata_pattern)}")
 
         # if not query_clauses:
         #     raise ValueError(

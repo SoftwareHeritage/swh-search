@@ -11,10 +11,10 @@ Empty query (should throw error)
 Origins with django as keyword, python language, and more than 5 visits
 ==================
 
-origin = django and language in ["python"] and visits >= 5
+origin : django and language in ["python"] and visits >= 5
 
 ---
-(query (filters (filters (filters (filter (patternFilter (patternField) (patternOp (equalOp)) (patternVal (string (singleWord)))))) (and) (filters (filter (unboundedListFilter (listField) (listOp (choiceOp)) (listVal (string (stringContent))))))) (and) (filters (filter (numericFilter (numericField) (numericOp (rangeOp)) (numberVal (number)))))))
+(query (filters (filters (filters (filter (patternFilter (patternField) (patternOp (containOp)) (patternVal (string (singleWord)))))) (and) (filters (filter (unboundedListFilter (listField) (listOp (choiceOp)) (listVal (string (stringContent))))))) (and) (filters (filter (numericFilter (numericField) (numericOp (rangeOp)) (numberVal (number)))))))
 
 ==================
 10 origins with latest revision after 2020-01-01
@@ -35,10 +35,10 @@ last_visit > 2021-01-01 or last_visit < 2020-01-01 sort_by = ["visits"]
 Unvisited origins with kubernetes in metadata or minikube in url
 ==================
 
-visited = false and metadata = "kubernetes" or origin = "minikube"
+visited = false and metadata : "kubernetes" or origin : "minikube"
 
 ---
-(query (filters (filters (filters (filter (booleanFilter (booleanField) (booleanOp (equalOp)) (booleanVal (booleanFalse))))) (and) (filters (filter (patternFilter (patternField) (patternOp (equalOp)) (patternVal (string (stringContent))))))) (or) (filters (filter (patternFilter (patternField) (patternOp (equalOp)) (patternVal (string (stringContent))))))))
+(query (filters (filters (filters (filter (booleanFilter (booleanField) (booleanOp (equalOp)) (booleanVal (booleanFalse))))) (and) (filters (filter (patternFilter (patternField) (patternOp (containOp)) (patternVal (string (stringContent))))))) (or) (filters (filter (patternFilter (patternField) (patternOp (containOp)) (patternVal (string (stringContent))))))))
 
 ==================
 Origins with "orchestration" or "kubectl" as keywords and language as "go" or "rust"
@@ -52,27 +52,27 @@ keyword in ["orchestration", "kubectl"] and language in ["go", "rust"]
 ==================
 Origins with a GPL-3 license that have "debian" in their url or have visit type as "deb"
 ==================
-(origin = debian or visit_type = ["deb"]) and license in ["GPL-3"]
+(origin : debian or visit_type = ["deb"]) and license in ["GPL-3"]
 ---
 
-(query (filters (filters (filters (filters (filter (patternFilter (patternField) (patternOp (equalOp)) (patternVal (string (singleWord)))))) (or) (filters (filter (boundedListFilter (visitTypeFilter (visitTypeField) (visitTypeOp (equalOp)) (visitTypeVal (visitTypeOptions)))))))) (and) (filters (filter (unboundedListFilter (listField) (listOp (choiceOp)) (listVal (string (stringContent))))))))
+(query (filters (filters (filters (filters (filter (patternFilter (patternField) (patternOp (containOp)) (patternVal (string (singleWord)))))) (or) (filters (filter (boundedListFilter (visitTypeFilter (visitTypeField) (visitTypeOp (equalOp)) (visitTypeVal (visitTypeOptions)))))))) (and) (filters (filter (unboundedListFilter (listField) (listOp (choiceOp)) (listVal (string (stringContent))))))))
 
 ==================
 Origins with `and` and `or` inside filter values
 ==================
-(origin = "foo and bar or baz")
+(origin : "foo and bar or baz")
 ---
 
-(query (filters (filters (filter (patternFilter (patternField) (patternOp (equalOp)) (patternVal (string (stringContent))))))))
+(query (filters (filters (filter (patternFilter (patternField) (patternOp (containOp)) (patternVal (string (stringContent))))))))
 
 
 ==================
 Origins with `'` and `"` inside filter values
 ==================
-(origin = "foo \\ \'bar\' \"baz\" ")
+(origin : "foo \\ \'bar\' \"baz\" ")
 ---
 
-(query (filters (filters (filter (patternFilter (patternField) (patternOp (equalOp)) (patternVal (string (stringContent (escape_sequence) (escape_sequence) (escape_sequence) (escape_sequence) (escape_sequence)))))))))
+(query (filters (filters (filter (patternFilter (patternField) (patternOp (containOp)) (patternVal (string (stringContent (escape_sequence) (escape_sequence) (escape_sequence) (escape_sequence) (escape_sequence)))))))))
 
 ==================
 Incomplete conjunction operators should throw error

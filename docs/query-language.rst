@@ -6,12 +6,12 @@ Every query is composed of filters separated by ``and`` or ``or``.
 These filters have 3 components in the order : ``Name Operator Value``
 
 Some of the examples are :
-    * ``origin = django and language in [python] and visits >= 5``
+    * ``origin : plasma and language in [python] and visits >= 5``
     * ``last_revision > 2020-01-01 and limit = 10``
     * ``last_visit > 2021-01-01 or last_visit < 2020-01-01``
-    * ``visited = false and metadata = "kubernetes" or origin = "minikube"``
+    * ``visited = false and metadata = "kubernetes" or origin : "minikube"``
     * ``keyword in ["orchestration", "kubectl"] and language in ["go", "rust"]``
-    * ``(origin = debian or visit_type = ["deb"]) and license in ["GPL-3"]``
+    * ``(origin : debian or visit_type = ["deb"]) and license in ["GPL-3"]``
 
 **Note**:
     * Whitespaces are optional between the three components of a filter.
@@ -30,18 +30,18 @@ Returns origins having the given keywords in their url or intrinsic metadata
     * Name:
         * ``origin``: Keywords from the origin url
         * ``metadata``: Keywords from all the intrinsic metadata fields
-    * Operator: ``=``
+    * Operator: ``:``
     * Value: String wrapped in quotation marks(``"`` or ``'``)
 
 **Note:** If a string has no whitespace then the quotation marks become optional.
 
 **Examples:**
 
-    * ``origin = https://github.com/Django/django``
-    * ``origin = kubernetes``
-    * ``origin = "github python"``
-    * ``metadata = orchestration``
-    * ``metadata = "javascript language"``
+    * ``origin : https://github.com/Django/django``
+    * ``origin : kubernetes``
+    * ``origin : "github python"``
+    * ``metadata : orchestration``
+    * ``metadata : "javascript language"``
 
 Boolean filters
 ---------------

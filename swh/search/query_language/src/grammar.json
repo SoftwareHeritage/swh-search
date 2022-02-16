@@ -562,7 +562,7 @@
     },
     "patternOp": {
       "type": "SYMBOL",
-      "name": "equalOp"
+      "name": "containOp"
     },
     "patternVal": {
       "type": "SYMBOL",
@@ -1171,6 +1171,18 @@
         ]
       }
     },
+    "containOp": {
+      "type": "TOKEN",
+      "content": {
+        "type": "CHOICE",
+        "members": [
+          {
+            "type": "STRING",
+            "value": ":"
+          }
+        ]
+      }
+    },
     "choiceOp": {
       "type": "TOKEN",
       "content": {
@@ -1189,7 +1201,7 @@
     },
     "isoDateTime": {
       "type": "PATTERN",
-      "value": "\\d{4}[-]\\d{2}[-]\\d{2}(\\s|T)*(\\d{2}:\\d{2}(:\\d{2}(\\.\\d{6})?)?)?(\\+\\d{2}:\\d{2}|Z)?"
+      "value": "\\d{4}[-]\\d{2}[-]\\d{2}((\\s|T)*\\d{2}:\\d{2}(:\\d{2}(\\.\\d{6})?)?(\\+\\d{2}:\\d{2}|Z)?)?"
     },
     "string": {
       "type": "CHOICE",
