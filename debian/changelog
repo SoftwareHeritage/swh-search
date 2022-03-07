@@ -1,3 +1,12 @@
+swh-search (0.13.1-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.13.1     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2022-03-07 12:49:31 +0100)
+  * Upstream changes:     - v0.13.1     - * docs: Update examples of the
+    query language
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Mon, 07 Mar 2022 11:54:17 +0000
+
 swh-search (0.13.0-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.13.0     - (tagged by Valentin Lorentz
