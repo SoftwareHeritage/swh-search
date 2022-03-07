@@ -7,11 +7,20 @@ These filters have 3 components in the order : ``Name Operator Value``
 
 Some of the examples are :
     * ``origin : plasma and language in [python] and visits >= 5``
-    * ``last_revision > 2020-01-01 and limit = 10``
     * ``last_visit > 2021-01-01 or last_visit < 2020-01-01``
     * ``visited = false and metadata = "kubernetes" or origin : "minikube"``
-    * ``keyword in ["orchestration", "kubectl"] and language in ["go", "rust"]``
+    * ``keyword in ["orchestration", "kubectl"] and license in ["GPLv3+", "GPLv3"]``
     * ``(origin : debian or visit_type = ["deb"]) and license in ["GPL-3"]``
+
+
+.. this one is currently disabled, because it is too expansive to add
+   the 'last_revision' in swh-search:
+
+    * ``last_revision > 2020-01-01 and limit = 10``
+
+.. and this one does not work yet because we don't collect enough language metadata:
+
+    * ``keyword in ["orchestration", "kubectl"] and language in ["go", "rust"]``
 
 **Note**:
     * Whitespaces are optional between the three components of a filter.
