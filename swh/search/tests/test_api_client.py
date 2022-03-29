@@ -11,10 +11,12 @@ from swh.core.api.tests.server_testing import ServerTestFixture
 from swh.search import get_search
 from swh.search.api.server import app
 
-from .test_search import CommonSearchTest
+from .test_elasticsearch import CommonElasticsearchSearchTest
 
 
-class TestRemoteSearch(CommonSearchTest, ServerTestFixture, unittest.TestCase):
+class TestRemoteSearch(
+    CommonElasticsearchSearchTest, ServerTestFixture, unittest.TestCase
+):
     @pytest.fixture(autouse=True)
     def _instantiate_search(self, elasticsearch_host):
         self._elasticsearch_host = elasticsearch_host

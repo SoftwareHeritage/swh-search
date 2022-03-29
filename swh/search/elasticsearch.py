@@ -38,6 +38,165 @@ ORIGIN_DEFAULT_CONFIG = {
     WRITE_ALIAS_PARAM: "origin-write",
 }
 
+ORIGIN_MAPPING = {
+    "dynamic_templates": [
+        {
+            "booleans_as_string": {
+                # All fields stored as string in the metadata
+                # even the booleans
+                "match_mapping_type": "boolean",
+                "path_match": "intrinsic_metadata.*",
+                "mapping": {"type": "keyword"},
+            }
+        }
+    ],
+    "date_detection": False,
+    "properties": {
+        # sha1 of the URL; used as the document id
+        "sha1": {"type": "keyword", "doc_values": True,},
+        # Used both to search URLs, and as the result to return
+        # as a response to queries
+        "url": {
+            "type": "text",
+            # To split URLs into token on any character
+            # that is not alphanumerical
+            "analyzer": "simple",
+            # 2-gram and partial-3-gram search (ie. with the end of the
+            # third word potentially missing)
+            "fields": {
+                "as_you_type": {"type": "search_as_you_type", "analyzer": "simple",}
+            },
+        },
+        "visit_types": {"type": "keyword"},
+        # used to filter out origins that were never visited
+        "has_visits": {"type": "boolean",},
+        "nb_visits": {"type": "integer"},
+        "snapshot_id": {"type": "keyword"},
+        "last_visit_date": {"type": "date"},
+        "last_eventful_visit_date": {"type": "date"},
+        "last_release_date": {"type": "date"},
+        "last_revision_date": {"type": "date"},
+        "intrinsic_metadata": {
+            "type": "nested",
+            "properties": {
+                "@context": {
+                    # don't bother indexing tokens in these URIs, as the
+                    # are used as namespaces
+                    "type": "keyword",
+                },
+                "http://schema": {
+                    "properties": {
+                        "org/dateCreated": {
+                            "properties": {"@value": {"type": "date",}}
+                        },
+                        "org/dateModified": {
+                            "properties": {"@value": {"type": "date",}}
+                        },
+                        "org/datePublished": {
+                            "properties": {"@value": {"type": "date",}}
+                        },
+                    }
+                },
+            },
+        },
+        # Has this origin been taken down?
+        "blocklisted": {"type": "boolean",},
+    },
+}
+
+# painless script that will be executed when updating an origin document
+ORIGIN_UPDATE_SCRIPT = dedent(
+    """
+    // utility function to get and parse date
+    ZonedDateTime getDate(def ctx, String date_field) {
+        String default_date = "0001-01-01T00:00:00Z";
+        String date = ctx._source.getOrDefault(date_field, default_date);
+        return ZonedDateTime.parse(date);
+    }
+
+    // backup current visit_types field value
+    List visit_types = ctx._source.getOrDefault("visit_types", []);
+    int nb_visits = ctx._source.getOrDefault("nb_visits", 0);
+
+    ZonedDateTime last_visit_date = getDate(ctx, "last_visit_date");
+
+    String snapshot_id = ctx._source.getOrDefault("snapshot_id", "");
+    ZonedDateTime last_eventful_visit_date =
+        getDate(ctx, "last_eventful_visit_date");
+    ZonedDateTime last_revision_date = getDate(ctx, "last_revision_date");
+    ZonedDateTime last_release_date = getDate(ctx, "last_release_date");
+
+    // update origin document with new field values
+    ctx._source.putAll(params);
+
+    // restore previous visit types after visit_types field overriding
+    if (ctx._source.containsKey("visit_types")) {
+        for (int i = 0; i < visit_types.length; ++i) {
+            if (!ctx._source.visit_types.contains(visit_types[i])) {
+                ctx._source.visit_types.add(visit_types[i]);
+            }
+        }
+    }
+
+    // Undo overwrite if incoming nb_visits is smaller
+    if (ctx._source.containsKey("nb_visits")) {
+        int incoming_nb_visits = ctx._source.getOrDefault("nb_visits", 0);
+        if(incoming_nb_visits < nb_visits){
+            ctx._source.nb_visits = nb_visits;
+        }
+    }
+
+    // Undo overwrite if incoming last_visit_date is older
+    if (ctx._source.containsKey("last_visit_date")) {
+        ZonedDateTime incoming_last_visit_date = getDate(ctx, "last_visit_date");
+        int difference =
+            // returns -1, 0 or 1
+            incoming_last_visit_date.compareTo(last_visit_date);
+        if(difference < 0){
+            ctx._source.last_visit_date = last_visit_date;
+        }
+    }
+
+    // Undo update of last_eventful_date and snapshot_id if
+    // snapshot_id hasn't changed OR incoming_last_eventful_visit_date is older
+    if (ctx._source.containsKey("snapshot_id")) {
+        String incoming_snapshot_id = ctx._source.getOrDefault("snapshot_id", "");
+        ZonedDateTime incoming_last_eventful_visit_date =
+            getDate(ctx, "last_eventful_visit_date");
+        int difference =
+            // returns -1, 0 or 1
+            incoming_last_eventful_visit_date.compareTo(last_eventful_visit_date);
+        if(snapshot_id == incoming_snapshot_id || difference < 0){
+            ctx._source.snapshot_id = snapshot_id;
+            ctx._source.last_eventful_visit_date = last_eventful_visit_date;
+        }
+    }
+
+    // Undo overwrite if incoming last_revision_date is older
+    if (ctx._source.containsKey("last_revision_date")) {
+        ZonedDateTime incoming_last_revision_date =
+            getDate(ctx, "last_revision_date");
+        int difference =
+            // returns -1, 0 or 1
+            incoming_last_revision_date.compareTo(last_revision_date);
+        if(difference < 0){
+            ctx._source.last_revision_date = last_revision_date;
+        }
+    }
+
+    // Undo overwrite if incoming last_release_date is older
+    if (ctx._source.containsKey("last_release_date")) {
+        ZonedDateTime incoming_last_release_date =
+            getDate(ctx, "last_release_date");
+        // returns -1, 0 or 1
+        int difference = incoming_last_release_date.compareTo(last_release_date);
+        if(difference < 0){
+            ctx._source.last_release_date = last_release_date;
+        }
+    }
+    """
+)
+
 
 def _sanitize_origin(origin):
     origin = origin.copy()
@@ -144,75 +303,7 @@ class ElasticSearch:
             )
 
         self._backend.indices.put_mapping(
-            index=self._get_origin_index(),
-            body={
-                "dynamic_templates": [
-                    {
-                        "booleans_as_string": {
-                            # All fields stored as string in the metadata
-                            # even the booleans
-                            "match_mapping_type": "boolean",
-                            "path_match": "intrinsic_metadata.*",
-                            "mapping": {"type": "keyword"},
-                        }
-                    }
-                ],
-                "date_detection": False,
-                "properties": {
-                    # sha1 of the URL; used as the document id
-                    "sha1": {"type": "keyword", "doc_values": True,},
-                    # Used both to search URLs, and as the result to return
-                    # as a response to queries
-                    "url": {
-                        "type": "text",
-                        # To split URLs into token on any character
-                        # that is not alphanumerical
-                        "analyzer": "simple",
-                        # 2-gram and partial-3-gram search (ie. with the end of the
-                        # third word potentially missing)
-                        "fields": {
-                            "as_you_type": {
-                                "type": "search_as_you_type",
-                                "analyzer": "simple",
-                            }
-                        },
-                    },
-                    "visit_types": {"type": "keyword"},
-                    # used to filter out origins that were never visited
-                    "has_visits": {"type": "boolean",},
-                    "nb_visits": {"type": "integer"},
-                    "snapshot_id": {"type": "keyword"},
-                    "last_visit_date": {"type": "date"},
-                    "last_eventful_visit_date": {"type": "date"},
-                    "last_release_date": {"type": "date"},
-                    "last_revision_date": {"type": "date"},
-                    "intrinsic_metadata": {
-                        "type": "nested",
-                        "properties": {
-                            "@context": {
-                                # don't bother indexing tokens in these URIs, as the
-                                # are used as namespaces
-                                "type": "keyword",
-                            },
-                            "http://schema": {
-                                "properties": {
-                                    "org/dateCreated": {
-                                        "properties": {"@value": {"type": "date",}}
-                                    },
-                                    "org/dateModified": {
-                                        "properties": {"@value": {"type": "date",}}
-                                    },
-                                    "org/datePublished": {
-                                        "properties": {"@value": {"type": "date",}}
-                                    },
-                                }
-                            },
-                        },
-                    },
-                    # Has this origin been taken down?
-                    "blocklisted": {"type": "boolean",},
-                },
-            },
+            index=self._get_origin_index(), body=ORIGIN_MAPPING
         )
 
     @timed
@@ -227,98 +318,6 @@ class ElasticSearch:
             (hash_to_hex(model.Origin(url=document["url"]).id), document)
             for document in documents
         )
-        # painless script that will be executed when updating an origin document
-        update_script = dedent(
-            """
-            // utility function to get and parse date
-            ZonedDateTime getDate(def ctx, String date_field) {
-                String default_date = "0001-01-01T00:00:00Z";
-                String date = ctx._source.getOrDefault(date_field, default_date);
-                return ZonedDateTime.parse(date);
-            }
-
-            // backup current visit_types field value
-            List visit_types = ctx._source.getOrDefault("visit_types", []);
-            int nb_visits = ctx._source.getOrDefault("nb_visits", 0);
-
-            ZonedDateTime last_visit_date = getDate(ctx, "last_visit_date");
-
-            String snapshot_id = ctx._source.getOrDefault("snapshot_id", "");
-            ZonedDateTime last_eventful_visit_date =
-                getDate(ctx, "last_eventful_visit_date");
-            ZonedDateTime last_revision_date = getDate(ctx, "last_revision_date");
-            ZonedDateTime last_release_date = getDate(ctx, "last_release_date");
-
-            // update origin document with new field values
-            ctx._source.putAll(params);
-
-            // restore previous visit types after visit_types field overriding
-            if (ctx._source.containsKey("visit_types")) {
-                for (int i = 0; i < visit_types.length; ++i) {
-                    if (!ctx._source.visit_types.contains(visit_types[i])) {
-                        ctx._source.visit_types.add(visit_types[i]);
-                    }
-                }
-            }
-
-            // Undo overwrite if incoming nb_visits is smaller
-            if (ctx._source.containsKey("nb_visits")) {
-                int incoming_nb_visits = ctx._source.getOrDefault("nb_visits", 0);
-                if(incoming_nb_visits < nb_visits){
-                    ctx._source.nb_visits = nb_visits;
-                }
-            }
-
-            // Undo overwrite if incoming last_visit_date is older
-            if (ctx._source.containsKey("last_visit_date")) {
-                ZonedDateTime incoming_last_visit_date = getDate(ctx, "last_visit_date");
-                int difference =
-                    // returns -1, 0 or 1
-                    incoming_last_visit_date.compareTo(last_visit_date);
-                if(difference < 0){
-                    ctx._source.last_visit_date = last_visit_date;
-                }
-            }
-
-            // Undo update of last_eventful_date and snapshot_id if
-            // snapshot_id hasn't changed OR incoming_last_eventful_visit_date is older
-            if (ctx._source.containsKey("snapshot_id")) {
-                String incoming_snapshot_id = ctx._source.getOrDefault("snapshot_id", "");
-                ZonedDateTime incoming_last_eventful_visit_date =
-                    getDate(ctx, "last_eventful_visit_date");
-                int difference =
-                    // returns -1, 0 or 1
-                    incoming_last_eventful_visit_date.compareTo(last_eventful_visit_date);
-                if(snapshot_id == incoming_snapshot_id || difference < 0){
-                    ctx._source.snapshot_id = snapshot_id;
-                    ctx._source.last_eventful_visit_date = last_eventful_visit_date;
-                }
-            }
-
-            // Undo overwrite if incoming last_revision_date is older
-            if (ctx._source.containsKey("last_revision_date")) {
-                ZonedDateTime incoming_last_revision_date =
-                    getDate(ctx, "last_revision_date");
-                int difference =
-                    // returns -1, 0 or 1
-                    incoming_last_revision_date.compareTo(last_revision_date);
-                if(difference < 0){
-                    ctx._source.last_revision_date = last_revision_date;
-                }
-            }
-
-            // Undo overwrite if incoming last_release_date is older
-            if (ctx._source.containsKey("last_release_date")) {
-                ZonedDateTime incoming_last_release_date =
-                    getDate(ctx, "last_release_date");
-                // returns -1, 0 or 1
-                int difference = incoming_last_release_date.compareTo(last_release_date);
-                if(difference < 0){
-                    ctx._source.last_release_date = last_release_date;
-                }
-            }
-            """  # noqa
-        )
 
         actions = [
             {
@@ -329,7 +328,7 @@ class ElasticSearch:
                 "upsert": {**document, "sha1": sha1,},
                 "retry_on_conflict": 10,
                 "script": {
-                    "source": update_script,
+                    "source": ORIGIN_UPDATE_SCRIPT,
                     "lang": "painless",
                     "params": document,
                 },
