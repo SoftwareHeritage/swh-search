@@ -14,6 +14,7 @@ from swh.core.api import error_handler
 from swh.search.metrics import timed
 
 from .. import get_search
+from ..exc import SearchException
 from ..interface import SearchInterface
 
 logger = logging.getLogger(__name__)
@@ -30,6 +31,11 @@ def _get_search():
 app = RPCServerApp(__name__, backend_class=SearchInterface, backend_factory=_get_search)
 
 search = None
+
+
+@app.errorhandler(SearchException)
+def search_error_handler(exception):
+    return error_handler(exception, encode_data, status_code=400)
 
 
 @app.errorhandler(Exception)

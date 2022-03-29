@@ -1,8 +1,11 @@
-swh-search (0.13.1-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-search (0.13.2-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.13.2     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2022-03-29 10:40:56 +0200)
+  * Upstream changes:     - v0.13.2     - * server: Return
+    SearchQuerySyntaxError as 400 instead of 500     - * refactorings
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Mon, 07 Mar 2022 11:59:54 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Tue, 29 Mar 2022 12:51:59 +0000
 
 swh-search (0.13.1-1~swh1) unstable-swh; urgency=medium
 
