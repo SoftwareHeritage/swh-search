@@ -124,13 +124,16 @@ SNAPSHOTS = [
     Snapshot(
         branches={
             b"target/revision1": SnapshotBranch(
-                target_type=TargetType.REVISION, target=REVISIONS[0].id,
+                target_type=TargetType.REVISION,
+                target=REVISIONS[0].id,
             ),
             b"target/revision2": SnapshotBranch(
-                target_type=TargetType.REVISION, target=REVISIONS[1].id,
+                target_type=TargetType.REVISION,
+                target=REVISIONS[1].id,
             ),
             b"target/revision3": SnapshotBranch(
-                target_type=TargetType.REVISION, target=REVISIONS[2].id,
+                target_type=TargetType.REVISION,
+                target=REVISIONS[2].id,
             ),
             b"target/release1": SnapshotBranch(
                 target_type=TargetType.RELEASE, target=RELEASES[0].id
@@ -149,7 +152,8 @@ SNAPSHOTS = [
     Snapshot(
         branches={
             b"target/revision1": SnapshotBranch(
-                target_type=TargetType.REVISION, target=REVISIONS[0].id,
+                target_type=TargetType.REVISION,
+                target=REVISIONS[0].id,
             )
         },
     ),
@@ -177,18 +181,39 @@ def storage():
 def test_journal_client_origin_from_journal():
     search_mock = MagicMock()
 
-    worker_fn = functools.partial(process_journal_objects, search=search_mock,)
+    worker_fn = functools.partial(
+        process_journal_objects,
+        search=search_mock,
+    )
 
-    worker_fn({"origin": [{"url": "http://foobar.baz"},]})
+    worker_fn(
+        {
+            "origin": [
+                {"url": "http://foobar.baz"},
+            ]
+        }
+    )
     search_mock.origin_update.assert_called_once_with(
-        [{"url": "http://foobar.baz"},]
+        [
+            {"url": "http://foobar.baz"},
+        ]
     )
 
     search_mock.reset_mock()
 
-    worker_fn({"origin": [{"url": "http://foobar.baz"}, {"url": "http://barbaz.qux"},]})
+    worker_fn(
+        {
+            "origin": [
+                {"url": "http://foobar.baz"},
+                {"url": "http://barbaz.qux"},
+            ]
+        }
+    )
     search_mock.origin_update.assert_called_once_with(
-        [{"url": "http://foobar.baz"}, {"url": "http://barbaz.qux"},]
+        [
+            {"url": "http://foobar.baz"},
+            {"url": "http://barbaz.qux"},
+        ]
     )
 
 
@@ -254,7 +279,10 @@ def test_journal_client_origin_visit_status_from_journal(storage):
 def test_journal_client_origin_metadata_from_journal():
     search_mock = MagicMock()
 
-    worker_fn = functools.partial(process_journal_objects, search=search_mock,)
+    worker_fn = functools.partial(
+        process_journal_objects,
+        search=search_mock,
+    )
 
     worker_fn(
         {

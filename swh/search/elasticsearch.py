@@ -53,7 +53,10 @@ ORIGIN_MAPPING = {
     "date_detection": False,
     "properties": {
         # sha1 of the URL; used as the document id
-        "sha1": {"type": "keyword", "doc_values": True,},
+        "sha1": {
+            "type": "keyword",
+            "doc_values": True,
+        },
         # Used both to search URLs, and as the result to return
         # as a response to queries
         "url": {
@@ -64,12 +67,17 @@ ORIGIN_MAPPING = {
             # 2-gram and partial-3-gram search (ie. with the end of the
             # third word potentially missing)
             "fields": {
-                "as_you_type": {"type": "search_as_you_type", "analyzer": "simple",}
+                "as_you_type": {
+                    "type": "search_as_you_type",
+                    "analyzer": "simple",
+                }
             },
         },
         "visit_types": {"type": "keyword"},
         # used to filter out origins that were never visited
-        "has_visits": {"type": "boolean",},
+        "has_visits": {
+            "type": "boolean",
+        },
         "nb_visits": {"type": "integer"},
         "snapshot_id": {"type": "keyword"},
         "last_visit_date": {"type": "date"},
@@ -87,20 +95,34 @@ ORIGIN_MAPPING = {
                 "http://schema": {
                     "properties": {
                         "org/dateCreated": {
-                            "properties": {"@value": {"type": "date",}}
+                            "properties": {
+                                "@value": {
+                                    "type": "date",
+                                }
+                            }
                         },
                         "org/dateModified": {
-                            "properties": {"@value": {"type": "date",}}
+                            "properties": {
+                                "@value": {
+                                    "type": "date",
+                                }
+                            }
                         },
                         "org/datePublished": {
-                            "properties": {"@value": {"type": "date",}}
+                            "properties": {
+                                "@value": {
+                                    "type": "date",
+                                }
+                            }
                         },
                     }
                 },
             },
         },
         # Has this origin been taken down?
-        "blocklisted": {"type": "boolean",},
+        "blocklisted": {
+            "type": "boolean",
+        },
     },
 }
 
@@ -325,7 +347,10 @@ class ElasticSearch:
                 "_id": sha1,
                 "_index": write_index,
                 "scripted_upsert": True,
-                "upsert": {**document, "sha1": sha1,},
+                "upsert": {
+                    **document,
+                    "sha1": sha1,
+                },
                 "retry_on_conflict": 10,
                 "script": {
                     "source": ORIGIN_UPDATE_SCRIPT,
@@ -479,7 +504,10 @@ class ElasticSearch:
                     sorting_params.append({field: order})
 
         sorting_params.extend(
-            [{"_score": "desc"}, {"sha1": "asc"},]
+            [
+                {"_score": "desc"},
+                {"sha1": "asc"},
+            ]
         )
 
         body = {

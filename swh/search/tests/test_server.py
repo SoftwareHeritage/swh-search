@@ -30,7 +30,12 @@ def _write_config_file(tmp_path, monkeypatch, content):
 
 @pytest.fixture
 def swh_search_server_config_without_indexes() -> Dict[str, Any]:
-    return {"search": {"cls": "elasticsearch", "hosts": ["es1"],}}
+    return {
+        "search": {
+            "cls": "elasticsearch",
+            "hosts": ["es1"],
+        }
+    }
 
 
 @pytest.fixture
@@ -127,7 +132,9 @@ def test_server_make_app_from_config_file_without_indexes(
     assert app is app2
 
 
-def test_server_make_app_from_config_file_with_indexes(swh_search_config_with_indexes,):
+def test_server_make_app_from_config_file_with_indexes(
+    swh_search_config_with_indexes,
+):
     app = make_app_from_configfile()
     expected_cfg = load_from_envvar()
     assert app is not None
@@ -142,7 +149,7 @@ def test_server_first_call_initialize_elasticsearch(
     swh_search_config_with_indexes, mocker
 ):
     """Test the initialize method is called during the first and first only
-       request to the server"""
+    request to the server"""
     mock = mocker.patch("swh.search.elasticsearch.ElasticSearch.initialize")
 
     app = make_app_from_configfile()

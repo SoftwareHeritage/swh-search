@@ -103,7 +103,9 @@ def test_deeply_nested_filters():
         "filters": {
             "bool": {
                 "must": [
-                    {"term": {"has_visits": True},},
+                    {
+                        "term": {"has_visits": True},
+                    },
                     {"range": {"nb_visits": {"gt": 0}}},
                 ]
             }
@@ -157,7 +159,11 @@ def test_visits_not_equal_to_filter():
     query = "visits != 5"
     expected = {
         "filters": {
-            "bool": {"must_not": [{"range": {"nb_visits": {"gte": 5, "lte": 5}}},]}
+            "bool": {
+                "must_not": [
+                    {"range": {"nb_visits": {"gte": 5, "lte": 5}}},
+                ]
+            }
         },
     }
 
@@ -434,7 +440,11 @@ def test_nonascii_before_operator():
                             },
                         },
                     },
-                    {"term": {"has_visits": True,},},
+                    {
+                        "term": {
+                            "has_visits": True,
+                        },
+                    },
                 ],
             }
         }

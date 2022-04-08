@@ -42,9 +42,7 @@ class OriginDict(MinimalOriginDict, total=False):
 class SearchInterface:
     @remote_api_endpoint("check")
     def check(self):
-        """Dedicated method to execute some specific check per implementation.
-
-        """
+        """Dedicated method to execute some specific check per implementation."""
         ...
 
     @remote_api_endpoint("flush")
@@ -57,9 +55,7 @@ class SearchInterface:
 
     @remote_api_endpoint("origin/update")
     def origin_update(self, documents: Iterable[OriginDict]) -> None:
-        """Persist documents to the search backend.
-
-        """
+        """Persist documents to the search backend."""
         ...
 
     @remote_api_endpoint("origin/search")
@@ -137,6 +133,5 @@ class SearchInterface:
 
     @remote_api_endpoint("visit_types_count")
     def visit_types_count(self) -> Counter:
-        """Returns origin counts per visit type (git, hg, svn, ...).
-        """
+        """Returns origin counts per visit type (git, hg, svn, ...)."""
         ...

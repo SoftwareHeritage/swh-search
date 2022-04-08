@@ -200,7 +200,8 @@ class CommonSearchTest:
 
         def _check_min_nb_visits(min_nb_visits):
             actual_page = self.search.origin_search(
-                url_pattern=origin_url, min_nb_visits=min_nb_visits,
+                url_pattern=origin_url,
+                min_nb_visits=min_nb_visits,
             )
             assert actual_page.next_page_token is None
             results = [r["url"] for r in actual_page.results]
@@ -233,7 +234,8 @@ class CommonSearchTest:
 
         def _check_min_last_visit_date(min_last_visit_date):
             actual_page = self.search.origin_search(
-                url_pattern=origin_url, min_last_visit_date=min_last_visit_date,
+                url_pattern=origin_url,
+                min_last_visit_date=min_last_visit_date,
             )
             assert actual_page.next_page_token is None
             results = [r["url"] for r in actual_page.results]
@@ -292,7 +294,8 @@ class CommonSearchTest:
             self.search.flush()
             origin_url = "http://foobar.baz"
             actual_page = self.search.origin_search(
-                url_pattern=origin_url, min_last_eventful_visit_date=NOW_PLUS_5_HOURS,
+                url_pattern=origin_url,
+                min_last_eventful_visit_date=NOW_PLUS_5_HOURS,
             )
             assert actual_page.next_page_token is None
             results = [r["url"] for r in actual_page.results]
@@ -368,12 +371,20 @@ class CommonSearchTest:
         self.search.flush()
 
         def _update_last_revision_release_date(date):
-            self.search.origin_update([{"url": origin_url, date_type: date,}])
+            self.search.origin_update(
+                [
+                    {
+                        "url": origin_url,
+                        date_type: date,
+                    }
+                ]
+            )
             self.search.flush()
 
         def _check_min_last_revision_release_date(date):
             actual_page = self.search.origin_search(
-                url_pattern=origin_url, **{f"min_{date_type}": date},
+                url_pattern=origin_url,
+                **{f"min_{date_type}": date},
             )
             assert actual_page.next_page_token is None
             results = [r["url"] for r in actual_page.results]
@@ -605,7 +616,11 @@ class CommonSearchTest:
                 "nb_visits": 1,
                 "last_visit_date": now_minus_5_hours,
             },
-            {"url": "http://foobar.2.com", "nb_visits": 2, "last_visit_date": now,},
+            {
+                "url": "http://foobar.2.com",
+                "nb_visits": 2,
+                "last_visit_date": now,
+            },
             {
                 "url": "http://foobar.3.com",
                 "nb_visits": 3,
@@ -777,7 +792,10 @@ class CommonSearchTest:
 
         self.search.origin_update(
             [
-                {**origin1_nothin, "intrinsic_metadata": {},},
+                {
+                    **origin1_nothin,
+                    "intrinsic_metadata": {},
+                },
                 {
                     **origin2_foobar,
                     "intrinsic_metadata": {
@@ -891,7 +909,10 @@ class CommonSearchTest:
 
         self.search.origin_update(
             [
-                {**origin1_nothin, "intrinsic_metadata": {},},
+                {
+                    **origin1_nothin,
+                    "intrinsic_metadata": {},
+                },
                 {
                     **origin2_foobar,
                     "intrinsic_metadata": {
@@ -935,7 +956,10 @@ class CommonSearchTest:
                     **origin1_foobar,
                     "intrinsic_metadata": {
                         "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
-                        "author": {"familyName": "Foo", "givenName": "Bar",},
+                        "author": {
+                            "familyName": "Foo",
+                            "givenName": "Bar",
+                        },
                     },
                 },
             ]

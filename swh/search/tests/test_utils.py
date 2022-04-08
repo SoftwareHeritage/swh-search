@@ -17,7 +17,8 @@ def test_parse_and_format_date_success(date_str):
 
 
 @pytest.mark.parametrize(
-    "date_str", ["foo", "2021/07/03", "2021+07+03T15,17,08Z"],
+    "date_str",
+    ["foo", "2021/07/03", "2021+07+03T15,17,08Z"],
 )
 def test_parse_and_format_date_failure(date_str):
     assert parse_and_format_date(date_str) is None

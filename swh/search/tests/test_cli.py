@@ -116,9 +116,7 @@ def test__journal_client__origin(
 def test__journal_client__origin_visit_status(
     swh_search, elasticsearch_host, kafka_prefix: str, kafka_server
 ):
-    """Subscribing to origin-visit-status should result in swh-search indexation
-
-    """
+    """Subscribing to origin-visit-status should result in swh-search indexation"""
     origin_foobar = {"url": "http://baz.foobar"}
     producer = Producer(
         {
@@ -180,9 +178,7 @@ def test__journal_client__origin_visit_status(
 def test__journal_client__origin_intrinsic_metadata(
     swh_search, elasticsearch_host, kafka_prefix: str, kafka_server
 ):
-    """Subscribing to origin-intrinsic-metadata should result in swh-search indexation
-
-    """
+    """Subscribing to origin-intrinsic-metadata should result in swh-search indexation"""
     origin_foobar = {"url": "https://github.com/clojure/clojure"}
 
     origin_intrinsic_metadata = {
@@ -254,7 +250,12 @@ def test__journal_client__missing_main_journal_config_key(elasticsearch_host):
     with pytest.raises(KeyError, match="journal"):
         invoke(
             catch_exceptions=False,
-            args=["journal-client", "objects", "--stop-after-objects", "1",],
+            args=[
+                "journal-client",
+                "objects",
+                "--stop-after-objects",
+                "1",
+            ],
             config="",  # missing config will make it raise
             elasticsearch_host=elasticsearch_host,
         )
@@ -369,7 +370,7 @@ def test__initialize__with_index_name(elasticsearch_host):
 
 def test__initialize__with_read_alias(elasticsearch_host):
     """Initializing the index with a search alias name should create
-       the right search alias"""
+    the right search alias"""
 
     search = get_search(
         "elasticsearch",
@@ -384,7 +385,7 @@ def test__initialize__with_read_alias(elasticsearch_host):
 
 def test__initialize__with_write_alias(elasticsearch_host):
     """Initializing the index with an indexing alias name should create
-       the right indexing alias"""
+    the right indexing alias"""
 
     search = get_search(
         "elasticsearch",

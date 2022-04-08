@@ -18,7 +18,11 @@ def get_expansion(field, sep=None):
             "http://schema.org/programmingLanguage",
             "@value",
         ],
-        "keywords": ["intrinsic_metadata", "http://schema.org/keywords", "@value",],
+        "keywords": [
+            "intrinsic_metadata",
+            "http://schema.org/keywords",
+            "@value",
+        ],
         "descriptions": [
             "intrinsic_metadata",
             "http://schema.org/description",
@@ -85,7 +89,13 @@ def escape(obj):
     elif type(obj) == str:
         return (
             '"'
-            + obj.translate({ord("'"): r"\'", ord('"'): r"\"", ord("\\"): r"\\",})
+            + obj.translate(
+                {
+                    ord("'"): r"\'",
+                    ord('"'): r"\"",
+                    ord("\\"): r"\\",
+                }
+            )
             + '"'
         )
     else:

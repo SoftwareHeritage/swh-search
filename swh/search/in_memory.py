@@ -190,7 +190,10 @@ class InMemorySearch:
                     datetime.fromisoformat(document["last_visit_date"]),
                     datetime.fromisoformat(
                         self._origins[id_]
-                        .get("last_visit_date", "0001-01-01T00:00:00.000000Z",)
+                        .get(
+                            "last_visit_date",
+                            "0001-01-01T00:00:00.000000Z",
+                        )
                         .replace("Z", "+00:00")
                     ),
                 ).isoformat()
@@ -201,7 +204,10 @@ class InMemorySearch:
                 )
                 current_date = datetime.fromisoformat(
                     self._origins[id_]
-                    .get("last_eventful_visit_date", "0001-01-01T00:00:00Z",)
+                    .get(
+                        "last_eventful_visit_date",
+                        "0001-01-01T00:00:00Z",
+                    )
                     .replace("Z", "+00:00")
                 )
                 incoming_snapshot_id = document["snapshot_id"]
@@ -220,7 +226,10 @@ class InMemorySearch:
                     datetime.fromisoformat(document["last_revision_date"]),
                     datetime.fromisoformat(
                         self._origins[id_]
-                        .get("last_revision_date", "0001-01-01T00:00:00Z",)
+                        .get(
+                            "last_revision_date",
+                            "0001-01-01T00:00:00Z",
+                        )
                         .replace("Z", "+00:00")
                     ),
                 ).isoformat()
@@ -229,7 +238,10 @@ class InMemorySearch:
                     datetime.fromisoformat(document["last_release_date"]),
                     datetime.fromisoformat(
                         self._origins[id_]
-                        .get("last_release_date", "0001-01-01T00:00:00Z",)
+                        .get(
+                            "last_release_date",
+                            "0001-01-01T00:00:00Z",
+                        )
                         .replace("Z", "+00:00")
                     ),
                 ).isoformat()
@@ -506,7 +518,10 @@ class InMemorySearch:
 
         assert len(origins) <= limit
 
-        return PagedResult(results=origins, next_page_token=next_page_token,)
+        return PagedResult(
+            results=origins,
+            next_page_token=next_page_token,
+        )
 
     def visit_types_count(self) -> Counter:
         hits = self._get_hits()
