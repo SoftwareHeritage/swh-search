@@ -70,6 +70,9 @@ def _run_elasticsearch(
         "-Des.path.conf={}".format(conf_dir),
         "-Des.bundled_jdk=true",
         "-Dlog4j2.disable.jmx=true",
+        # fix UnsupportedOperationException related to deprecated Security Manager
+        # when using JDK >= 18
+        "-Djava.security.manager=allow",
         "-cp",
         "{}/lib/*".format(es_home),
         "org.elasticsearch.bootstrap.Elasticsearch",
