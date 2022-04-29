@@ -1,3 +1,19 @@
+swh-search (0.14.0-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.14.0     - (tagged by Antoine R. Dumont
+    (@ardumont) <ardumont@softwareheritage.org> on 2022-04-29 15:43:46
+    +0200)
+  * Upstream changes:     - v0.14.0     - Add new supported visit type
+    'maven'     - Fix query language metadata filter example     -
+    Internals:     - Bump mypy to v0.942     - conftest: Fix tests hang
+    with elasticsearch 7.17.3     - pre-commit: Remove codespell commit-
+    msg hook     - Add .git-blame-ignore-revs file with automatic
+    reformatting commits     - python: Reformat code with black 22.3.0
+    - pre-commit, tox: Bump black from 19.10b0 to 22.3.0     -
+    requirements-test: Remove pytest pinning to < 7
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 29 Apr 2022 13:49:57 +0000
+
 swh-search (0.13.2-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.13.2     - (tagged by Valentin Lorentz
