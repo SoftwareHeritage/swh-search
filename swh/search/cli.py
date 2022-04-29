@@ -18,7 +18,10 @@ from swh.core.cli import swh as swh_cli_group
     "--config-file",
     "-C",
     default=None,
-    type=click.Path(exists=True, dir_okay=False,),
+    type=click.Path(
+        exists=True,
+        dir_okay=False,
+    ),
     help="Configuration file.",
 )
 @click.pass_context
@@ -99,7 +102,9 @@ def journal_client(ctx):
     help="Default list of object types to subscribe to",
 )
 @click.option(
-    "--prefix", "-p", help="Topic prefix to use (e.g swh.journal.indexed)",
+    "--prefix",
+    "-p",
+    help="Topic prefix to use (e.g swh.journal.indexed)",
 )
 @click.pass_context
 def journal_client_objects(ctx, stop_after_objects, object_type, prefix):
@@ -131,7 +136,10 @@ def journal_client_objects(ctx, stop_after_objects, object_type, prefix):
     if journal_cfg["prefix"] is None:
         raise ValueError("'prefix' must be specified by cli or configuration")
 
-    client = get_journal_client(cls="kafka", **journal_cfg,)
+    client = get_journal_client(
+        cls="kafka",
+        **journal_cfg,
+    )
     search = get_search(**config["search"])
     storage = get_storage(**config["storage"])
 

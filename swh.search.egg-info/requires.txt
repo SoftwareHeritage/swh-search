@@ -9,7 +9,7 @@ swh.journal>=0.1.0
 swh.model
 
 [testing]
-pytest<7.0.0
+pytest
 pytest-mock
 confluent-kafka
 types-click

@@ -8,7 +8,7 @@ These filters have 3 components in the order : ``Name Operator Value``
 Some of the examples are :
     * ``origin : plasma and language in [python] and visits >= 5``
     * ``last_visit > 2021-01-01 or last_visit < 2020-01-01``
-    * ``visited = false and metadata = "kubernetes" or origin : "minikube"``
+    * ``visited = false and metadata : "kubernetes" or origin : "minikube"``
     * ``keyword in ["orchestration", "kubectl"] and license in ["GPLv3+", "GPLv3"]``
     * ``(origin : debian or visit_type = ["deb"]) and license in ["GPL-3"]``
 

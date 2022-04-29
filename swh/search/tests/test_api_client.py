@@ -40,7 +40,10 @@ class TestRemoteSearch(
         self.app = app
         super().setUp()
         self.reset()
-        self.search = get_search("remote", url=self.url(),)
+        self.search = get_search(
+            "remote",
+            url=self.url(),
+        )
 
     def reset(self):
         search = get_search(
