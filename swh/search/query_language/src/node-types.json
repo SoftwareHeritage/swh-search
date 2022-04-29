@@ -833,6 +833,10 @@
     "named": true
   },
   {
+    "type": "maven",
+    "named": false
+  },
+  {
     "type": "modified",
     "named": false
   },

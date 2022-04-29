@@ -915,6 +915,10 @@
         },
         {
           "type": "STRING",
+          "value": "maven"
+        },
+        {
+          "type": "STRING",
           "value": "nixguix"
         },
         {

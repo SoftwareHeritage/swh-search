@@ -301,7 +301,10 @@ class Translator:
                             ("must" if op == "=" else "must_not"): [
                                 {
                                     "range": {
-                                        f"{name}_date": {"gte": value, "lte": value,}
+                                        f"{name}_date": {
+                                            "gte": value,
+                                            "lte": value,
+                                        }
                                     }
                                 }
                             ],

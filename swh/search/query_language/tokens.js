@@ -62,6 +62,7 @@ const visitTypeOptions = [
     "ftp",
     "hg",
     "git",
+    "maven",
     "nixguix",
     "npm",
     "opam",

@@ -13,9 +13,7 @@ DURATION_METRIC = "swh_search_request_duration_seconds"
 
 
 def timed(f):
-    """Time that function!
-
-    """
+    """Time that function!"""
 
     @wraps(f)
     def d(*a, **kw):

@@ -147,8 +147,13 @@ class CommonElasticsearchSearchTest(CommonSearchTest):
                     "last_visit_date": now_minus_5_days,
                     "last_eventful_visit_date": now_minus_5_days,
                 },
-                {"url": "http://foobar.2.com",},
-                {"url": "http://foobar.3.com", "has_visits": False,},
+                {
+                    "url": "http://foobar.2.com",
+                },
+                {
+                    "url": "http://foobar.3.com",
+                    "has_visits": False,
+                },
             ]
         )
         self.search.flush()

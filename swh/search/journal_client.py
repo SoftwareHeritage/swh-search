@@ -124,7 +124,10 @@ def process_origin_intrinsic_metadata(origin_metadata, search):
     logging.debug("processing origin intrinsic_metadata %r", origin_metadata)
 
     origin_metadata = [
-        {"url": item["id"], "intrinsic_metadata": item["metadata"],}
+        {
+            "url": item["id"],
+            "intrinsic_metadata": item["metadata"],
+        }
         for item in origin_metadata
     ]
 
