@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021  The Software Heritage developers
+# Copyright (C) 2019-2022  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -1257,3 +1257,30 @@ class CommonSearchTest:
         self.search.flush()
 
         assert self.search.visit_types_count() == Counter(git=1, hg=2, svn=3)
+
+    def test_origin_search_empty_url_pattern(self):
+        origins = [
+            {"url": "http://foobar.baz", "visit_types": ["git"]},
+            {"url": "http://barbaz.qux", "visit_types": ["svn"]},
+            {"url": "http://qux.quux", "visit_types": ["hg"]},
+        ]
+
+        self.search.origin_update(origins)
+        self.search.flush()
+
+        # should match all origins
+        actual_page = self.search.origin_search(url_pattern="")
+        assert actual_page.next_page_token is None
+        results = [r["url"] for r in actual_page.results]
+        expected_results = [origin["url"] for origin in origins]
+        assert sorted(results) == sorted(expected_results)
+
+        # should match all origins with visit type
+        for origin in origins:
+            actual_page = self.search.origin_search(
+                url_pattern="", visit_types=origin["visit_types"]
+            )
+            assert actual_page.next_page_token is None
+            results = [r["url"] for r in actual_page.results]
+            expected_results = [origin["url"]]
+            assert results == expected_results
