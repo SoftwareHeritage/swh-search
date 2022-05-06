@@ -1,9 +1,7 @@
-# Copyright (C) 2021  The Software Heritage developers
+# Copyright (C) 2021-2022  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
-
-import pytest
 
 from swh.search.translator import Translator
 from swh.search.utils import get_expansion
@@ -16,8 +14,7 @@ def _test_results(query, expected):
 
 def test_empty_query():
     query = ""
-    with pytest.raises(Exception):
-        _test_results(query, {})
+    _test_results(query, {"filters": {"match_all": {}}})
 
 
 def test_conjunction_operators():
