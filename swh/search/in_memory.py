@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2021  The Software Heritage developers
+# Copyright (C) 2019-2022  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -341,7 +341,7 @@ class InMemorySearch:
 
             hits = filter(predicate, hits)
 
-        if not url_pattern and not metadata_pattern:
+        if url_pattern is None and metadata_pattern is None:
             raise ValueError(
                 "At least one of url_pattern and metadata_pattern must be provided."
             )
