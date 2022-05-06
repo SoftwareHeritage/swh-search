@@ -41,14 +41,17 @@ class Translator:
         self.query = ""
 
     def parse_query(self, query):
-        self.query = query.encode()
-        tree = self.parser.parse(self.query)
-        self.query_node = tree.root_node
+        if query:
+            self.query = query.encode()
+            tree = self.parser.parse(self.query)
+            self.query_node = tree.root_node
 
-        if self.query_node.has_error:
-            raise SearchQuerySyntaxError("Invalid query")
+            if self.query_node.has_error:
+                raise SearchQuerySyntaxError("Invalid query")
 
-        return self._traverse(self.query_node)
+            return self._traverse(self.query_node)
+        else:
+            return {"filters": {"match_all": {}}}
 
     def _traverse(self, node):
         if len(node.children) == 3 and node.children[1].type == "filters":

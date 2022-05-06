@@ -1,4 +1,4 @@
-# Copyright (C) 2020-2021  The Software Heritage developers
+# Copyright (C) 2020-2022  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -86,10 +86,11 @@ class SearchInterface:
 
         Args:
             query: Find origins according the queries written as per the
-                swh-search query language syntax.
-            url_pattern: Part of the URL to search for
-            metadata_pattern: Keywords to look for
-            (across all the fields of intrinsic_metadata)
+                swh-search query language syntax, if empty return all origins
+            url_pattern: Part of the URL to search for, if empty and no filter
+                parameters used return all origins
+            metadata_pattern: Keywords to look for (across all the fields of
+                intrinsic_metadata)
             with_visit: Whether origins with no visits are to be filtered out
             visit_types: Only origins having any of the provided visit types
                 (e.g. git, svn, pypi) will be returned
