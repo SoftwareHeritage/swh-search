@@ -48,7 +48,25 @@ ORIGIN_MAPPING = {
                 "path_match": "intrinsic_metadata.*",
                 "mapping": {"type": "keyword"},
             }
-        }
+        },
+        {
+            "floats_as_string": {
+                # All fields stored as string in the metadata
+                # even the floats
+                "match_mapping_type": "double",
+                "path_match": "intrinsic_metadata.*",
+                "mapping": {"type": "text"},
+            }
+        },
+        {
+            "longs_as_string": {
+                # All fields stored as string in the metadata
+                # even the longs
+                "match_mapping_type": "long",
+                "path_match": "intrinsic_metadata.*",
+                "mapping": {"type": "text"},
+            }
+        },
     ],
     "date_detection": False,
     "properties": {
