@@ -1,16 +1,14 @@
 Metadata-Version: 2.1
 Name: swh.search
-Version: 0.14.1
+Version: 0.15.0
 Summary: Software Heritage search service
 Home-page: https://forge.softwareheritage.org/diffusion/DSEA
 Author: Software Heritage developers
 Author-email: swh-devel@inria.fr
-License: UNKNOWN
 Project-URL: Bug Reports, https://forge.softwareheritage.org/maniphest
 Project-URL: Funding, https://www.softwareheritage.org/donate
 Project-URL: Source, https://forge.softwareheritage.org/source/swh-search
 Project-URL: Documentation, https://docs.softwareheritage.org/devel/swh-search/
-Platform: UNKNOWN
 Classifier: Programming Language :: Python :: 3
 Classifier: Intended Audience :: Developers
 Classifier: License :: OSI Approved :: GNU General Public License v3 (GPLv3)
@@ -86,5 +84,3 @@ of **ts-dev** using `sed` to achieve the desired format.
 * **ts-build-so**: Generates `swh_ql.wasm` file from the previously generated parser using emscripten
 
 * **ts-build**: Executes both **ts-build-so** and **ts-build-so**
-
-
