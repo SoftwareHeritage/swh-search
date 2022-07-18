@@ -8,7 +8,7 @@ from collections import Counter
 import logging
 import pprint
 from textwrap import dedent
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, cast
 
 from elasticsearch import Elasticsearch, helpers
 import msgpack
@@ -48,7 +48,25 @@ ORIGIN_MAPPING = {
                 "path_match": "intrinsic_metadata.*",
                 "mapping": {"type": "keyword"},
             }
-        }
+        },
+        {
+            "floats_as_string": {
+                # All fields stored as string in the metadata
+                # even the floats
+                "match_mapping_type": "double",
+                "path_match": "intrinsic_metadata.*",
+                "mapping": {"type": "text"},
+            }
+        },
+        {
+            "longs_as_string": {
+                # All fields stored as string in the metadata
+                # even the longs
+                "match_mapping_type": "long",
+                "path_match": "intrinsic_metadata.*",
+                "mapping": {"type": "text"},
+            }
+        },
     ],
     "date_detection": False,
     "properties": {
@@ -348,7 +366,7 @@ class ElasticSearch:
                 "_index": write_index,
                 "scripted_upsert": True,
                 "upsert": {
-                    **document,
+                    **cast(dict, document),
                     "sha1": sha1,
                 },
                 "retry_on_conflict": 10,
