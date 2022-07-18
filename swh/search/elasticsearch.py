@@ -8,7 +8,7 @@ from collections import Counter
 import logging
 import pprint
 from textwrap import dedent
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, cast
 
 from elasticsearch import Elasticsearch, helpers
 import msgpack
@@ -348,7 +348,7 @@ class ElasticSearch:
                 "_index": write_index,
                 "scripted_upsert": True,
                 "upsert": {
-                    **document,
+                    **cast(dict, document),
                     "sha1": sha1,
                 },
                 "retry_on_conflict": 10,
