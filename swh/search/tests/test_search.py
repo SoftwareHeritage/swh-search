@@ -1030,8 +1030,10 @@ class CommonSearchTest:
                     "intrinsic_metadata": {
                         "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                         "dateCreated": "2021-02-18T10:16:52",
-                        "version": "1.0",
+                        "version": 1.0,
+                        "softwareVersion": "1.0",
                         "isAccessibleForFree": True,
+                        "copyrightYear": 2022,
                     },
                 }
             ]
@@ -1046,7 +1048,9 @@ class CommonSearchTest:
                         "dateCreated": "a long time ago",
                         "address": "in a galaxy far, far away",
                         "version": "a new hope",
+                        "softwareVersion": "a new hope",
                         "isAccessibleForFree": "it depends",
+                        "copyrightYear": "foo bar",
                     },
                 },
             ]
