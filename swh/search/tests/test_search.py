@@ -430,7 +430,7 @@ class CommonSearchTest:
         ORIGINS = [
             {
                 "url": "http://foobar.0.com",
-                "intrinsic_metadata": {
+                "jsonld": {
                     "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                     "dateCreated": DATE_0,
                     "dateModified": DATE_1,
@@ -439,7 +439,7 @@ class CommonSearchTest:
             },
             {
                 "url": "http://foobar.1.com",
-                "intrinsic_metadata": {
+                "jsonld": {
                     "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                     "dateCreated": DATE_1,
                     "dateModified": DATE_2,
@@ -448,7 +448,7 @@ class CommonSearchTest:
             },
             {
                 "url": "http://foobar.2.com",
-                "intrinsic_metadata": {
+                "jsonld": {
                     "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                     "dateCreated": DATE_2,
                     "dateModified": DATE_2,
@@ -498,7 +498,7 @@ class CommonSearchTest:
         ORIGINS = [
             {
                 "url": "http://foobar.0.com",
-                "intrinsic_metadata": {
+                "jsonld": {
                     "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                     "dateCreated": DATE_0,
                     "dateModified": DATE_1,
@@ -507,7 +507,7 @@ class CommonSearchTest:
             },
             {
                 "url": "http://foobar.1.com",
-                "intrinsic_metadata": {
+                "jsonld": {
                     "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                     "dateCreated": DATE_1,
                     "dateModified": DATE_2,
@@ -516,7 +516,7 @@ class CommonSearchTest:
             },
             {
                 "url": "http://foobar.2.com",
-                "intrinsic_metadata": {
+                "jsonld": {
                     "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                     "dateCreated": DATE_2,
                     "dateModified": DATE_2,
@@ -539,7 +539,7 @@ class CommonSearchTest:
         ORIGINS = [
             {
                 "url": "http://foobar.1.com",
-                "intrinsic_metadata": {
+                "jsonld": {
                     "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                     "description": "Django is a backend framework for applications",
                     "keywords": "django,backend,server,web,framework",
@@ -547,7 +547,7 @@ class CommonSearchTest:
             },
             {
                 "url": "http://foobar.2.com",
-                "intrinsic_metadata": {
+                "jsonld": {
                     "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                     "description": "Native Android applications are fast",
                     "keywords": "android,mobile,ui",
@@ -555,7 +555,7 @@ class CommonSearchTest:
             },
             {
                 "url": "http://foobar.3.com",
-                "intrinsic_metadata": {
+                "jsonld": {
                     "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                     "description": "React framework helps you build web applications",
                     "keywords": "react,web,ui",
@@ -648,7 +648,7 @@ class CommonSearchTest:
         ORIGINS = [
             {
                 "url": "http://foobar.1.com",
-                "intrinsic_metadata": {
+                "jsonld": {
                     "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                     "description": "foo bar",
                     "license": "https://spdx.org/licenses/MIT",
@@ -656,7 +656,7 @@ class CommonSearchTest:
             },
             {
                 "url": "http://foobar.2.com",
-                "intrinsic_metadata": {
+                "jsonld": {
                     "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                     "description": "foo bar",
                     "license": "BSD-3-Clause",
@@ -681,7 +681,7 @@ class CommonSearchTest:
         ORIGINS = [
             {
                 "url": "http://foobar.1.com",
-                "intrinsic_metadata": {
+                "jsonld": {
                     "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                     "description": "foo bar",
                     "programmingLanguage": "python",
@@ -689,7 +689,7 @@ class CommonSearchTest:
             },
             {
                 "url": "http://foobar.2.com",
-                "intrinsic_metadata": {
+                "jsonld": {
                     "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                     "description": "foo bar",
                     "programmingLanguage": "javascript",
@@ -716,7 +716,7 @@ class CommonSearchTest:
         ORIGINS = [
             {
                 "url": "http://foobar.1.com",
-                "intrinsic_metadata": {
+                "jsonld": {
                     "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                     "description": "foo bar 1",
                     "programmingLanguage": "python",
@@ -725,7 +725,7 @@ class CommonSearchTest:
             },
             {
                 "url": "http://foobar.2.com",
-                "intrinsic_metadata": {
+                "jsonld": {
                     "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                     "description": "foo bar 2",
                     "programmingLanguage": ["javascript", "html", "css"],
@@ -737,7 +737,7 @@ class CommonSearchTest:
             },
             {
                 "url": "http://foobar.3.com",
-                "intrinsic_metadata": {
+                "jsonld": {
                     "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                     "description": "foo bar 3",
                     "programmingLanguage": ["Cpp", "c"],
@@ -785,7 +785,7 @@ class CommonSearchTest:
         expected_results = [origin_url]
         assert results == expected_results
 
-    def test_origin_intrinsic_metadata_description(self):
+    def test_origin_jsonld_description(self):
         origin1_nothin = {"url": "http://origin1"}
         origin2_foobar = {"url": "http://origin2"}
         origin3_barbaz = {"url": "http://origin3"}
@@ -794,18 +794,18 @@ class CommonSearchTest:
             [
                 {
                     **origin1_nothin,
-                    "intrinsic_metadata": {},
+                    "jsonld": {},
                 },
                 {
                     **origin2_foobar,
-                    "intrinsic_metadata": {
+                    "jsonld": {
                         "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                         "description": "foo bar",
                     },
                 },
                 {
                     **origin3_barbaz,
-                    "intrinsic_metadata": {
+                    "jsonld": {
                         "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                         "description": "bar baz",
                     },
@@ -826,7 +826,7 @@ class CommonSearchTest:
         assert actual_page.next_page_token is None
         assert actual_page.results == [origin3_barbaz]
 
-    def test_origin_intrinsic_metadata_all_terms(self):
+    def test_origin_jsonld_all_terms(self):
         origin1_foobarfoobar = {"url": "http://origin1"}
         origin3_foobarbaz = {"url": "http://origin2"}
 
@@ -834,14 +834,14 @@ class CommonSearchTest:
             [
                 {
                     **origin1_foobarfoobar,
-                    "intrinsic_metadata": {
+                    "jsonld": {
                         "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                         "description": "foo bar foo bar",
                     },
                 },
                 {
                     **origin3_foobarbaz,
-                    "intrinsic_metadata": {
+                    "jsonld": {
                         "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                         "description": "foo bar baz",
                     },
@@ -854,11 +854,11 @@ class CommonSearchTest:
         assert actual_page.next_page_token is None
         assert actual_page.results == [origin3_foobarbaz]
 
-    def test_origin_intrinsic_metadata_long_description(self):
+    def test_origin_jsonld_long_description(self):
         """Checks ElasticSearch does not try to store large values untokenize,
         which would be inefficient and crash it with:
 
-        Document contains at least one immense term in field="intrinsic_metadata.http://schema.org/description.@value" (whose UTF8 encoding is longer than the max length 32766), all of which were skipped.
+        Document contains at least one immense term in field="jsonld.http://schema.org/description.@value" (whose UTF8 encoding is longer than the max length 32766), all of which were skipped.
         """  # noqa
         origin1 = {"url": "http://origin1"}
 
@@ -866,7 +866,7 @@ class CommonSearchTest:
             [
                 {
                     **origin1,
-                    "intrinsic_metadata": {
+                    "jsonld": {
                         "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                         "description": " ".join(f"foo{i}" for i in range(100000)),
                     },
@@ -879,7 +879,7 @@ class CommonSearchTest:
         assert actual_page.next_page_token is None
         assert actual_page.results == [origin1]
 
-    def test_origin_intrinsic_metadata_matches_cross_fields(self):
+    def test_origin_jsonld_matches_cross_fields(self):
         """Checks the backend finds results even if the two words in the query are
         each in a different field."""
         origin1 = {"url": "http://origin1"}
@@ -888,7 +888,7 @@ class CommonSearchTest:
             [
                 {
                     **origin1,
-                    "intrinsic_metadata": {
+                    "jsonld": {
                         "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                         "description": "foo bar",
                         "author": "John Doe",
@@ -902,7 +902,7 @@ class CommonSearchTest:
         assert actual_page.next_page_token is None
         assert actual_page.results == [origin1]
 
-    def test_origin_intrinsic_metadata_nested(self):
+    def test_origin_jsonld_nested(self):
         origin1_nothin = {"url": "http://origin1"}
         origin2_foobar = {"url": "http://origin2"}
         origin3_barbaz = {"url": "http://origin3"}
@@ -911,18 +911,18 @@ class CommonSearchTest:
             [
                 {
                     **origin1_nothin,
-                    "intrinsic_metadata": {},
+                    "jsonld": {},
                 },
                 {
                     **origin2_foobar,
-                    "intrinsic_metadata": {
+                    "jsonld": {
                         "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                         "keywords": ["foo", "bar"],
                     },
                 },
                 {
                     **origin3_barbaz,
-                    "intrinsic_metadata": {
+                    "jsonld": {
                         "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                         "keywords": ["bar", "baz"],
                     },
@@ -943,7 +943,7 @@ class CommonSearchTest:
         assert actual_page.next_page_token is None
         assert actual_page.results == [origin3_barbaz]
 
-    def test_origin_intrinsic_metadata_inconsistent_type(self):
+    def test_origin_jsonld_inconsistent_type(self):
         """Checks the same field can have a concrete value, an object, or an array
         in different documents."""
         origin1_foobar = {"url": "http://origin1"}
@@ -954,7 +954,7 @@ class CommonSearchTest:
             [
                 {
                     **origin1_foobar,
-                    "intrinsic_metadata": {
+                    "jsonld": {
                         "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                         "author": {
                             "familyName": "Foo",
@@ -969,14 +969,14 @@ class CommonSearchTest:
             [
                 {
                     **origin2_barbaz,
-                    "intrinsic_metadata": {
+                    "jsonld": {
                         "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                         "author": "Bar Baz",
                     },
                 },
                 {
                     **origin3_bazqux,
-                    "intrinsic_metadata": {
+                    "jsonld": {
                         "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                         "author": ["Baz", "Qux"],
                     },
@@ -1015,7 +1015,7 @@ class CommonSearchTest:
         assert actual_page.next_page_token is None
         assert actual_page.results == [origin1_foobar]
 
-    def test_origin_intrinsic_metadata_string_mapping(self):
+    def test_origin_jsonld_string_mapping(self):
         """Checks inserting a date-like in a field does not update the mapping to
         require every document uses a date in that field; or that search queries
         use a date either.
@@ -1027,7 +1027,7 @@ class CommonSearchTest:
             [
                 {
                     **origin1,
-                    "intrinsic_metadata": {
+                    "jsonld": {
                         "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                         "dateCreated": "2021-02-18T10:16:52",
                         "version": 1.0,
@@ -1043,7 +1043,7 @@ class CommonSearchTest:
             [
                 {
                     **origin2,
-                    "intrinsic_metadata": {
+                    "jsonld": {
                         "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                         "dateCreated": "a long time ago",
                         "address": "in a galaxy far, far away",
@@ -1075,11 +1075,11 @@ class CommonSearchTest:
         assert actual_page.next_page_token is None
         assert actual_page.results == [origin2]
 
-    def test_origin_intrinsic_metadata_update(self):
+    def test_origin_jsonld_update(self):
         origin = {"url": "http://origin1"}
         origin_data = {
             **origin,
-            "intrinsic_metadata": {
+            "jsonld": {
                 "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                 "author": "John Doe",
             },
@@ -1092,7 +1092,7 @@ class CommonSearchTest:
         assert actual_page.next_page_token is None
         assert actual_page.results == [origin]
 
-        origin_data["intrinsic_metadata"]["author"] = "Jane Doe"
+        origin_data["jsonld"]["author"] = "Jane Doe"
 
         self.search.origin_update([origin_data])
         self.search.flush()
@@ -1142,7 +1142,7 @@ class CommonSearchTest:
 
     @settings(deadline=None)
     @given(strategies.integers(min_value=1, max_value=4))
-    def test_origin_intrinsic_metadata_paging(self, limit):
+    def test_origin_jsonld_paging(self, limit):
         # TODO: no hypothesis
         origin1_foo = {"url": "http://origin1"}
         origin2_foobar = {"url": "http://origin2"}
@@ -1153,21 +1153,21 @@ class CommonSearchTest:
             [
                 {
                     **origin1_foo,
-                    "intrinsic_metadata": {
+                    "jsonld": {
                         "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                         "keywords": ["foo"],
                     },
                 },
                 {
                     **origin2_foobar,
-                    "intrinsic_metadata": {
+                    "jsonld": {
                         "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                         "keywords": ["foo", "bar"],
                     },
                 },
                 {
                     **origin3_foobarbaz,
-                    "intrinsic_metadata": {
+                    "jsonld": {
                         "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                         "keywords": ["foo", "bar", "baz"],
                     },

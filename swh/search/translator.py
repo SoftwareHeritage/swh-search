@@ -152,7 +152,7 @@ class Translator:
             elif name == "metadata":
                 return {
                     "nested": {
-                        "path": "intrinsic_metadata",
+                        "path": "jsonld",
                         "query": {
                             "multi_match": {
                                 "query": value,
@@ -164,9 +164,9 @@ class Translator:
                                 # be considered a match.
                                 # TODO: allow missing keywords?
                                 "operator": "and",
-                                # Searches on all fields of the intrinsic_metadata dict,
+                                # Searches on all fields of the JSON-LD dict,
                                 # recursively.
-                                "fields": ["intrinsic_metadata.*"],
+                                "fields": ["jsonld.*"],
                                 # date{Created,Modified,Published} are of type date
                                 "lenient": True,
                             }
@@ -219,7 +219,7 @@ class Translator:
             if name == "keyword":
                 return {
                     "nested": {
-                        "path": "intrinsic_metadata",
+                        "path": "jsonld",
                         "query": {
                             "multi_match": {
                                 "query": " ".join(value_array),
@@ -228,7 +228,7 @@ class Translator:
                                     get_expansion("descriptions", "."),
                                     # "^2" boosts an origin's score by 2x
                                     # if it the queried keywords are
-                                    # found in its intrinsic_metadata.keywords
+                                    # found in its jsonld.keywords
                                 ],
                             }
                         },
@@ -243,7 +243,7 @@ class Translator:
 
                 return {
                     "nested": {
-                        "path": "intrinsic_metadata",
+                        "path": "jsonld",
                         "query": {
                             "bool": {
                                 "should": [
@@ -261,7 +261,7 @@ class Translator:
                 if op in ["=", "!="]:
                     return {
                         "nested": {
-                            "path": "intrinsic_metadata",
+                            "path": "jsonld",
                             "query": {
                                 "bool": {
                                     ("must" if op == "=" else "must_not"): [
@@ -281,7 +281,7 @@ class Translator:
 
                 return {
                     "nested": {
-                        "path": "intrinsic_metadata",
+                        "path": "jsonld",
                         "query": {
                             "bool": {
                                 "must": [

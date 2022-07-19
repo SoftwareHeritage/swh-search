@@ -245,27 +245,27 @@ class InMemorySearch:
                         .replace("Z", "+00:00")
                     ),
                 ).isoformat()
-            if "intrinsic_metadata" in document:
-                intrinsic_metadata = document["intrinsic_metadata"]
+            if "jsonld" in document:
+                jsonld = document["jsonld"]
 
                 for date_field in ["dateCreated", "dateModified", "datePublished"]:
-                    if date_field in intrinsic_metadata:
-                        date = intrinsic_metadata[date_field]
+                    if date_field in jsonld:
+                        date = jsonld[date_field]
 
                         # If date{Created,Modified,Published} value isn't parsable
                         # It gets rejected and isn't stored (unlike other fields)
                         formatted_date = parse_and_format_date(date)
                         if formatted_date is None:
-                            intrinsic_metadata.pop(date_field)
+                            jsonld.pop(date_field)
                         else:
-                            intrinsic_metadata[date_field] = formatted_date
+                            jsonld[date_field] = formatted_date
 
-                document["intrinsic_metadata"] = codemeta.expand(intrinsic_metadata)
+                document["jsonld"] = codemeta.expand(jsonld)
 
-                if len(document["intrinsic_metadata"]) != 1:
+                if len(document["jsonld"]) != 1:
                     continue
 
-                metadata = document["intrinsic_metadata"][0]
+                metadata = document["jsonld"][0]
                 if "http://schema.org/license" in metadata:
                     metadata["http://schema.org/license"] = [
                         {"@id": license["@id"].lower()}
@@ -332,12 +332,10 @@ class InMemorySearch:
             )
 
             def predicate(match):
-                if "intrinsic_metadata" not in match:
+                if "jsonld" not in match:
                     return False
 
-                return metadata_pattern_words.issubset(
-                    _dict_words_set(match["intrinsic_metadata"])
-                )
+                return metadata_pattern_words.issubset(_dict_words_set(match["jsonld"]))
 
             hits = filter(predicate, hits)
 

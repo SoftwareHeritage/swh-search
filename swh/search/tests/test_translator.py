@@ -132,13 +132,13 @@ def test_origin_and_metadata_filters():
                     },
                     {
                         "nested": {
-                            "path": "intrinsic_metadata",
+                            "path": "jsonld",
                             "query": {
                                 "multi_match": {
                                     "query": "framework and web",
                                     "type": "cross_fields",
                                     "operator": "and",
-                                    "fields": ["intrinsic_metadata.*"],
+                                    "fields": ["jsonld.*"],
                                     "lenient": True,
                                 }
                             },
@@ -179,7 +179,7 @@ def test_keyword_filter():
     expected = {
         "filters": {
             "nested": {
-                "path": "intrinsic_metadata",
+                "path": "jsonld",
                 "query": {
                     "multi_match": {
                         "query": r"""word1 word2 " ' word3""",
@@ -201,7 +201,7 @@ def test_language_filter():
     expected = {
         "filters": {
             "nested": {
-                "path": "intrinsic_metadata",
+                "path": "jsonld",
                 "query": {
                     "bool": {
                         "should": [
@@ -239,7 +239,7 @@ def test_license_filter():
     expected = {
         "filters": {
             "nested": {
-                "path": "intrinsic_metadata",
+                "path": "jsonld",
                 "query": {
                     "bool": {
                         "should": [
@@ -261,7 +261,7 @@ def test_date_created_not_equal_to_filter():
     expected = {
         "filters": {
             "nested": {
-                "path": "intrinsic_metadata",
+                "path": "jsonld",
                 "query": {
                     "bool": {
                         "must_not": [
@@ -288,7 +288,7 @@ def test_date_created_greater_than_filter():
     expected = {
         "filters": {
             "nested": {
-                "path": "intrinsic_metadata",
+                "path": "jsonld",
                 "query": {
                     "bool": {
                         "must": [
@@ -380,7 +380,7 @@ def test_escaped_punctuation_parsing():
     expected = {
         "filters": {
             "nested": {
-                "path": "intrinsic_metadata",
+                "path": "jsonld",
                 "query": {
                     "multi_match": {
                         "query": r"""foo '" bar""",
@@ -401,7 +401,7 @@ def test_nonascii():
     expected = {
         "filters": {
             "nested": {
-                "path": "intrinsic_metadata",
+                "path": "jsonld",
                 "query": {
                     "multi_match": {
                         "query": r"""café""",
@@ -425,7 +425,7 @@ def test_nonascii_before_operator():
                 "must": [
                     {
                         "nested": {
-                            "path": "intrinsic_metadata",
+                            "path": "jsonld",
                             "query": {
                                 "multi_match": {
                                     "query": r"""🐍""",
