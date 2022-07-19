@@ -303,7 +303,7 @@ def test_journal_client_origin_metadata_from_journal():
         [
             {
                 "url": "http://foobar.baz",
-                "intrinsic_metadata": {
+                "jsonld": {
                     "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
                     "description": "foo bar",
                     "programmingLanguage": "python",

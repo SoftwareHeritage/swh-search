@@ -126,7 +126,7 @@ def process_origin_intrinsic_metadata(origin_metadata, search):
     origin_metadata = [
         {
             "url": item["id"],
-            "intrinsic_metadata": item["metadata"],
+            "jsonld": item["metadata"],
         }
         for item in origin_metadata
     ]
