@@ -45,7 +45,7 @@ ORIGIN_MAPPING = {
                 # All fields stored as string in the metadata
                 # even the booleans
                 "match_mapping_type": "boolean",
-                "path_match": "intrinsic_metadata.*",
+                "path_match": "jsonld.*",
                 "mapping": {"type": "keyword"},
             }
         },
@@ -54,7 +54,7 @@ ORIGIN_MAPPING = {
                 # All fields stored as string in the metadata
                 # even the floats
                 "match_mapping_type": "double",
-                "path_match": "intrinsic_metadata.*",
+                "path_match": "jsonld.*",
                 "mapping": {"type": "text"},
             }
         },
@@ -63,7 +63,7 @@ ORIGIN_MAPPING = {
                 # All fields stored as string in the metadata
                 # even the longs
                 "match_mapping_type": "long",
-                "path_match": "intrinsic_metadata.*",
+                "path_match": "jsonld.*",
                 "mapping": {"type": "text"},
             }
         },
@@ -102,7 +102,7 @@ ORIGIN_MAPPING = {
         "last_eventful_visit_date": {"type": "date"},
         "last_release_date": {"type": "date"},
         "last_revision_date": {"type": "date"},
-        "intrinsic_metadata": {
+        "jsonld": {
             "type": "nested",
             "properties": {
                 "@context": {
@@ -246,7 +246,7 @@ def _sanitize_origin(origin):
     for field_name in (
         "blocklisted",
         "has_visits",
-        "intrinsic_metadata",
+        "jsonld",
         "visit_types",
         "nb_visits",
         "snapshot_id",
@@ -270,21 +270,21 @@ def _sanitize_origin(origin):
     # * {"author": {"@value": "Jane Doe"}}
     # * {"author": [{"@value": "Jane Doe"}]}
     # and JSON-LD expansion will convert them all to the last one.
-    if "intrinsic_metadata" in res:
-        intrinsic_metadata = res["intrinsic_metadata"]
+    if "jsonld" in res:
+        jsonld = res["jsonld"]
         for date_field in ["dateCreated", "dateModified", "datePublished"]:
-            if date_field in intrinsic_metadata:
-                date = intrinsic_metadata[date_field]
+            if date_field in jsonld:
+                date = jsonld[date_field]
 
                 # If date{Created,Modified,Published} value isn't parsable
                 # It gets rejected and isn't stored (unlike other fields)
                 formatted_date = parse_and_format_date(date)
                 if formatted_date is None:
-                    intrinsic_metadata.pop(date_field)
+                    jsonld.pop(date_field)
                 else:
-                    intrinsic_metadata[date_field] = formatted_date
+                    jsonld[date_field] = formatted_date
 
-        res["intrinsic_metadata"] = codemeta.expand(intrinsic_metadata)
+        res["jsonld"] = codemeta.expand(jsonld)
 
     return res
 
@@ -513,7 +513,7 @@ class ElasticSearch:
                     sorting_params.append(
                         {
                             get_expansion(field, "."): {
-                                "nested_path": "intrinsic_metadata",
+                                "nested_path": "jsonld",
                                 "order": order,
                             }
                         }

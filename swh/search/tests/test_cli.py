@@ -10,6 +10,7 @@ import tempfile
 from click.testing import CliRunner
 from confluent_kafka import Producer
 import pytest
+from typing_extensions import Literal
 import yaml
 
 from swh.journal.serializers import value_to_kafka
@@ -175,13 +176,18 @@ def test__journal_client__origin_visit_status(
     assert actual_page.results == [origin_foobar]
 
 
-def test__journal_client__origin_intrinsic_metadata(
-    swh_search, elasticsearch_host, kafka_prefix: str, kafka_server
+@pytest.mark.parametrize("metadata_source", ["intrinsic", "extrinsic"])
+def test__journal_client__origin_metadata(
+    swh_search,
+    elasticsearch_host,
+    kafka_prefix: str,
+    kafka_server,
+    metadata_source: Literal["intrinsic", "extrinsic"],
 ):
     """Subscribing to origin-intrinsic-metadata should result in swh-search indexation"""
     origin_foobar = {"url": "https://github.com/clojure/clojure"}
 
-    origin_intrinsic_metadata = {
+    origin_metadata = {
         "id": origin_foobar["url"],
         "metadata": {
             "name": "clojure",
@@ -194,9 +200,27 @@ def test__journal_client__origin_intrinsic_metadata(
             "codeRepository": "https://repo.maven.apache.org/maven2/org/clojure/clojure",  # noqa
         },
         "indexer_configuration_id": 1,
-        "from_revision": hash_to_bytes("f47c139e20970ee0852166f48ee2a4626632b86e"),
-        "mappings": ["maven"],
     }
+    if metadata_source == "intrinsic":
+        origin_metadata.update(
+            {
+                "from_revision": hash_to_bytes(
+                    "f47c139e20970ee0852166f48ee2a4626632b86e"
+                ),
+                "mappings": ["maven"],
+            }
+        )
+    elif metadata_source == "extrinsic":
+        origin_metadata.update(
+            {
+                "from_revision": hash_to_bytes(
+                    "f47c139e20970ee0852166f48ee2a4626632b86e"
+                ),
+                "mappings": ["github"],
+            }
+        )
+    else:
+        assert False, metadata_source
 
     producer = Producer(
         {
@@ -205,9 +229,9 @@ def test__journal_client__origin_intrinsic_metadata(
             "acks": "all",
         }
     )
-    topic = f"{kafka_prefix}.origin_intrinsic_metadata"
-    value = value_to_kafka(origin_intrinsic_metadata)
-    producer.produce(topic=topic, key=b"bogus-origin-intrinsic-metadata", value=value)
+    topic = f"{kafka_prefix}.origin_{metadata_source}_metadata"
+    value = value_to_kafka(origin_metadata)
+    producer.produce(topic=topic, key=b"bogus-origin-metadata", value=value)
     producer.flush()
 
     journal_objects_config = JOURNAL_OBJECTS_CONFIG_TEMPLATE.format(
@@ -221,7 +245,7 @@ def test__journal_client__origin_intrinsic_metadata(
             "--stop-after-objects",
             "1",
             "--object-type",
-            "origin_intrinsic_metadata",
+            f"origin_{metadata_source}_metadata",
         ],
         journal_objects_config,
         elasticsearch_host=elasticsearch_host,
