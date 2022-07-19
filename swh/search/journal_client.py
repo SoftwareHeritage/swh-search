@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2021  The Software Heritage developers
+# Copyright (C) 2018-2022  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -15,6 +15,7 @@ EXPECTED_MESSAGE_TYPES = {
     "origin",
     "origin_visit_status",
     "origin_intrinsic_metadata",
+    "origin_extrinsic_metadata",
 }
 
 
@@ -80,6 +81,9 @@ def process_journal_objects(messages, *, search, storage=None):
     if "origin_intrinsic_metadata" in messages:
         process_origin_intrinsic_metadata(messages["origin_intrinsic_metadata"], search)
 
+    if "origin_extrinsic_metadata" in messages:
+        process_origin_extrinsic_metadata(messages["origin_extrinsic_metadata"], search)
+
 
 def process_origins(origins, search):
     logging.debug("processing origins %r", origins)
@@ -126,7 +130,21 @@ def process_origin_intrinsic_metadata(origin_metadata, search):
     origin_metadata = [
         {
             "url": item["id"],
-            "intrinsic_metadata": item["metadata"],
+            "jsonld": item["metadata"],
+        }
+        for item in origin_metadata
+    ]
+
+    search.origin_update(origin_metadata)
+
+
+def process_origin_extrinsic_metadata(origin_metadata, search):
+    logging.debug("processing origin extrinsic_metadata %r", origin_metadata)
+
+    origin_metadata = [
+        {
+            "url": item["id"],
+            "jsonld": item["metadata"],
         }
         for item in origin_metadata
     ]

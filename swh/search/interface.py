@@ -90,7 +90,7 @@ class SearchInterface:
             url_pattern: Part of the URL to search for, if empty and no filter
                 parameters used return all origins
             metadata_pattern: Keywords to look for (across all the fields of
-                intrinsic_metadata)
+                "jsonld")
             with_visit: Whether origins with no visits are to be filtered out
             visit_types: Only origins having any of the provided visit types
                 (e.g. git, svn, pypi) will be returned
@@ -106,11 +106,11 @@ class SearchInterface:
             min_last_release_date: Filter origins that have
                 last_release_date on or after the provided date(ISO format)
             min_date_created: Filter origins that have date_created
-                from intrinsic_metadata on or after the provided date
+                from ``jsonld`` on or after the provided date
             min_date_modified: Filter origins that have date_modified
-                from intrinsic_metadata on or after the provided date
+                from ``jsonld`` on or after the provided date
             min_date_published: Filter origins that have date_published
-                from intrinsic_metadata on or after the provided date
+                from ``jsonld`` on or after the provided date
             programming_languages: Filter origins with programming languages
                 present in the given list (based on instrinsic_metadata)
             licenses: Filter origins with licenses present in the given list
