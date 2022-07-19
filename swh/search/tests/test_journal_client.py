@@ -276,7 +276,10 @@ def test_journal_client_origin_visit_status_from_journal(storage):
     )
 
 
-def test_journal_client_origin_metadata_from_journal():
+@pytest.mark.parametrize(
+    "key", ["origin_intrinsic_metadata", "origin_extrinsic_metadata"]
+)
+def test_journal_client_origin_metadata_from_journal(key):
     search_mock = MagicMock()
 
     worker_fn = functools.partial(
@@ -286,7 +289,7 @@ def test_journal_client_origin_metadata_from_journal():
 
     worker_fn(
         {
-            "origin_intrinsic_metadata": [
+            key: [
                 {
                     "id": "http://foobar.baz",
                     "metadata": {
