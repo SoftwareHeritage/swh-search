@@ -12,9 +12,10 @@ from swh.search import get_search
 from swh.search.api.server import app
 
 from .test_elasticsearch import CommonElasticsearchSearchTest
+from .test_in_memory import CommonInmemorySearchTest
 
 
-class TestRemoteSearch(
+class TestRemoteSearchElasticSearch(
     CommonElasticsearchSearchTest, ServerTestFixture, unittest.TestCase
 ):
     @pytest.fixture(autouse=True)
@@ -64,4 +65,25 @@ class TestRemoteSearch(
         "Elasticsearch also returns close matches, so this test would fail"
     )
     def test_origin_url_paging(self, count):
+        pass
+
+
+class TestRemoteSearchInMemory(
+    CommonInmemorySearchTest, ServerTestFixture, unittest.TestCase
+):
+    def setUp(self):
+        self.config = {
+            "search": {
+                "cls": "memory",
+            }
+        }
+        self.app = app
+        super().setUp()
+        # self.reset()
+        self.search = get_search(
+            "remote",
+            url=self.url(),
+        )
+
+    def reset(self):
         pass

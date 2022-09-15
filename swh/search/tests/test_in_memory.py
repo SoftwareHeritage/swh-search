@@ -14,11 +14,13 @@ from swh.search.in_memory import _nested_get
 from .test_search import CommonSearchTest
 
 
-class InmemorySearchTest(unittest.TestCase, CommonSearchTest):
+class CommonInmemorySearchTest(CommonSearchTest):
     @pytest.fixture(autouse=True)
     def _instantiate_search(self):
         self.search = get_search("memory")
 
+
+class InmemorySearchTest(CommonInmemorySearchTest, unittest.TestCase):
     def setUp(self):
         self.reset()
 
