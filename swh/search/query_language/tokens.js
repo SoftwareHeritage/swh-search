@@ -54,19 +54,26 @@ const sortByOptions = [
 
 const visitTypeOptions = [
     "any",
+    "arch",
+    "aur",
     "bzr",
     "cran",
+    "crates",
     "cvs",
     "deb",
     "deposit",
     "ftp",
+    "hackage",
     "hg",
     "git",
+    "golang",
     "maven",
     "nixguix",
     "npm",
     "opam",
+    "pubdev",
     "pypi",
+    "rpm",
     "svn",
     "tar"
 ];
