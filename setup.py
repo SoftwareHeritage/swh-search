@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
-# Copyright (C) 2015-2020  The Software Heritage developers
+# Copyright (C) 2015-2022  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
-from distutils.cmd import Command
-from distutils.command.build import build
 import glob
 from io import open
 import os
@@ -15,6 +13,9 @@ import subprocess
 from setuptools import find_packages, setup
 from setuptools.command.develop import develop
 from setuptools.command.sdist import sdist
+
+from distutils.cmd import Command  # isort: skip
+from distutils.command.build import build  # isort: skip
 
 here = os.path.abspath(os.path.dirname(__file__))
 
