@@ -737,6 +737,14 @@
     "named": false
   },
   {
+    "type": "arch",
+    "named": false
+  },
+  {
+    "type": "aur",
+    "named": false
+  },
+  {
     "type": "booleanFalse",
     "named": true
   },
@@ -762,6 +770,10 @@
   },
   {
     "type": "cran",
+    "named": false
+  },
+  {
+    "type": "crates",
     "named": false
   },
   {
@@ -798,6 +810,14 @@
   },
   {
     "type": "git",
+    "named": false
+  },
+  {
+    "type": "golang",
+    "named": false
+  },
+  {
+    "type": "hackage",
     "named": false
   },
   {
@@ -869,6 +889,10 @@
     "named": true
   },
   {
+    "type": "pubdev",
+    "named": false
+  },
+  {
     "type": "published",
     "named": false
   },
@@ -879,6 +903,10 @@
   {
     "type": "rangeOp",
     "named": true
+  },
+  {
+    "type": "rpm",
+    "named": false
   },
   {
     "type": "singleWord",

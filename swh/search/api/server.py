@@ -52,7 +52,8 @@ def index():
 @app.before_first_request
 def initialized_index():
     search = _get_search()
-    logger.info("Initializing indexes with configuration: ", search.origin_config)
+    if app.config["search"]["cls"] == "elasticsearch":
+        logger.info("Initializing indexes with configuration: ", search.origin_config)
     search.initialize()
 
 

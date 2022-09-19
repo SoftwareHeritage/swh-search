@@ -883,11 +883,23 @@
         },
         {
           "type": "STRING",
+          "value": "arch"
+        },
+        {
+          "type": "STRING",
+          "value": "aur"
+        },
+        {
+          "type": "STRING",
           "value": "bzr"
         },
         {
           "type": "STRING",
           "value": "cran"
+        },
+        {
+          "type": "STRING",
+          "value": "crates"
         },
         {
           "type": "STRING",
@@ -907,11 +919,19 @@
         },
         {
           "type": "STRING",
+          "value": "hackage"
+        },
+        {
+          "type": "STRING",
           "value": "hg"
         },
         {
           "type": "STRING",
           "value": "git"
+        },
+        {
+          "type": "STRING",
+          "value": "golang"
         },
         {
           "type": "STRING",
@@ -931,7 +951,15 @@
         },
         {
           "type": "STRING",
+          "value": "pubdev"
+        },
+        {
+          "type": "STRING",
           "value": "pypi"
+        },
+        {
+          "type": "STRING",
+          "value": "rpm"
         },
         {
           "type": "STRING",
