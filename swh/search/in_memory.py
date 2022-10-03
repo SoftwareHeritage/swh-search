@@ -171,8 +171,11 @@ class InMemorySearch:
 
     def origin_update(self, documents: Iterable[OriginDict]) -> None:
         for source_document in documents:
-            document: Dict[str, Any] = dict(source_document)
-            id_ = hash_to_hex(model.Origin(url=document["url"]).id)
+            id_ = hash_to_hex(model.Origin(url=source_document["url"]).id)
+            document: Dict[str, Any] = {
+                **source_document,
+                "sha1": id_,
+            }
             if "url" in document:
                 document["_url_tokens"] = set(
                     self._url_splitter.split(source_document["url"])
@@ -520,6 +523,14 @@ class InMemorySearch:
             results=origins,
             next_page_token=next_page_token,
         )
+
+    def origin_get(self, url: str) -> Optional[Dict[str, Any]]:
+        origin_id = hash_to_hex(model.Origin(url=url).id)
+        document = self._origins.get(origin_id)
+        if document is None:
+            return None
+        else:
+            return {k: v for (k, v) in document.items() if k != "_url_tokens"}
 
     def visit_types_count(self) -> Counter:
         hits = self._get_hits()
