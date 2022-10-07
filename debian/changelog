@@ -1,8 +1,10 @@
-swh-search (0.16.2-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-search (0.16.3-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.16.3     - (tagged by Valentin Lorentz
+    <vlorentz@softwareheritage.org> on 2022-10-07 13:39:50 +0200)
+  * Upstream changes:     - v0.16.3     - * Add 'origin_get' endpoint
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Mon, 19 Sep 2022 09:46:10 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Fri, 07 Oct 2022 11:45:56 +0000
 
 swh-search (0.16.2-1~swh1) unstable-swh; urgency=medium
 
