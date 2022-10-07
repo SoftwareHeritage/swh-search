@@ -4,7 +4,7 @@
 # See top-level LICENSE file for more information
 
 from collections import Counter
-from typing import Iterable, List, Optional, TypeVar
+from typing import Any, Dict, Iterable, List, Optional, TypeVar
 
 from typing_extensions import TypedDict
 
@@ -131,6 +131,13 @@ class SearchInterface:
 
         """
         ...
+
+    @remote_api_endpoint("origin/get")
+    def origin_get(self, url: str) -> Optional[Dict[str, Any]]:
+        """Returns the full documents associated to the given origin URLs.
+
+        Order is arbitrary; unknown origins are not returned.
+        """
 
     @remote_api_endpoint("visit_types_count")
     def visit_types_count(self) -> Counter:

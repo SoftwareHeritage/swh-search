@@ -10,7 +10,7 @@ import pprint
 from textwrap import dedent
 from typing import Any, Dict, Iterable, List, Optional, cast
 
-from elasticsearch import Elasticsearch, helpers
+from elasticsearch import Elasticsearch, NotFoundError, helpers
 import msgpack
 
 from swh.indexer import codemeta
@@ -386,6 +386,17 @@ class ElasticSearch:
         send_metric(
             "document:index_error", count=len(errors), method_name="origin_update"
         )
+
+    def origin_get(self, url: str) -> Optional[Dict[str, Any]]:
+        origin_id = hash_to_hex(model.Origin(url=url).id)
+        try:
+            document = self._backend.get(
+                index=self._get_origin_read_alias(), id=origin_id
+            )
+        except NotFoundError:
+            return None
+        else:
+            return document["_source"]
 
     @timed
     def origin_search(

@@ -5,6 +5,7 @@
 
 from collections import Counter
 from datetime import datetime, timedelta, timezone
+import hashlib
 from itertools import permutations
 
 from hypothesis import given, settings, strategies
@@ -1227,7 +1228,7 @@ class CommonSearchTest:
         assert result_page.next_page_token is None
         assert result_page.results == []
 
-    def test_filter_keyword_in_filter(self):
+    def test_search_filter_keyword_in_filter(self):
         origin1 = {
             "url": "foo language in ['foo baz'] bar",
         }
@@ -1241,6 +1242,94 @@ class CommonSearchTest:
         result_page = self.search.origin_search(url_pattern="baaz")
         assert result_page.next_page_token is None
         assert result_page.results == []
+
+    def test_origin_get(self):
+        """Checks the same field can have a concrete value, an object, or an array
+        in different documents."""
+        origin1 = {"url": "http://origin1"}
+        origin2 = {"url": "http://origin2"}
+        origin3 = {"url": "http://origin3"}
+        origins = [
+            {
+                **origin1,
+                "jsonld": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "author": {
+                        "familyName": "Foo",
+                        "givenName": "Bar",
+                    },
+                },
+            },
+            {
+                **origin2,
+                "jsonld": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "author": "Bar Baz",
+                },
+            },
+            {
+                **origin3,
+                "jsonld": {
+                    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+                    "author": ["Baz", "Qux"],
+                },
+            },
+        ]
+
+        expanded_origins = [
+            {
+                **origin1,
+                "sha1": hashlib.sha1(origin1["url"].encode()).hexdigest(),
+                "jsonld": [
+                    {
+                        "http://schema.org/author": [
+                            {
+                                "@list": [
+                                    {
+                                        "http://schema.org/familyName": [
+                                            {"@value": "Foo"}
+                                        ],
+                                        "http://schema.org/givenName": [
+                                            {"@value": "Bar"}
+                                        ],
+                                    }
+                                ]
+                            }
+                        ],
+                    }
+                ],
+            },
+            {
+                **origin2,
+                "sha1": hashlib.sha1(origin2["url"].encode()).hexdigest(),
+                "jsonld": [
+                    {
+                        "http://schema.org/author": [
+                            {"@list": [{"@value": "Bar Baz"}]}
+                        ],
+                    }
+                ],
+            },
+            {
+                **origin3,
+                "sha1": hashlib.sha1(origin3["url"].encode()).hexdigest(),
+                "jsonld": [
+                    {
+                        "http://schema.org/author": [
+                            {"@list": [{"@value": "Baz"}, {"@value": "Qux"}]}
+                        ],
+                    }
+                ],
+            },
+        ]
+
+        self.search.origin_update(origins)
+        self.search.flush()
+
+        assert self.search.origin_get(origin1["url"]) == expanded_origins[0]
+        assert self.search.origin_get(origin2["url"]) == expanded_origins[1]
+        assert self.search.origin_get(origin3["url"]) == expanded_origins[2]
+        assert self.search.origin_get("http://origin4") is None
 
     def test_visit_types_count(self):
         assert self.search.visit_types_count() == Counter()
