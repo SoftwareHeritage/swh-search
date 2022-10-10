@@ -887,11 +887,27 @@
         },
         {
           "type": "STRING",
+          "value": "archive"
+        },
+        {
+          "type": "STRING",
           "value": "aur"
         },
         {
           "type": "STRING",
           "value": "bzr"
+        },
+        {
+          "type": "STRING",
+          "value": "conda"
+        },
+        {
+          "type": "STRING",
+          "value": "content"
+        },
+        {
+          "type": "STRING",
+          "value": "cpan"
         },
         {
           "type": "STRING",
@@ -912,6 +928,10 @@
         {
           "type": "STRING",
           "value": "deposit"
+        },
+        {
+          "type": "STRING",
+          "value": "directory"
         },
         {
           "type": "STRING",
@@ -955,11 +975,19 @@
         },
         {
           "type": "STRING",
+          "value": "puppet"
+        },
+        {
+          "type": "STRING",
           "value": "pypi"
         },
         {
           "type": "STRING",
           "value": "rpm"
+        },
+        {
+          "type": "STRING",
+          "value": "rubygems"
         },
         {
           "type": "STRING",
