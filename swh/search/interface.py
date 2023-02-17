@@ -6,7 +6,7 @@
 from collections import Counter
 from typing import Any, Dict, Iterable, List, Optional, TypeVar
 
-from typing_extensions import TypedDict
+from typing_extensions import Protocol, TypedDict
 
 from swh.core.api import remote_api_endpoint
 from swh.core.api.classes import PagedResult as CorePagedResult
@@ -39,7 +39,7 @@ class OriginDict(MinimalOriginDict, total=False):
     has_visits: bool
 
 
-class SearchInterface:
+class SearchInterface(Protocol):
     @remote_api_endpoint("check")
     def check(self):
         """Dedicated method to execute some specific check per implementation."""
