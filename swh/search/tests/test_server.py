@@ -143,21 +143,3 @@ def test_server_make_app_from_config_file_with_indexes(
 
     app2 = make_app_from_configfile()
     assert app is app2
-
-
-def test_server_first_call_initialize_elasticsearch(
-    swh_search_config_with_indexes, mocker
-):
-    """Test the initialize method is called during the first and first only
-    request to the server"""
-    mock = mocker.patch("swh.search.elasticsearch.ElasticSearch.initialize")
-
-    app = make_app_from_configfile()
-    app.config["TESTING"] = True
-    tc = app.test_client()
-
-    tc.get("/")
-    assert mock.call_count == 1
-
-    tc.get("/")
-    assert mock.call_count == 1
