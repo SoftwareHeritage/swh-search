@@ -1,9 +1,8 @@
-# Copyright (C) 2019-2020  The Software Heritage developers
+# Copyright (C) 2019-2023  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
-import unittest
 
 import pytest
 
@@ -15,13 +14,12 @@ from .test_elasticsearch import CommonElasticsearchSearchTest
 from .test_in_memory import CommonInmemorySearchTest
 
 
-class TestRemoteSearchElasticSearch(
-    CommonElasticsearchSearchTest, ServerTestFixture, unittest.TestCase
-):
+class TestRemoteSearchElasticSearch(CommonElasticsearchSearchTest, ServerTestFixture):
     @pytest.fixture(autouse=True)
     def _instantiate_search(self, elasticsearch_host):
         self._elasticsearch_host = elasticsearch_host
 
+    @pytest.fixture(autouse=True)
     def setUp(self):
         self.config = {
             "search": {
@@ -39,12 +37,14 @@ class TestRemoteSearchElasticSearch(
             }
         }
         self.app = app
-        super().setUp()
+        self.start_server()
         self.reset()
         self.search = get_search(
             "remote",
             url=self.url(),
         )
+        yield
+        self.stop_server()
 
     def reset(self):
         search = get_search(
@@ -68,9 +68,8 @@ class TestRemoteSearchElasticSearch(
         pass
 
 
-class TestRemoteSearchInMemory(
-    CommonInmemorySearchTest, ServerTestFixture, unittest.TestCase
-):
+class TestRemoteSearchInMemory(CommonInmemorySearchTest, ServerTestFixture):
+    @pytest.fixture(autouse=True)
     def setUp(self):
         self.config = {
             "search": {
@@ -78,12 +77,13 @@ class TestRemoteSearchInMemory(
             }
         }
         self.app = app
-        super().setUp()
-        # self.reset()
+        self.start_server()
         self.search = get_search(
             "remote",
             url=self.url(),
         )
+        yield
+        self.stop_server()
 
     def reset(self):
         pass
