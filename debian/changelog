@@ -1,3 +1,13 @@
+swh-search (0.16.5-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.16.5     - (tagged by David Douard
+    <david.douard@sdfa3.org> on 2023-09-28 12:49:22 +0200)
+  * Upstream changes:     - v0.16.5     - fix support for flask >= 2.3
+    - fix editable install with setuptools >= 64     - fix doc related
+    issues
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 28 Sep 2023 10:54:29 +0000
+
 swh-search (0.16.4-1~swh1) unstable-swh; urgency=medium
 
   * New upstream release 0.16.4     - (tagged by Antoine Lambert
