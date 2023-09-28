@@ -9,9 +9,10 @@ swh.journal>=0.1.0
 swh.model
 
 [testing]
+confluent-kafka
 pytest
 pytest-mock
-confluent-kafka
+swh.core[testing]
 types-click
 types-pytz
 types-pyyaml

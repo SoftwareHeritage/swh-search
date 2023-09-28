@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: swh.search
-Version: 0.16.4
+Version: 0.16.5
 Summary: Software Heritage search service
 Home-page: https://forge.softwareheritage.org/diffusion/DSEA
 Author: Software Heritage developers
@@ -16,9 +16,27 @@ Classifier: Operating System :: OS Independent
 Classifier: Development Status :: 3 - Alpha
 Requires-Python: >=3.7
 Description-Content-Type: text/markdown
-Provides-Extra: testing
 License-File: LICENSE
 License-File: AUTHORS
+Requires-Dist: click
+Requires-Dist: elasticsearch<8.0.0,>=7.0.0
+Requires-Dist: typing-extensions
+Requires-Dist: tree_sitter
+Requires-Dist: iso8601
+Requires-Dist: swh.core[http]>=0.3.0
+Requires-Dist: swh.indexer
+Requires-Dist: swh.journal>=0.1.0
+Requires-Dist: swh.model
+Provides-Extra: testing
+Requires-Dist: confluent-kafka; extra == "testing"
+Requires-Dist: pytest; extra == "testing"
+Requires-Dist: pytest-mock; extra == "testing"
+Requires-Dist: swh.core[testing]; extra == "testing"
+Requires-Dist: types-click; extra == "testing"
+Requires-Dist: types-pytz; extra == "testing"
+Requires-Dist: types-pyyaml; extra == "testing"
+Requires-Dist: types-requests; extra == "testing"
+Requires-Dist: types-setuptools; extra == "testing"
 
 swh-search
 ==========

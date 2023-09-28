@@ -24,6 +24,11 @@ def _get_search():
     global search
     if not search:
         search = get_search(**app.config["search"])
+        if app.config["search"]["cls"] == "elasticsearch":
+            logger.info(
+                "Initializing indexes with configuration: ", search.origin_config
+            )
+        search.initialize()
 
     return search
 
@@ -47,14 +52,6 @@ def my_error_handler(exception):
 @timed
 def index():
     return "SWH Search API server"
-
-
-@app.before_first_request
-def initialized_index():
-    search = _get_search()
-    if app.config["search"]["cls"] == "elasticsearch":
-        logger.info("Initializing indexes with configuration: ", search.origin_config)
-    search.initialize()
 
 
 api_cfg = None
