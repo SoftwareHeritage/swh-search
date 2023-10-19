@@ -52,39 +52,6 @@ const sortByOptions = [
     'published'
 ];
 
-const visitTypeOptions = [
-    "any",
-    "arch",
-    "archive",
-    "aur",
-    "bzr",
-    "conda",
-    "content",
-    "cpan",
-    "cran",
-    "crates",
-    "cvs",
-    "deb",
-    "deposit",
-    "directory",
-    "ftp",
-    "hackage",
-    "hg",
-    "git",
-    "golang",
-    "maven",
-    "nixguix",
-    "npm",
-    "opam",
-    "pubdev",
-    "puppet",
-    "pypi",
-    "rpm",
-    "rubygems",
-    "svn",
-    "tar"
-];
-
 // Extra tokens
 const OR = "or";
 const AND = "and";
@@ -115,7 +82,6 @@ module.exports = {
 
     // Values
     sortByOptions,
-    visitTypeOptions,
 
     // Extra tokens
     OR,
