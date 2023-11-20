@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2022  The Software Heritage developers
+# Copyright (C) 2019-2023  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -8,7 +8,6 @@ from datetime import datetime, timedelta, timezone
 import hashlib
 from itertools import permutations
 
-from hypothesis import given, settings, strategies
 import pytest
 
 from swh.core.api.classes import stream_results
@@ -1106,10 +1105,8 @@ class CommonSearchTest:
 
     # TODO: add more tests with edge cases
 
-    @settings(deadline=None)
-    @given(strategies.integers(min_value=1, max_value=4))
+    @pytest.mark.parametrize("limit", list(range(1, 5)))
     def test_origin_url_paging(self, limit):
-        # TODO: no hypothesis
         origin1_foo = {"url": "http://origin1/foo"}
         origin2_foobar = {"url": "http://origin2/foo/bar"}
         origin3_foobarbaz = {"url": "http://origin3/foo/bar/baz"}
@@ -1141,10 +1138,8 @@ class CommonSearchTest:
         ]
         assert sorted(results[0 : len(expected_results)]) == sorted(expected_results)
 
-    @settings(deadline=None)
-    @given(strategies.integers(min_value=1, max_value=4))
+    @pytest.mark.parametrize("limit", list(range(1, 5)))
     def test_origin_jsonld_paging(self, limit):
-        # TODO: no hypothesis
         origin1_foo = {"url": "http://origin1"}
         origin2_foobar = {"url": "http://origin2"}
         origin3_foobarbaz = {"url": "http://origin3"}

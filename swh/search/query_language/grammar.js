@@ -12,7 +12,7 @@ const {
     dateFields
 } = require("./tokens.js");
 const { equalOp, containOp, rangeOp, choiceOp } = require("./tokens.js");
-const { sortByOptions, visitTypeOptions } = require("./tokens.js");
+const { sortByOptions } = require("./tokens.js");
 const { OR, AND, TRUE, FALSE } = require("./tokens.js");
 
 const PRECEDENCE = {
@@ -99,9 +99,7 @@ module.exports = grammar({
         visitTypeFilter: $ => annotateFilter($.visitTypeField, $.visitTypeOp, $.visitTypeVal),
         visitTypeField: $ => token(visitTypeField),
         visitTypeOp: $ => $.equalOp,
-        visitTypeVal: $ => createArray(optionalWrapWith($.visitTypeOptions, ["'", '"'])),
-        visitTypeOptions: $ => choice(...visitTypeOptions),
-        // TODO: fetch visitTypeOptions choices dynamically from other swh services?
+        visitTypeVal: $ => createArray($.string),
 
         // Array members can be any string
         unboundedListFilter: $ => annotateFilter($.listField, $.listOp, $.listVal),
