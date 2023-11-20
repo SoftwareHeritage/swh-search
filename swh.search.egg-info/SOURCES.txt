@@ -7,7 +7,7 @@ CONTRIBUTORS
 LICENSE
 MANIFEST.in
 Makefile
-README.md
+README.rst
 mypy.ini
 package.json
 pyproject.toml

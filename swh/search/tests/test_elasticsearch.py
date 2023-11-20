@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2022  The Software Heritage developers
+# Copyright (C) 2019-2023  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -6,7 +6,6 @@
 from datetime import datetime, timedelta, timezone
 from textwrap import dedent
 import types
-import unittest
 
 from elasticsearch.helpers.errors import BulkIndexError
 import pytest
@@ -184,7 +183,7 @@ class CommonElasticsearchSearchTest(CommonSearchTest):
             self.search.origin_search(query="foobar")
 
 
-class TestElasticsearchSearch(CommonElasticsearchSearchTest, unittest.TestCase):
+class TestElasticsearchSearch(CommonElasticsearchSearchTest):
     @pytest.fixture(autouse=True)
     def _instantiate_search(self, swh_search, elasticsearch_host, mocker):
         self._elasticsearch_host = elasticsearch_host

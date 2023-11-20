@@ -1,11 +1,10 @@
-# Copyright (C) 2019-2021  The Software Heritage developers
+# Copyright (C) 2019-2023  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
 from datetime import datetime, timedelta, timezone
 import functools
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -178,8 +177,8 @@ def storage():
     return storage
 
 
-def test_journal_client_origin_from_journal():
-    search_mock = MagicMock()
+def test_journal_client_origin_from_journal(mocker):
+    search_mock = mocker.MagicMock()
 
     worker_fn = functools.partial(
         process_journal_objects,
@@ -217,8 +216,8 @@ def test_journal_client_origin_from_journal():
     )
 
 
-def test_journal_client_origin_visit_status_from_journal(storage):
-    search_mock = MagicMock()
+def test_journal_client_origin_visit_status_from_journal(storage, mocker):
+    search_mock = mocker.MagicMock()
 
     worker_fn = functools.partial(
         process_journal_objects, search=search_mock, storage=storage
@@ -279,8 +278,8 @@ def test_journal_client_origin_visit_status_from_journal(storage):
 @pytest.mark.parametrize(
     "key", ["origin_intrinsic_metadata", "origin_extrinsic_metadata"]
 )
-def test_journal_client_origin_metadata_from_journal(key):
-    search_mock = MagicMock()
+def test_journal_client_origin_metadata_from_journal(mocker, key):
+    search_mock = mocker.MagicMock()
 
     worker_fn = functools.partial(
         process_journal_objects,

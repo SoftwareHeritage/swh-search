@@ -668,11 +668,6 @@
     }
   },
   {
-    "type": "visitTypeOptions",
-    "named": true,
-    "fields": {}
-  },
-  {
     "type": "visitTypeVal",
     "named": true,
     "fields": {
@@ -681,15 +676,7 @@
         "required": false,
         "types": [
           {
-            "type": "\"",
-            "named": false
-          },
-          {
-            "type": "'",
-            "named": false
-          },
-          {
-            "type": "visitTypeOptions",
+            "type": "string",
             "named": true
           }
         ]
@@ -733,22 +720,6 @@
     "named": true
   },
   {
-    "type": "any",
-    "named": false
-  },
-  {
-    "type": "arch",
-    "named": false
-  },
-  {
-    "type": "archive",
-    "named": false
-  },
-  {
-    "type": "aur",
-    "named": false
-  },
-  {
     "type": "booleanFalse",
     "named": true
   },
@@ -761,60 +732,20 @@
     "named": true
   },
   {
-    "type": "bzr",
-    "named": false
-  },
-  {
     "type": "choiceOp",
     "named": true
-  },
-  {
-    "type": "conda",
-    "named": false
   },
   {
     "type": "containOp",
     "named": true
   },
   {
-    "type": "content",
-    "named": false
-  },
-  {
-    "type": "cpan",
-    "named": false
-  },
-  {
-    "type": "cran",
-    "named": false
-  },
-  {
-    "type": "crates",
-    "named": false
-  },
-  {
     "type": "created",
-    "named": false
-  },
-  {
-    "type": "cvs",
     "named": false
   },
   {
     "type": "dateField",
     "named": true
-  },
-  {
-    "type": "deb",
-    "named": false
-  },
-  {
-    "type": "deposit",
-    "named": false
-  },
-  {
-    "type": "directory",
-    "named": false
   },
   {
     "type": "equalOp",
@@ -823,26 +754,6 @@
   {
     "type": "escape_sequence",
     "named": true
-  },
-  {
-    "type": "ftp",
-    "named": false
-  },
-  {
-    "type": "git",
-    "named": false
-  },
-  {
-    "type": "golang",
-    "named": false
-  },
-  {
-    "type": "hackage",
-    "named": false
-  },
-  {
-    "type": "hg",
-    "named": false
   },
   {
     "type": "isoDateTime",
@@ -873,19 +784,7 @@
     "named": true
   },
   {
-    "type": "maven",
-    "named": false
-  },
-  {
     "type": "modified",
-    "named": false
-  },
-  {
-    "type": "nixguix",
-    "named": false
-  },
-  {
-    "type": "npm",
     "named": false
   },
   {
@@ -897,10 +796,6 @@
     "named": true
   },
   {
-    "type": "opam",
-    "named": false
-  },
-  {
     "type": "or",
     "named": true
   },
@@ -909,32 +804,12 @@
     "named": true
   },
   {
-    "type": "pubdev",
-    "named": false
-  },
-  {
     "type": "published",
-    "named": false
-  },
-  {
-    "type": "puppet",
-    "named": false
-  },
-  {
-    "type": "pypi",
     "named": false
   },
   {
     "type": "rangeOp",
     "named": true
-  },
-  {
-    "type": "rpm",
-    "named": false
-  },
-  {
-    "type": "rubygems",
-    "named": false
   },
   {
     "type": "singleWord",
@@ -943,14 +818,6 @@
   {
     "type": "sortByField",
     "named": true
-  },
-  {
-    "type": "svn",
-    "named": false
-  },
-  {
-    "type": "tar",
-    "named": false
   },
   {
     "type": "visitTypeField",

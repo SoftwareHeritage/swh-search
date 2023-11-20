@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (C) 2015-2022  The Software Heritage developers
+# Copyright (C) 2015-2023  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -10,17 +10,15 @@ import os
 import shutil
 import subprocess
 
-from setuptools import find_packages, setup
+from setuptools import Command, find_packages, setup
+from setuptools.command.build_py import build_py
 from setuptools.command.develop import develop
 from setuptools.command.sdist import sdist
-
-from distutils.cmd import Command  # isort: skip
-from distutils.command.build import build  # isort: skip
 
 here = os.path.abspath(os.path.dirname(__file__))
 
 # Get the long description from the README file
-with open(os.path.join(here, "README.md"), encoding="utf-8") as f:
+with open(os.path.join(here, "README.rst"), encoding="utf-8") as f:
     long_description = f.read()
 
 
@@ -117,12 +115,16 @@ class TSBuildCommand(TSCommand):
         self.run_command("ts_build_so")
 
 
-class custom_build(build):
+class custom_build(build_py):
     def run(self):
         super().run()
-
         if not self.dry_run:
-            self.run_command("ts_build")
+            if getattr(self, "editable_mode", False):
+                # setuptools >= 64
+                self.run_command("ts_install")
+                generate_parser("swh/search/query_language")
+            else:
+                self.run_command("ts_build")
 
 
 class custom_sdist(sdist):
@@ -166,7 +168,7 @@ setup(
     name="swh.search",
     description="Software Heritage search service",
     long_description=long_description,
-    long_description_content_type="text/markdown",
+    long_description_content_type="text/x-rst",
     python_requires=">=3.7",
     author="Software Heritage developers",
     author_email="swh-devel@inria.fr",
@@ -196,7 +198,7 @@ setup(
         "Documentation": "https://docs.softwareheritage.org/devel/swh-search/",
     },
     cmdclass={
-        "build": custom_build,
+        "build_py": custom_build,
         "sdist": custom_sdist,
         "develop": custom_develop,
         "ts_install": TSInstallCommand,

@@ -13,7 +13,7 @@ Some of the examples are :
     * ``(origin : debian or visit_type = ["deb"]) and license in ["GPL-3"]``
 
 
-.. this one is currently disabled, because it is too expansive to add
+.. this one is currently disabled because it is too expensive to add
    the 'last_revision' in swh-search:
 
     * ``last_revision > 2020-01-01 and limit = 10``
@@ -29,7 +29,7 @@ Some of the examples are :
     * Precedence can be overridden using parentheses: ``(`` and ``)``. For example, you can override the default precedence in the previous query as: ``(foo or bar) and baz``
     * To actually search for ``and`` or ``or`` as strings, just put them within quotes. Example : ``metadata : "vcs history and metadata"``, or even just ``metadata : "and"`` to search for the string ``and`` in the metadata
 
-The filters have been classified based on the type of value that they expects.
+The filters have been classified based on the type of value that they expect.
 
 
 Pattern filters

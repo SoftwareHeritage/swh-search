@@ -1,8 +1,22 @@
-swh-search (0.16.4-1~swh1~bpo10+1) buster-swh; urgency=medium
+swh-search (0.16.6-1~swh1) unstable-swh; urgency=medium
 
-  * Rebuild for buster-swh
+  * New upstream release 0.16.6     - (tagged by David Douard
+    <david.douard@sdfa3.org> on 2023-11-20 14:57:00 +0100)
+  * Upstream changes:     - v0.16.6     - migrate tests to pytest     -
+    remove hardcoded list of origin types in the search query language
+    - normalize the README file
 
- -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Mon, 10 Oct 2022 11:21:21 +0000
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Mon, 20 Nov 2023 14:38:08 +0000
+
+swh-search (0.16.5-1~swh1) unstable-swh; urgency=medium
+
+  * New upstream release 0.16.5     - (tagged by David Douard
+    <david.douard@sdfa3.org> on 2023-09-28 12:49:22 +0200)
+  * Upstream changes:     - v0.16.5     - fix support for flask >= 2.3
+    - fix editable install with setuptools >= 64     - fix doc related
+    issues
+
+ -- Software Heritage autobuilder (on jenkins-debian1) <jenkins@jenkins-debian1.internal.softwareheritage.org>  Thu, 28 Sep 2023 10:54:29 +0000
 
 swh-search (0.16.4-1~swh1) unstable-swh; urgency=medium
 
