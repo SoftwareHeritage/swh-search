@@ -741,52 +741,8 @@
                   "type": "FIELD",
                   "name": "array_member",
                   "content": {
-                    "type": "CHOICE",
-                    "members": [
-                      {
-                        "type": "CHOICE",
-                        "members": [
-                          {
-                            "type": "SEQ",
-                            "members": [
-                              {
-                                "type": "STRING",
-                                "value": "'"
-                              },
-                              {
-                                "type": "SYMBOL",
-                                "name": "visitTypeOptions"
-                              },
-                              {
-                                "type": "STRING",
-                                "value": "'"
-                              }
-                            ]
-                          },
-                          {
-                            "type": "SEQ",
-                            "members": [
-                              {
-                                "type": "STRING",
-                                "value": "\""
-                              },
-                              {
-                                "type": "SYMBOL",
-                                "name": "visitTypeOptions"
-                              },
-                              {
-                                "type": "STRING",
-                                "value": "\""
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "type": "SYMBOL",
-                        "name": "visitTypeOptions"
-                      }
-                    ]
+                    "type": "SYMBOL",
+                    "name": "string"
                   }
                 },
                 {
@@ -805,52 +761,8 @@
                             "type": "FIELD",
                             "name": "array_member",
                             "content": {
-                              "type": "CHOICE",
-                              "members": [
-                                {
-                                  "type": "CHOICE",
-                                  "members": [
-                                    {
-                                      "type": "SEQ",
-                                      "members": [
-                                        {
-                                          "type": "STRING",
-                                          "value": "'"
-                                        },
-                                        {
-                                          "type": "SYMBOL",
-                                          "name": "visitTypeOptions"
-                                        },
-                                        {
-                                          "type": "STRING",
-                                          "value": "'"
-                                        }
-                                      ]
-                                    },
-                                    {
-                                      "type": "SEQ",
-                                      "members": [
-                                        {
-                                          "type": "STRING",
-                                          "value": "\""
-                                        },
-                                        {
-                                          "type": "SYMBOL",
-                                          "name": "visitTypeOptions"
-                                        },
-                                        {
-                                          "type": "STRING",
-                                          "value": "\""
-                                        }
-                                      ]
-                                    }
-                                  ]
-                                },
-                                {
-                                  "type": "SYMBOL",
-                                  "name": "visitTypeOptions"
-                                }
-                              ]
+                              "type": "SYMBOL",
+                              "name": "string"
                             }
                           },
                           {
@@ -871,131 +783,6 @@
         {
           "type": "STRING",
           "value": "]"
-        }
-      ]
-    },
-    "visitTypeOptions": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "STRING",
-          "value": "any"
-        },
-        {
-          "type": "STRING",
-          "value": "arch"
-        },
-        {
-          "type": "STRING",
-          "value": "archive"
-        },
-        {
-          "type": "STRING",
-          "value": "aur"
-        },
-        {
-          "type": "STRING",
-          "value": "bzr"
-        },
-        {
-          "type": "STRING",
-          "value": "conda"
-        },
-        {
-          "type": "STRING",
-          "value": "content"
-        },
-        {
-          "type": "STRING",
-          "value": "cpan"
-        },
-        {
-          "type": "STRING",
-          "value": "cran"
-        },
-        {
-          "type": "STRING",
-          "value": "crates"
-        },
-        {
-          "type": "STRING",
-          "value": "cvs"
-        },
-        {
-          "type": "STRING",
-          "value": "deb"
-        },
-        {
-          "type": "STRING",
-          "value": "deposit"
-        },
-        {
-          "type": "STRING",
-          "value": "directory"
-        },
-        {
-          "type": "STRING",
-          "value": "ftp"
-        },
-        {
-          "type": "STRING",
-          "value": "hackage"
-        },
-        {
-          "type": "STRING",
-          "value": "hg"
-        },
-        {
-          "type": "STRING",
-          "value": "git"
-        },
-        {
-          "type": "STRING",
-          "value": "golang"
-        },
-        {
-          "type": "STRING",
-          "value": "maven"
-        },
-        {
-          "type": "STRING",
-          "value": "nixguix"
-        },
-        {
-          "type": "STRING",
-          "value": "npm"
-        },
-        {
-          "type": "STRING",
-          "value": "opam"
-        },
-        {
-          "type": "STRING",
-          "value": "pubdev"
-        },
-        {
-          "type": "STRING",
-          "value": "puppet"
-        },
-        {
-          "type": "STRING",
-          "value": "pypi"
-        },
-        {
-          "type": "STRING",
-          "value": "rpm"
-        },
-        {
-          "type": "STRING",
-          "value": "rubygems"
-        },
-        {
-          "type": "STRING",
-          "value": "svn"
-        },
-        {
-          "type": "STRING",
-          "value": "tar"
         }
       ]
     },
