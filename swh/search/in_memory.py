@@ -459,7 +459,6 @@ class InMemorySearch:
                 hits,
             )
         if keywords:
-
             if sort_by:
                 sort_by.append("-score")
             else:

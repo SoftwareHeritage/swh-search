@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 
 
 class Translator:
-
     RANGE_OPERATOR_MAP = {
         ">": "gt",
         "<": "lt",
@@ -125,7 +124,6 @@ class Translator:
         return unescape(value)
 
     def _parse_filter(self, filter):
-
         if filter.type == "boundedListFilter":
             filter = filter.children[0]
 
@@ -256,7 +254,6 @@ class Translator:
                 }
 
         if category == "dateFilter":
-
             if name in ["created", "modified", "published"]:
                 if op in ["=", "!="]:
                     return {
