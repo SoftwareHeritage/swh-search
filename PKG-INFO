@@ -1,14 +1,13 @@
 Metadata-Version: 2.1
 Name: swh.search
-Version: 0.16.6
+Version: 0.17.0
 Summary: Software Heritage search service
-Home-page: https://forge.softwareheritage.org/diffusion/DSEA
-Author: Software Heritage developers
-Author-email: swh-devel@inria.fr
-Project-URL: Bug Reports, https://forge.softwareheritage.org/maniphest
+Author-email: Software Heritage developers <swh-devel@inria.fr>
+Project-URL: Homepage, https://gitlab.softwareheritage.org/swh/devel/swh-search
+Project-URL: Bug Reports, https://gitlab.softwareheritage.org/swh/devel/swh-search/-/issues
 Project-URL: Funding, https://www.softwareheritage.org/donate
-Project-URL: Source, https://forge.softwareheritage.org/source/swh-search
 Project-URL: Documentation, https://docs.softwareheritage.org/devel/swh-search/
+Project-URL: Source, https://gitlab.softwareheritage.org/swh/devel/swh-search.git
 Classifier: Programming Language :: Python :: 3
 Classifier: Intended Audience :: Developers
 Classifier: License :: OSI Approved :: GNU General Public License v3 (GPLv3)
@@ -28,6 +27,15 @@ Requires-Dist: swh.indexer
 Requires-Dist: swh.journal>=0.1.0
 Requires-Dist: swh.model
 Provides-Extra: testing
+Requires-Dist: click; extra == "testing"
+Requires-Dist: elasticsearch<8.0.0,>=7.0.0; extra == "testing"
+Requires-Dist: typing-extensions; extra == "testing"
+Requires-Dist: tree_sitter; extra == "testing"
+Requires-Dist: iso8601; extra == "testing"
+Requires-Dist: swh.core[http]>=0.3.0; extra == "testing"
+Requires-Dist: swh.indexer; extra == "testing"
+Requires-Dist: swh.journal>=0.1.0; extra == "testing"
+Requires-Dist: swh.model; extra == "testing"
 Requires-Dist: confluent-kafka; extra == "testing"
 Requires-Dist: pytest; extra == "testing"
 Requires-Dist: pytest-mock; extra == "testing"

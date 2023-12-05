@@ -9,6 +9,15 @@ swh.journal>=0.1.0
 swh.model
 
 [testing]
+click
+elasticsearch<8.0.0,>=7.0.0
+typing-extensions
+tree_sitter
+iso8601
+swh.core[http]>=0.3.0
+swh.indexer
+swh.journal>=0.1.0
+swh.model
 confluent-kafka
 pytest
 pytest-mock

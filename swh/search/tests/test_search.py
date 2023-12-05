@@ -422,7 +422,6 @@ class CommonSearchTest:
         )
 
     def test_origin_instrinsic_metadata_dates_filter_sorting_search(self):
-
         DATE_0 = "1999-06-28"
         DATE_1 = "2001-02-13"
         DATE_2 = "2005-10-02"
@@ -490,7 +489,6 @@ class CommonSearchTest:
         )
 
     def test_origin_instrinsic_metadata_dates_processing(self):
-
         DATE_0 = "foo"  # will be discarded
         DATE_1 = "2001-2-13"  # will be formatted to 2001-02-13
         DATE_2 = "2005-10-2"  # will be formatted to 2005-10-02
@@ -601,7 +599,6 @@ class CommonSearchTest:
         _check_results(["web", "applications"], [2, 0, 1])
 
     def test_origin_sort_by_search(self):
-
         now = datetime.now(tz=timezone.utc).isoformat()
         now_minus_5_hours = (
             datetime.now(tz=timezone.utc) - timedelta(hours=5)

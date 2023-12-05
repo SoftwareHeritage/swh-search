@@ -1,2 +1,2 @@
 [swh.cli.subcommands]
-search = swh.search.cli
+swh.search = swh.search.cli
