@@ -52,7 +52,6 @@ class CommonElasticsearchSearchTest(CommonSearchTest):
     (ES backend via HTTP test)"""
 
     def test_sort_by_and_limit_query(self):
-
         self.search.origin_update(ORIGINS)
         self.search.flush()
 

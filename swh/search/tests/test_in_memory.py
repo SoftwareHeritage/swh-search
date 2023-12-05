@@ -30,7 +30,6 @@ class TestInmemorySearch(CommonInmemorySearchTest):
 
 
 def test_nested_get_helper_function():
-
     instrinsic_metadata = codemeta.expand(
         {
             "@context": "https://doi.org/10.5063/schema/codemeta-2.0",

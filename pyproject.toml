@@ -1,3 +1,50 @@
+[project]
+name = "swh.search"
+authors = [
+    {name="Software Heritage developers", email="swh-devel@inria.fr"},
+]
+
+description = "Software Heritage search service"
+readme = {file = "README.rst", content-type = "text/x-rst"}
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+    "Development Status :: 3 - Alpha",
+]
+dynamic = ["version", "dependencies", "optional-dependencies"]
+
+[tool.setuptools]
+zip-safe = false
+
+[tool.setuptools.packages.find]
+include = ["swh.*"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt", "requirements-swh.txt"]}
+
+[tool.setuptools.dynamic.optional-dependencies]
+testing = {file = ["requirements.txt", "requirements-swh.txt", "requirements-test.txt"]}
+
+[project.entry-points."swh.cli.subcommands"]
+"swh.search" = "swh.search.cli"
+
+[project.urls]
+"Homepage" = "https://gitlab.softwareheritage.org/swh/devel/swh-search"
+"Bug Reports" = "https://gitlab.softwareheritage.org/swh/devel/swh-search/-/issues"
+"Funding" = "https://www.softwareheritage.org/donate"
+"Documentation" = "https://docs.softwareheritage.org/devel/swh-search/"
+"Source" = "https://gitlab.softwareheritage.org/swh/devel/swh-search.git"
+
+[build-system]
+requires = ["setuptools", "setuptools-scm", "wheel", "tree_sitter"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+fallback_version = "0.0.1"
+
 [tool.black]
 target-version = ['py37']
 
@@ -9,6 +56,4 @@ use_parentheses = true
 ensure_newline_before_comments = true
 line_length = 88
 force_sort_within_sections = true
-
-[build-system]
-requires = ["setuptools", "wheel", "tree_sitter"]
+known_first_party = ['swh']
