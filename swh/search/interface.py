@@ -81,7 +81,7 @@ class SearchInterface(Protocol):
         sort_by: Optional[List[str]] = None,
         page_token: Optional[str] = None,
         limit: int = 50,
-    ) -> PagedResult[MinimalOriginDict]:
+    ) -> PagedResult[OriginDict]:
         """Searches for origins matching the `url_pattern`.
 
         Args:

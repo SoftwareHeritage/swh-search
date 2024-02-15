@@ -55,7 +55,7 @@ def invoke(catch_exceptions, args, config="", *, elasticsearch_host):
     return result
 
 
-def test__journal_client__origin(
+def test_journal_client_origin(
     swh_search, elasticsearch_host: str, kafka_prefix: str, kafka_server
 ):
     """Tests the re-indexing when origin_batch_size*task_batch_size is a
@@ -69,6 +69,8 @@ def test__journal_client__origin(
     )
     origin_foobar_baz = {
         "url": "http://foobar.baz",
+        "visit_types": [],
+        "has_visits": False,
     }
     value = value_to_kafka(origin_foobar_baz)
     topic = f"{kafka_prefix}.origin"
@@ -114,11 +116,15 @@ def test__journal_client__origin(
     assert actual_page.results == []
 
 
-def test__journal_client__origin_visit_status(
+def test_journal_client_origin_visit_status(
     swh_search, elasticsearch_host, kafka_prefix: str, kafka_server
 ):
     """Subscribing to origin-visit-status should result in swh-search indexation"""
-    origin_foobar = {"url": "http://baz.foobar"}
+    origin_foobar = {
+        "url": "http://baz.foobar",
+        "visit_types": ["git"],
+        "has_visits": True,
+    }
     producer = Producer(
         {
             "bootstrap.servers": kafka_server,
@@ -177,7 +183,7 @@ def test__journal_client__origin_visit_status(
 
 
 @pytest.mark.parametrize("metadata_source", ["intrinsic", "extrinsic"])
-def test__journal_client__origin_metadata(
+def test_journal_client_origin_metadata(
     swh_search,
     elasticsearch_host,
     kafka_prefix: str,
@@ -185,7 +191,11 @@ def test__journal_client__origin_metadata(
     metadata_source: Literal["intrinsic", "extrinsic"],
 ):
     """Subscribing to origin-intrinsic-metadata should result in swh-search indexation"""
-    origin_foobar = {"url": "https://github.com/clojure/clojure"}
+    origin_foobar = {
+        "url": "https://github.com/clojure/clojure",
+        "visit_types": [],
+        "has_visits": False,
+    }
 
     origin_metadata = {
         "id": origin_foobar["url"],
@@ -269,7 +279,7 @@ def test__journal_client__origin_metadata(
     assert actual_page.results == []
 
 
-def test__journal_client__missing_main_journal_config_key(elasticsearch_host):
+def test_journal_client_missing_main_journal_config_key(elasticsearch_host):
     """Missing configuration on journal should raise"""
     with pytest.raises(KeyError, match="journal"):
         invoke(
@@ -285,7 +295,7 @@ def test__journal_client__missing_main_journal_config_key(elasticsearch_host):
         )
 
 
-def test__journal_client__missing_journal_config_keys(elasticsearch_host):
+def test_journal_client_missing_journal_config_keys(elasticsearch_host):
     """Missing configuration on mandatory journal keys should raise"""
     kafka_prefix = "swh.journal.objects"
     journal_objects_config = JOURNAL_OBJECTS_CONFIG_TEMPLATE.format(
@@ -318,7 +328,7 @@ def test__journal_client__missing_journal_config_keys(elasticsearch_host):
             )
 
 
-def test__journal_client__missing_prefix_config_key(
+def test_journal_client_missing_prefix_config_key(
     swh_search, elasticsearch_host, kafka_server
 ):
     """Missing configuration on mandatory prefix key should raise"""
@@ -351,7 +361,7 @@ journal:
         )
 
 
-def test__journal_client__missing_object_types_config_key(
+def test_journal_client_missing_object_types_config_key(
     swh_search, elasticsearch_host, kafka_server
 ):
     """Missing configuration on mandatory object-types key should raise"""
@@ -378,7 +388,7 @@ journal:
         )
 
 
-def test__initialize__with_index_name(elasticsearch_host):
+def test_initialize_with_index_name(elasticsearch_host):
     """Initializing the index with an index name should create the right index"""
 
     search = get_search(
@@ -392,7 +402,7 @@ def test__initialize__with_index_name(elasticsearch_host):
     assert search._get_origin_write_alias() == "origin-write"
 
 
-def test__initialize__with_read_alias(elasticsearch_host):
+def test_initialize_with_read_alias(elasticsearch_host):
     """Initializing the index with a search alias name should create
     the right search alias"""
 
@@ -407,7 +417,7 @@ def test__initialize__with_read_alias(elasticsearch_host):
     assert search._get_origin_write_alias() == "origin-write"
 
 
-def test__initialize__with_write_alias(elasticsearch_host):
+def test_initialize_with_write_alias(elasticsearch_host):
     """Initializing the index with an indexing alias name should create
     the right indexing alias"""
 

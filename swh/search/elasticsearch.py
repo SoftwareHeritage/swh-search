@@ -16,12 +16,7 @@ import msgpack
 from swh.indexer import codemeta
 from swh.model import model
 from swh.model.hashutil import hash_to_hex
-from swh.search.interface import (
-    SORT_BY_OPTIONS,
-    MinimalOriginDict,
-    OriginDict,
-    PagedResult,
-)
+from swh.search.interface import SORT_BY_OPTIONS, OriginDict, PagedResult
 from swh.search.metrics import send_metric, timed
 from swh.search.translator import Translator
 from swh.search.utils import escape, get_expansion, parse_and_format_date
@@ -421,7 +416,7 @@ class ElasticSearch:
         sort_by: Optional[List[str]] = None,
         page_token: Optional[str] = None,
         limit: int = 50,
-    ) -> PagedResult[MinimalOriginDict]:
+    ) -> PagedResult[OriginDict]:
         query_clauses: List[Dict[str, Any]] = []
 
         query_filters = []
@@ -582,7 +577,17 @@ class ElasticSearch:
         assert len(hits) <= limit
 
         return PagedResult(
-            results=[{"url": hit["_source"]["url"]} for hit in hits],
+            results=[
+                {
+                    field: hit["_source"].get(field, default)
+                    for field, default in [
+                        ("url", ""),
+                        ("visit_types", []),
+                        ("has_visits", False),
+                    ]
+                }
+                for hit in hits
+            ],
             next_page_token=next_page_token,
         )
 

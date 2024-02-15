@@ -15,9 +15,21 @@ from swh.core.api.classes import stream_results
 
 class CommonSearchTest:
     def test_origin_url_unique_word_prefix(self):
-        origin_foobar_baz = {"url": "http://foobar.baz"}
-        origin_barbaz_qux = {"url": "http://barbaz.qux"}
-        origin_qux_quux = {"url": "http://qux.quux"}
+        origin_foobar_baz = {
+            "url": "http://foobar.baz",
+            "visit_types": [],
+            "has_visits": False,
+        }
+        origin_barbaz_qux = {
+            "url": "http://barbaz.qux",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
+        origin_qux_quux = {
+            "url": "http://qux.quux",
+            "visit_types": ["git", "git-checkout"],
+            "has_visits": True,
+        }
         origins = [origin_foobar_baz, origin_barbaz_qux, origin_qux_quux]
 
         self.search.origin_update(origins)
@@ -63,8 +75,16 @@ class CommonSearchTest:
         assert sorted(results) == sorted(expected_results)
 
     def test_origin_url_all_terms(self):
-        origin_foo_bar_baz = {"url": "http://foo.bar/baz"}
-        origin_foo_bar_foo_bar = {"url": "http://foo.bar/foo.bar"}
+        origin_foo_bar_baz = {
+            "url": "http://foo.bar/baz",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
+        origin_foo_bar_foo_bar = {
+            "url": "http://foo.bar/foo.bar",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
         origins = [origin_foo_bar_baz, origin_foo_bar_foo_bar]
 
         self.search.origin_update(origins)
@@ -76,7 +96,11 @@ class CommonSearchTest:
         assert actual_page.results == [origin_foo_bar_baz]
 
     def test_origin_with_visit(self):
-        origin_foobar_baz = {"url": "http://foobar/baz"}
+        origin_foobar_baz = {
+            "url": "http://foobar/baz",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
 
         self.search.origin_update(
             [{**o, "has_visits": True} for o in [origin_foobar_baz]]
@@ -88,7 +112,11 @@ class CommonSearchTest:
         assert actual_page.results == [origin_foobar_baz]
 
     def test_origin_with_visit_added(self):
-        origin_foobar_baz = {"url": "http://foobar.baz"}
+        origin_foobar_baz = {
+            "url": "http://foobar.baz",
+            "visit_types": ["git"],
+            "has_visits": False,
+        }
 
         self.search.origin_update([origin_foobar_baz])
         self.search.flush()
@@ -97,9 +125,9 @@ class CommonSearchTest:
         assert actual_page.next_page_token is None
         assert actual_page.results == []
 
-        self.search.origin_update(
-            [{**o, "has_visits": True} for o in [origin_foobar_baz]]
-        )
+        origin_foobar_baz["has_visits"] = True
+
+        self.search.origin_update([origin_foobar_baz])
         self.search.flush()
 
         actual_page = self.search.origin_search(url_pattern="foobar", with_visit=True)
@@ -783,9 +811,21 @@ class CommonSearchTest:
         assert results == expected_results
 
     def test_origin_jsonld_description(self):
-        origin1_nothin = {"url": "http://origin1"}
-        origin2_foobar = {"url": "http://origin2"}
-        origin3_barbaz = {"url": "http://origin3"}
+        origin1_nothin = {
+            "url": "http://origin1",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
+        origin2_foobar = {
+            "url": "http://origin2",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
+        origin3_barbaz = {
+            "url": "http://origin3",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
 
         self.search.origin_update(
             [
@@ -824,8 +864,16 @@ class CommonSearchTest:
         assert actual_page.results == [origin3_barbaz]
 
     def test_origin_jsonld_all_terms(self):
-        origin1_foobarfoobar = {"url": "http://origin1"}
-        origin3_foobarbaz = {"url": "http://origin2"}
+        origin1_foobarfoobar = {
+            "url": "http://origin1",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
+        origin3_foobarbaz = {
+            "url": "http://origin2",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
 
         self.search.origin_update(
             [
@@ -857,7 +905,11 @@ class CommonSearchTest:
 
         Document contains at least one immense term in field="jsonld.http://schema.org/description.@value" (whose UTF8 encoding is longer than the max length 32766), all of which were skipped.
         """  # noqa
-        origin1 = {"url": "http://origin1"}
+        origin1 = {
+            "url": "http://origin1",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
 
         self.search.origin_update(
             [
@@ -879,7 +931,11 @@ class CommonSearchTest:
     def test_origin_jsonld_matches_cross_fields(self):
         """Checks the backend finds results even if the two words in the query are
         each in a different field."""
-        origin1 = {"url": "http://origin1"}
+        origin1 = {
+            "url": "http://origin1",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
 
         self.search.origin_update(
             [
@@ -900,9 +956,21 @@ class CommonSearchTest:
         assert actual_page.results == [origin1]
 
     def test_origin_jsonld_nested(self):
-        origin1_nothin = {"url": "http://origin1"}
-        origin2_foobar = {"url": "http://origin2"}
-        origin3_barbaz = {"url": "http://origin3"}
+        origin1_nothin = {
+            "url": "http://origin1",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
+        origin2_foobar = {
+            "url": "http://origin2",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
+        origin3_barbaz = {
+            "url": "http://origin3",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
 
         self.search.origin_update(
             [
@@ -943,9 +1011,21 @@ class CommonSearchTest:
     def test_origin_jsonld_inconsistent_type(self):
         """Checks the same field can have a concrete value, an object, or an array
         in different documents."""
-        origin1_foobar = {"url": "http://origin1"}
-        origin2_barbaz = {"url": "http://origin2"}
-        origin3_bazqux = {"url": "http://origin3"}
+        origin1_foobar = {
+            "url": "http://origin1",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
+        origin2_barbaz = {
+            "url": "http://origin2",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
+        origin3_bazqux = {
+            "url": "http://origin3",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
 
         self.search.origin_update(
             [
@@ -1017,8 +1097,16 @@ class CommonSearchTest:
         require every document uses a date in that field; or that search queries
         use a date either.
         Likewise for numeric and boolean fields."""
-        origin1 = {"url": "http://origin1"}
-        origin2 = {"url": "http://origin2"}
+        origin1 = {
+            "url": "http://origin1",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
+        origin2 = {
+            "url": "http://origin2",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
 
         self.search.origin_update(
             [
@@ -1073,7 +1161,11 @@ class CommonSearchTest:
         assert actual_page.results == [origin2]
 
     def test_origin_jsonld_update(self):
-        origin = {"url": "http://origin1"}
+        origin = {
+            "url": "http://origin1",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
         origin_data = {
             **origin,
             "jsonld": {
@@ -1104,9 +1196,21 @@ class CommonSearchTest:
 
     @pytest.mark.parametrize("limit", list(range(1, 5)))
     def test_origin_url_paging(self, limit):
-        origin1_foo = {"url": "http://origin1/foo"}
-        origin2_foobar = {"url": "http://origin2/foo/bar"}
-        origin3_foobarbaz = {"url": "http://origin3/foo/bar/baz"}
+        origin1_foo = {
+            "url": "http://origin1/foo",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
+        origin2_foobar = {
+            "url": "http://origin2/foo/bar",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
+        origin3_foobarbaz = {
+            "url": "http://origin3/foo/bar/baz",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
 
         self.reset()
         self.search.origin_update([origin1_foo, origin2_foobar, origin3_foobarbaz])
@@ -1137,9 +1241,21 @@ class CommonSearchTest:
 
     @pytest.mark.parametrize("limit", list(range(1, 5)))
     def test_origin_jsonld_paging(self, limit):
-        origin1_foo = {"url": "http://origin1"}
-        origin2_foobar = {"url": "http://origin2"}
-        origin3_foobarbaz = {"url": "http://origin3"}
+        origin1_foo = {
+            "url": "http://origin1",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
+        origin2_foobar = {
+            "url": "http://origin2",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
+        origin3_foobarbaz = {
+            "url": "http://origin3",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
 
         self.reset()
         self.search.origin_update(
@@ -1185,8 +1301,17 @@ class CommonSearchTest:
         assert list(results) == [origin1_foo, origin2_foobar, origin3_foobarbaz]
 
     def test_search_blocklisted_results(self):
-        origin1 = {"url": "http://origin1"}
-        origin2 = {"url": "http://origin2", "blocklisted": True}
+        origin1 = {
+            "url": "http://origin1",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
+        origin2 = {
+            "url": "http://origin2",
+            "visit_types": ["git"],
+            "has_visits": True,
+            "blocklisted": True,
+        }
 
         self.search.origin_update([origin1, origin2])
         self.search.flush()
@@ -1196,7 +1321,11 @@ class CommonSearchTest:
         assert actual_page.results == [origin1]
 
     def test_search_blocklisted_update(self):
-        origin1 = {"url": "http://origin1"}
+        origin1 = {
+            "url": "http://origin1",
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
         self.search.origin_update([origin1])
         self.search.flush()
 
@@ -1223,6 +1352,8 @@ class CommonSearchTest:
     def test_search_filter_keyword_in_filter(self):
         origin1 = {
             "url": "foo language in ['foo baz'] bar",
+            "visit_types": ["git"],
+            "has_visits": True,
         }
         self.search.origin_update([origin1])
         self.search.flush()

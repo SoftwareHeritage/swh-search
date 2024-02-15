@@ -12,12 +12,7 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional
 from swh.indexer import codemeta
 from swh.model import model
 from swh.model.hashutil import hash_to_hex
-from swh.search.interface import (
-    SORT_BY_OPTIONS,
-    MinimalOriginDict,
-    OriginDict,
-    PagedResult,
-)
+from swh.search.interface import SORT_BY_OPTIONS, OriginDict, PagedResult
 from swh.search.utils import get_expansion, parse_and_format_date
 
 _words_regexp = re.compile(r"\w+")
@@ -307,7 +302,7 @@ class InMemorySearch:
         sort_by: Optional[List[str]] = None,
         page_token: Optional[str] = None,
         limit: int = 50,
-    ) -> PagedResult[MinimalOriginDict]:
+    ) -> PagedResult[OriginDict]:
         hits = self._get_hits()
 
         if url_pattern:
@@ -509,7 +504,11 @@ class InMemorySearch:
         start_at_index = int(page_token) if page_token else 0
 
         origins = [
-            {"url": hit["url"]}
+            {
+                "url": hit.get("url", ""),
+                "visit_types": list(hit.get("visit_types", [])),
+                "has_visits": hit.get("has_visits", False),
+            }
             for hit in hits_list[start_at_index : start_at_index + limit]
         ]
 
