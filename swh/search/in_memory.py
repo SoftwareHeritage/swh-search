@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2022  The Software Heritage developers
+# Copyright (C) 2019-2024  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -176,9 +176,11 @@ class InMemorySearch:
                     self._url_splitter.split(source_document["url"])
                 )
             if "visit_types" in document:
-                document["visit_types"] = set(source_document["visit_types"])
+                document["visit_types"] = source_document["visit_types"]
                 if "visit_types" in self._origins[id_]:
-                    document["visit_types"].update(self._origins[id_]["visit_types"])
+                    document["visit_types"] = list(
+                        set(document["visit_types"] + self._origins[id_]["visit_types"])
+                    )
             if "nb_visits" in document:
                 document["nb_visits"] = max(
                     document["nb_visits"], self._origins[id_].get("nb_visits", 0)
@@ -488,7 +490,7 @@ class InMemorySearch:
         if visit_types is not None:
             visit_types_set = set(visit_types)
             hits = filter(
-                lambda o: visit_types_set.intersection(o.get("visit_types", set())),
+                lambda o: visit_types_set.intersection(set(o.get("visit_types", []))),
                 hits,
             )
 
@@ -505,9 +507,12 @@ class InMemorySearch:
 
         origins = [
             {
-                "url": hit.get("url", ""),
-                "visit_types": list(hit.get("visit_types", [])),
-                "has_visits": hit.get("has_visits", False),
+                field: hit.get(field, default)
+                for field, default in [
+                    ("url", ""),
+                    ("visit_types", []),
+                    ("has_visits", False),
+                ]
             }
             for hit in hits_list[start_at_index : start_at_index + limit]
         ]
