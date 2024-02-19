@@ -1160,6 +1160,55 @@ class CommonSearchTest:
         assert actual_page.next_page_token is None
         assert actual_page.results == [origin2]
 
+    def test_origin_jsonld_rank_forks(self):
+        """Checks forks rank lower than "original" repositories."""
+
+        # mark http://foobar.2.com as a fork of http://foobar.1.com
+        origins = [
+            {
+                "url": "http://foobar.1.com",
+            },
+            {
+                "url": "http://foobar.2.com",
+                "jsonld": {
+                    "https://forgefed.org/ns#forkedFrom": [
+                        {"@id": "http://foobar.1.com"},
+                    ],
+                },
+            },
+            {
+                "url": "http://foobar.3.org",
+                "jsonld": {
+                    # Unrelated JSON-LD fields should have no impact
+                    "http://schema.org/dateCreated": "2001-02-02",
+                },
+            },
+        ]
+        self.search.origin_update(origins)
+        self.search.flush()
+
+        results = [
+            r["url"] for r in self.search.origin_search(url_pattern="foobar").results
+        ]
+        assert set(results[0:2]) == {
+            "http://foobar.1.com",
+            "http://foobar.3.org",
+        }, results
+        assert results[2] == "http://foobar.2.com", results
+
+        # Boost forks instead of penalizing them
+        results = [
+            r["url"]
+            for r in self.search.origin_search(
+                url_pattern="foobar", fork_weight=2.0
+            ).results
+        ]
+        assert results[0] == "http://foobar.2.com", results
+        assert set(results[1:]) == {
+            "http://foobar.1.com",
+            "http://foobar.3.org",
+        }, results
+
     def test_origin_jsonld_update(self):
         origin = {
             "url": "http://origin1",

@@ -413,6 +413,7 @@ class ElasticSearch:
         programming_languages: Optional[List[str]] = None,
         licenses: Optional[List[str]] = None,
         keywords: Optional[List[str]] = None,
+        fork_weight: Optional[float] = 0.5,
         sort_by: Optional[List[str]] = None,
         page_token: Optional[str] = None,
         limit: int = 50,
@@ -534,12 +535,44 @@ class ElasticSearch:
             ]
         )
 
+        score_functions = []
+        if fork_weight is not None:
+            # Apply the weight to all origins advertizing themselves as fork of
+            # something else.
+            score_functions.append(
+                {
+                    "filter": {
+                        "nested": {
+                            "path": "jsonld",
+                            "query": {
+                                "bool": {
+                                    "must": [
+                                        {
+                                            "exists": {
+                                                "field": "jsonld.https://forgefed.org/ns#forkedFrom",  # noqa
+                                            }
+                                        }
+                                    ]
+                                },
+                            },
+                        }
+                    },
+                    "weight": fork_weight,
+                }
+            )
+
         body = {
             "query": {
-                "bool": {
-                    "must": query_clauses,
-                    "must_not": [{"term": {"blocklisted": True}}],
-                }
+                "function_score": {
+                    "query": {
+                        "bool": {
+                            "must": query_clauses,
+                            "must_not": [{"term": {"blocklisted": True}}],
+                        }
+                    },
+                    "functions": score_functions,
+                    "score_mode": "multiply",
+                },
             },
             "sort": sorting_params,
         }

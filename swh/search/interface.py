@@ -78,6 +78,7 @@ class SearchInterface(Protocol):
         programming_languages: Optional[List[str]] = None,
         licenses: Optional[List[str]] = None,
         keywords: Optional[List[str]] = None,
+        fork_weight: Optional[float] = 0.5,
         sort_by: Optional[List[str]] = None,
         page_token: Optional[str] = None,
         limit: int = 50,
@@ -117,6 +118,8 @@ class SearchInterface(Protocol):
                 (based on instrinsic_metadata)
             keywords: Filter origins having description/keywords
                 (extracted from instrinsic_metadata) that match given values
+            fork_weight: Multiplicative factor to apply to all origins known to be forks
+                (<1 penalizes them, >1 boosts them)
             sort_by: Sort results based on a list of fields mentioned in SORT_BY_OPTIONS
                 (nb_visits,last_visit_date, last_eventful_visit_date,
                 last_revision_date, last_release_date).

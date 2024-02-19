@@ -301,10 +301,16 @@ class InMemorySearch:
         programming_languages: Optional[List[str]] = None,
         licenses: Optional[List[str]] = None,
         keywords: Optional[List[str]] = None,
+        fork_weight: Optional[float] = 0.5,
         sort_by: Optional[List[str]] = None,
         page_token: Optional[str] = None,
         limit: int = 50,
     ) -> PagedResult[OriginDict]:
+        if sort_by:
+            sort_by.append("-score")
+        else:
+            sort_by = ["-score"]
+
         hits = self._get_hits()
 
         if url_pattern:
@@ -456,11 +462,6 @@ class InMemorySearch:
                 hits,
             )
         if keywords:
-            if sort_by:
-                sort_by.append("-score")
-            else:
-                sort_by = ["-score"]
-
             from copy import deepcopy
 
             hits_list = deepcopy(list(hits))
@@ -495,6 +496,24 @@ class InMemorySearch:
             )
 
         hits_list = list(hits)
+
+        if fork_weight is not None:
+            hits_list = [
+                {
+                    **hit,
+                    "score": hit.get("score", 1)
+                    * (
+                        fork_weight
+                        if any(
+                            "https://forgefed.org/ns#forkedFrom" in doc
+                            for doc in hit.get("jsonld", [])
+                        )
+                        else 1.0
+                    ),
+                }
+                for hit in hits_list
+            ]
+
         if sort_by:
             sort_by_list = list(sort_by)
             hits_list.sort(
