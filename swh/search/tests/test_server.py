@@ -15,7 +15,8 @@ from swh.search.api import server
 from swh.search.api.server import load_and_check_config, make_app_from_configfile
 
 
-def teardown_function():
+@pytest.fixture(autouse=True)
+def server_config_reset():
     # Ensure there is no configuration loaded from a previous test
     server.api_cfg = None
 
