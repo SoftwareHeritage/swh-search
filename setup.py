@@ -103,10 +103,10 @@ class custom_build(build_py):
     def get_output_mapping(self):
         output_mapping = super().get_output_mapping()
         for fname in (
-            "src/grammar.json",
-            "src/tree_sitter/parser.h",
-            "src/parser.c",
-            "src/node-types.json",
+            "swh/search/query_language/src/grammar.json",
+            "swh/search/query_language/src/tree_sitter/parser.h",
+            "swh/search/query_language/src/parser.c",
+            "swh/search/query_language/src/node-types.json",
         ):
             output_mapping[f"{self.build_lib}/{fname}"] = fname
         return output_mapping
