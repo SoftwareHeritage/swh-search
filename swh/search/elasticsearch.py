@@ -393,6 +393,14 @@ class ElasticSearch:
         else:
             return document["_source"]
 
+    def origin_delete(self, url: str) -> bool:
+        origin_id = hash_to_hex(model.Origin(url=url).id)
+        try:
+            self._backend.delete(index=self._get_origin_read_alias(), id=origin_id)
+        except NotFoundError:
+            return False
+        return True
+
     @timed
     def origin_search(
         self,

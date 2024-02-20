@@ -1503,6 +1503,28 @@ class CommonSearchTest:
         assert self.search.origin_get(origin3["url"]) == expanded_origins[2]
         assert self.search.origin_get("http://origin4") is None
 
+    def test_origin_delete(self):
+        origin1 = {"url": "http://one", "visit_types": ["git"], "has_visits": True}
+        origin2 = {"url": "http://two", "visit_types": ["git"], "has_visits": True}
+        self.search.origin_update([origin1, origin2])
+        self.search.flush()
+
+        assert self.search.origin_get("http://one")["url"] == "http://one"
+        assert len(self.search.origin_search(url_pattern="one", limit=1).results) == 1
+        deleted = self.search.origin_delete("http://one")
+        assert deleted, "origin not found"
+        self.search.flush()
+
+        assert self.search.origin_get("http://one") is None
+        assert len(self.search.origin_search(url_pattern="one", limit=1).results) == 0
+        assert self.search.origin_get("http://two")["url"] == "http://two"
+
+        # Ensure idempotency
+        deleted = self.search.origin_delete("http://one")
+        self.search.flush()
+        assert not deleted, "origin deleted twice‽"
+        assert self.search.origin_get("http://one") is None
+
     def test_visit_types_count(self):
         assert self.search.visit_types_count() == Counter()
 

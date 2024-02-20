@@ -554,6 +554,18 @@ class InMemorySearch:
         else:
             return {k: v for (k, v) in document.items() if k != "_url_tokens"}
 
+    def origin_delete(self, url: str) -> bool:
+        origin_id = hash_to_hex(model.Origin(url=url).id)
+        try:
+            del self._origins[origin_id]
+        except KeyError:
+            return False
+        try:
+            self._origin_ids.remove(origin_id)
+        except ValueError:
+            assert False, "this should not have happened"
+        return True
+
     def visit_types_count(self) -> Counter:
         hits = self._get_hits()
         return Counter(chain(*[hit.get("visit_types", []) for hit in hits]))

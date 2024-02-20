@@ -142,6 +142,15 @@ class SearchInterface(Protocol):
         Order is arbitrary; unknown origins are not returned.
         """
 
+    @remote_api_endpoint("origin/delete")
+    def origin_delete(self, url: str) -> bool:
+        """Remove the documents associated with the given origin URL.
+
+        Returns:
+            True if the document was removed, False if it could not be found.
+        """
+        ...
+
     @remote_api_endpoint("visit_types_count")
     def visit_types_count(self) -> Counter:
         """Returns origin counts per visit type (git, hg, svn, ...)."""
