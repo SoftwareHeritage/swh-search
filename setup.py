@@ -100,6 +100,27 @@ class custom_build(build_py):
             else:
                 self.run_command("ts_build")
 
+    def get_output_mapping(self):
+        output_mapping = super().get_output_mapping()
+        for fname in (
+            "src/grammar.json",
+            "src/tree_sitter/parser.h",
+            "src/parser.c",
+            "src/node-types.json",
+        ):
+            output_mapping[f"{self.build_lib}/{fname}"] = fname
+        return output_mapping
+
+    def get_source_files(self):
+        source_files = super().get_source_files()
+        source_files.extend(
+            [
+                "swh/search/query_language/grammar.js",
+                "swh/search/query_language/token.js",
+            ]
+        )
+        return source_files
+
 
 class custom_sdist(sdist):
     def make_release_tree(self, base_dir, files):
