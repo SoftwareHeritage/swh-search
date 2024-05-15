@@ -39,7 +39,7 @@ testing = {file = ["requirements.txt", "requirements-swh.txt", "requirements-tes
 "Source" = "https://gitlab.softwareheritage.org/swh/devel/swh-search.git"
 
 [build-system]
-requires = ["setuptools", "setuptools-scm", "wheel", "tree_sitter"]
+requires = ["setuptools", "setuptools-scm", "wheel", "tree_sitter<0.22.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
