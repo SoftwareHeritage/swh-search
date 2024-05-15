@@ -7,7 +7,7 @@ import logging
 import sys
 from typing import Dict, Optional
 
-from swh.model.model import TargetType
+from swh.model.model import SnapshotTargetType
 from swh.storage.algos.snapshot import snapshot_get_all_branches
 from swh.storage.interface import StorageInterface
 
@@ -41,9 +41,9 @@ def fetch_last_revision_release_date(
     tip_release_ids = []
 
     for branch in branches:
-        if branch.target_type == TargetType.REVISION:
+        if branch.target_type == SnapshotTargetType.REVISION:
             tip_revision_ids.append(branch.target)
-        elif branch.target_type == TargetType.RELEASE:
+        elif branch.target_type == SnapshotTargetType.RELEASE:
             tip_release_ids.append(branch.target)
 
     revision_datetimes = [

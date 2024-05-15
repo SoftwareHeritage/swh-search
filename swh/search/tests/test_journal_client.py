@@ -17,7 +17,7 @@ from swh.model.model import (
     RevisionType,
     Snapshot,
     SnapshotBranch,
-    TargetType,
+    SnapshotTargetType,
     TimestampWithTimezone,
 )
 from swh.search.journal_client import (
@@ -123,35 +123,35 @@ SNAPSHOTS = [
     Snapshot(
         branches={
             b"target/revision1": SnapshotBranch(
-                target_type=TargetType.REVISION,
+                target_type=SnapshotTargetType.REVISION,
                 target=REVISIONS[0].id,
             ),
             b"target/revision2": SnapshotBranch(
-                target_type=TargetType.REVISION,
+                target_type=SnapshotTargetType.REVISION,
                 target=REVISIONS[1].id,
             ),
             b"target/revision3": SnapshotBranch(
-                target_type=TargetType.REVISION,
+                target_type=SnapshotTargetType.REVISION,
                 target=REVISIONS[2].id,
             ),
             b"target/release1": SnapshotBranch(
-                target_type=TargetType.RELEASE, target=RELEASES[0].id
+                target_type=SnapshotTargetType.RELEASE, target=RELEASES[0].id
             ),
             b"target/release2": SnapshotBranch(
-                target_type=TargetType.RELEASE, target=RELEASES[1].id
+                target_type=SnapshotTargetType.RELEASE, target=RELEASES[1].id
             ),
             b"target/release3": SnapshotBranch(
-                target_type=TargetType.RELEASE, target=RELEASES[2].id
+                target_type=SnapshotTargetType.RELEASE, target=RELEASES[2].id
             ),
             b"target/alias": SnapshotBranch(
-                target_type=TargetType.ALIAS, target=b"target/revision1"
+                target_type=SnapshotTargetType.ALIAS, target=b"target/revision1"
             ),
         },
     ),
     Snapshot(
         branches={
             b"target/revision1": SnapshotBranch(
-                target_type=TargetType.REVISION,
+                target_type=SnapshotTargetType.REVISION,
                 target=REVISIONS[0].id,
             )
         },
@@ -159,7 +159,7 @@ SNAPSHOTS = [
     Snapshot(
         branches={
             b"target/release1": SnapshotBranch(
-                target_type=TargetType.RELEASE, target=RELEASES[0].id
+                target_type=SnapshotTargetType.RELEASE, target=RELEASES[0].id
             )
         },
     ),
