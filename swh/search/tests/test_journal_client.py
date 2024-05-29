@@ -11,6 +11,8 @@ import pytest
 from swh.model.hashutil import hash_to_bytes
 from swh.model.model import (
     ObjectType,
+    Origin,
+    OriginVisit,
     Person,
     Release,
     Revision,
@@ -25,6 +27,8 @@ from swh.search.journal_client import (
     process_journal_objects,
 )
 from swh.storage import get_storage
+
+VISIT_DATE = datetime(2024, 5, 30, 1, 2, 3, tzinfo=timezone(timedelta(hours=2)))
 
 DATES = [
     TimestampWithTimezone.from_datetime(
@@ -166,6 +170,17 @@ SNAPSHOTS = [
     Snapshot(branches={}),
 ]
 
+VISITS = [
+    OriginVisit(
+        # used for the test case in which the visit status message does not
+        # come with the 'type' element
+        origin="http://foobar2.baz",
+        date=VISIT_DATE,
+        type="hg",
+        visit=5,
+    )
+]
+
 
 @pytest.fixture
 def storage():
@@ -174,6 +189,8 @@ def storage():
     storage.revision_add(REVISIONS)
     storage.release_add(RELEASES)
     storage.snapshot_add(SNAPSHOTS)
+    storage.origin_add([Origin(url=visit.origin) for visit in VISITS])
+    storage.origin_visit_add(VISITS)
     return storage
 
 
@@ -273,6 +290,72 @@ def test_journal_client_origin_visit_status_from_journal(storage, mocker):
     search_mock.origin_update.assert_called_once_with(
         [{"url": "http://foobar.baz", "visit_types": ["git"]}]
     )
+    search_mock.reset_mock()
+
+    # test a visit status missing the 'type' item (there are such topic
+    # messages in kafka) but the visit exists in the storage
+    worker_fn(
+        {
+            "origin_visit_status": [
+                {
+                    "origin": "http://foobar2.baz",
+                    "status": "full",
+                    "visit": 5,
+                    "date": current_datetime,
+                    "snapshot": SNAPSHOTS[0].id,
+                }  # full visits ok
+            ]
+        }
+    )
+    search_mock.origin_update.assert_called_once_with(
+        [
+            {
+                "url": "http://foobar2.baz",
+                "visit_types": ["hg"],
+                "has_visits": True,
+                "nb_visits": 5,
+                "snapshot_id": SNAPSHOTS[0].id.hex(),
+                "last_visit_date": current_datetime.isoformat(),
+                "last_eventful_visit_date": current_datetime.isoformat(),
+                "last_revision_date": "2009-02-14T01:31:33+02:00",
+                "last_release_date": "2009-02-14T01:31:34+02:00",
+            },
+        ]
+    )
+    search_mock.reset_mock()
+
+    # test a visit status missing the 'type' item (there are such topic
+    # messages in kafka) but the visit does not exists in the storage
+    worker_fn(
+        {
+            "origin_visit_status": [
+                {
+                    "origin": "http://foobar.baz",
+                    "status": "full",
+                    "visit": 5,
+                    "date": current_datetime,
+                    "snapshot": SNAPSHOTS[0].id,
+                }  # full visits ok
+            ]
+        }
+    )
+    # in this case, the visit_types is empty
+    search_mock.origin_update.assert_called_once_with(
+        [
+            {
+                "url": "http://foobar.baz",
+                "visit_types": [],
+                "has_visits": True,
+                "nb_visits": 5,
+                "snapshot_id": SNAPSHOTS[0].id.hex(),
+                "last_visit_date": current_datetime.isoformat(),
+                "last_eventful_visit_date": current_datetime.isoformat(),
+                "last_revision_date": "2009-02-14T01:31:33+02:00",
+                "last_release_date": "2009-02-14T01:31:34+02:00",
+            },
+        ]
+    )
+    search_mock.reset_mock()
 
 
 @pytest.mark.parametrize(

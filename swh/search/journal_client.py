@@ -101,9 +101,20 @@ def process_origin_visit_statuses(visit_statuses, search, storage):
 
     processed_visit_statuses = []
     for visit_status in visit_statuses:
+        visit_types = []
+        visit_type = visit_status.get("type")
+        if visit_type is None:
+            visit = storage.origin_visit_get_by(
+                origin=visit_status["origin"], visit=visit_status["visit"]
+            )
+            if visit is not None:
+                visit_types.append(visit.type)
+        else:
+            visit_types.append(visit_type)
+
         processed_status = {
             "url": visit_status["origin"],
-            "visit_types": [visit_status["type"]],
+            "visit_types": visit_types,
         }
         if visit_status["status"] == "full":
             processed_status.update(
