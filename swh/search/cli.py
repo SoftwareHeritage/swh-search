@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2020  The Software Heritage developers
+# Copyright (C) 2019-2024  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -22,15 +22,26 @@ from swh.core.cli import swh as swh_cli_group
         exists=True,
         dir_okay=False,
     ),
-    help="Configuration file.",
+    help=(
+        "Configuration file. This has a higher priority than SWH_CONFIG_FILENAME "
+        "environment variable if set."
+    ),
 )
 @click.pass_context
 def search_cli_group(ctx, config_file):
     """Software Heritage Search tools."""
+    from os import environ
+
     from swh.core import config
 
     ctx.ensure_object(dict)
-    conf = config.read(config_file)
+    if config_file:
+        conf = config.read(config_file)
+    elif "SWH_CONFIG_FILENAME" in environ:
+        conf = config.load_from_envvar()
+    else:
+        raise ValueError("No configuration file set.")
+
     ctx.obj["config"] = conf
 
 
