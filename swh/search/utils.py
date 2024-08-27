@@ -83,10 +83,10 @@ def escape(obj):
     ["foo \' bar", "bar \\\\\\\' baz", "foo \" baz"]
 
     """
-    if type(obj) == list:
+    if type(obj) is list:
         items = [escape(item) for item in obj]
         return "[" + ", ".join(items) + "]"
-    elif type(obj) == str:
+    elif type(obj) is str:
         return (
             '"'
             + obj.translate(

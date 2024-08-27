@@ -84,7 +84,7 @@ def _nested_get(nested_dict, nested_keys, default=""):
             return default
 
     res = _nested_get_recursive(nested_dict, nested_keys)
-    if type(res) != list:
+    if type(res) is not list:
         return [res]
 
     return res
