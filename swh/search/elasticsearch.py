@@ -526,13 +526,9 @@ class ElasticSearch:
                     order = "desc"
 
                 if field in ["date_created", "date_modified", "date_published"]:
+                    expansion = get_expansion(field, ".")
                     sorting_params.append(
-                        {
-                            get_expansion(field, "."): {
-                                "nested_path": "jsonld",
-                                "order": order,
-                            }
-                        }
+                        {expansion: {"order": order, "nested": {"path": "jsonld"}}}
                     )
                 elif field in SORT_BY_OPTIONS:
                     sorting_params.append({field: order})
