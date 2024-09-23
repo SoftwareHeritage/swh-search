@@ -113,7 +113,7 @@ def elasticsearch_session(tmpdir_factory):
     # Check ES didn't stop
     assert p.returncode is None, p.returncode
 
-    p.kill()
+    p.terminate()
     p.wait()
 
 
