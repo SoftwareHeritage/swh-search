@@ -318,8 +318,9 @@ class ElasticSearch:
         return self._backend.ping()
 
     def deinitialize(self) -> None:
-        """Removes all indices from the Elasticsearch backend"""
-        self._backend.indices.delete(index="*")
+        """Removes the active index from the Elasticsearch backend"""
+        if self._backend.indices.exists(index=self._get_origin_index()):
+            self._backend.indices.delete(index=self._get_origin_index())
 
     def initialize(self) -> None:
         """Declare Elasticsearch indices, aliases and mappings"""
