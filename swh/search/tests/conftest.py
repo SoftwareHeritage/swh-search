@@ -24,18 +24,6 @@ def free_port():
     return port
 
 
-def wait_for_peer(addr, port):
-    while True:
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.connect((addr, port))
-        except ConnectionRefusedError:
-            time.sleep(0.1)
-        else:
-            sock.close()
-            break
-
-
 CONFIG_TEMPLATE = """
 node.name: node-1
 path.data: {data}
@@ -81,9 +69,21 @@ def _run_elasticsearch(
     host = "127.0.0.1:{}".format(http_port)
 
     with open(logs_dir + "/output.txt", "w") as fd:
-        p = subprocess.Popen(cmd, env={"LIBFFI_TMPDIR": libffi_tmpdir})
+        p = subprocess.Popen(cmd, cwd=es_home, env={"LIBFFI_TMPDIR": libffi_tmpdir})
 
-    wait_for_peer("127.0.0.1", http_port)
+    for _ in range(3000):
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect(("127.0.0.1", http_port))
+        except ConnectionRefusedError:
+            if p.poll() is not None:
+                # process ahs exited
+                break
+            else:
+                time.sleep(0.1)
+        else:
+            sock.close()
+            break
 
     client = elasticsearch.Elasticsearch([host])
     assert client.ping()
