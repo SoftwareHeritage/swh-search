@@ -28,15 +28,19 @@ def free_port():
 
 CONFIG_TEMPLATES = {
     "elasticsearch.yml": """\
+        action.auto_create_index: false
+        action.destructive_requires_name: false
+        cluster.routing.allocation.disk.threshold_enabled: false
+        discovery.type: single-node
+        http.port: {http_port}
+        network.host: 127.0.0.1
         node.name: node-1
         path.data: {data}
         path.logs: {logs}
-        network.host: 127.0.0.1
-        http.port: {http_port}
+        stack.templates.enabled: false
         transport.port: {transport_port}
+        xpack.ml.enabled: false
         xpack.security.enabled: false
-        discovery.type: single-node
-        cluster.routing.allocation.disk.threshold_enabled: false
     """,
     "jvm.options": """\
         -XX:+UseG1GC
