@@ -145,7 +145,7 @@ def _get_sorting_key(origin, field):
 
 class InMemorySearch:
     def __init__(self):
-        pass
+        self.initialize()
 
     def check(self):
         return True
