@@ -1,8 +1,10 @@
 confluent-kafka
+msgpack-types
 pytest >= 8.1
 pytest-mock
 swh.core[testing]
 types-click
+types-confluent-kafka
 types-pytz
 types-pyyaml
 types-requests
