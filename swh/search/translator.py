@@ -1,13 +1,13 @@
-# Copyright (C) 2021-2022  The Software Heritage developers
+# Copyright (C) 2021-2025  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
+from importlib.resources import as_file, files
 import logging
 import os
 import tempfile
 
-from pkg_resources import resource_filename
 from tree_sitter import Language, Parser
 
 from swh.search.exc import SearchQuerySyntaxError
@@ -25,19 +25,24 @@ class Translator:
     }
 
     def __init__(self):
-        ql_path = resource_filename("swh.search", "static/swh_ql.so")
-        if not os.path.exists(ql_path):
-            logging.info("%s does not exist, building in temporary directory", ql_path)
-            self._build_dir = tempfile.TemporaryDirectory(prefix="swh.search-build")
-            source_path = resource_filename("swh.search", "query_language")
-            ql_path = os.path.join(self._build_dir.name, "swh_ql.so")
-            Language.build_library(ql_path, [source_path])
+        ql_file = files("swh.search").joinpath("static/swh_ql.so")
+        with as_file(ql_file) as ql_filepath:
+            ql_path = ql_filepath.as_posix()
+            if not ql_filepath.exists():
+                logging.info(
+                    "%s does not exist, building in temporary directory",
+                    ql_path,
+                )
+                self._build_dir = tempfile.TemporaryDirectory(prefix="swh.search-build")
+                source_path = str(files("swh.search").joinpath("query_language"))
+                ql_path = os.path.join(self._build_dir.name, "swh_ql.so")
+                Language.build_library(ql_path, [source_path])
 
-        search_ql = Language(ql_path, "swh_search_ql")
+            search_ql = Language(ql_path, "swh_search_ql")
 
-        self.parser = Parser()
-        self.parser.set_language(search_ql)
-        self.query = ""
+            self.parser = Parser()
+            self.parser.set_language(search_ql)
+            self.query = ""
 
     def parse_query(self, query):
         if query:
