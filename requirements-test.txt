@@ -4,7 +4,6 @@ pytest >= 8.1
 pytest-mock
 swh.core[testing]
 swh.journal[pytest] >= 2.0.0
-types-click
 types-confluent-kafka
 types-pytz
 types-pyyaml
