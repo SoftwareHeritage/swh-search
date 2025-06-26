@@ -525,14 +525,11 @@ class InMemorySearch:
         start_at_index = int(page_token) if page_token else 0
 
         origins = [
-            {
-                field: hit.get(field, default)
-                for field, default in [
-                    ("url", ""),
-                    ("visit_types", []),
-                    ("has_visits", False),
-                ]
-            }
+            OriginDict(
+                url=hit.get("url", ""),
+                visit_types=hit.get("visit_types", []),
+                has_visits=hit.get("has_visits", False),
+            )
             for hit in hits_list[start_at_index : start_at_index + limit]
         ]
 
@@ -544,6 +541,7 @@ class InMemorySearch:
         return PagedResult(
             results=origins,
             next_page_token=next_page_token,
+            total_results=len(hits_list),
         )
 
     def origin_get(self, url: str) -> Optional[Dict[str, Any]]:

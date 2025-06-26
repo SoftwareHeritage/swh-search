@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2023  The Software Heritage developers
+# Copyright (C) 2019-2024  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -335,7 +335,7 @@ class TestElasticsearchSearch(CommonElasticsearchSearchTest):
 
     def test_read_alias_usage(self):
         mock = self.mocker.patch("elasticsearch.Elasticsearch.search")
-        mock.return_value = {"hits": {"hits": []}}
+        mock.return_value = {"hits": {"hits": [], "total": {"value": 0}}}
 
         self.search.origin_search(url_pattern="foobar.baz")
 

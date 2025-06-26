@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2022  The Software Heritage developers
+# Copyright (C) 2019-2024  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -616,17 +616,15 @@ class ElasticSearch:
 
         return PagedResult(
             results=[
-                {
-                    field: hit["_source"].get(field, default)
-                    for field, default in [
-                        ("url", ""),
-                        ("visit_types", []),
-                        ("has_visits", False),
-                    ]
-                }
+                OriginDict(
+                    url=hit["_source"].get("url", ""),
+                    visit_types=hit["_source"].get("visit_types", []),
+                    has_visits=hit["_source"].get("has_visits", False),
+                )
                 for hit in hits
             ],
             next_page_token=next_page_token,
+            total_results=res["hits"].get("total", {}).get("value", 0),
         )
 
     def visit_types_count(self) -> Counter:

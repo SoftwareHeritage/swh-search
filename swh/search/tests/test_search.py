@@ -1571,3 +1571,37 @@ class CommonSearchTest:
             results = [r["url"] for r in actual_page.results]
             expected_results = [origin["url"]]
             assert results == expected_results
+
+    def test_origin_search_total_results(self):
+        limit = 10
+        nb_git_origins = 100
+        origins = [
+            {
+                "url": f"http://git.example.org/user/project{i:03d}",
+                "visit_types": ["git"],
+            }
+            for i in range(nb_git_origins)
+        ]
+        nb_svn_origins = 70
+        origins += [
+            {
+                "url": f"http://svn.example.org/user/project{i:03d}",
+                "visit_types": ["svn"],
+            }
+            for i in range(nb_svn_origins)
+        ]
+
+        self.search.origin_update(origins)
+        self.search.flush()
+
+        page = self.search.origin_search(
+            url_pattern="http://git.example.org", limit=limit
+        )
+        assert len(page.results) == limit
+        assert page.total_results == nb_git_origins
+
+        page = self.search.origin_search(
+            url_pattern="http://svn.example.org", limit=limit
+        )
+        assert len(page.results) == limit
+        assert page.total_results == nb_svn_origins
