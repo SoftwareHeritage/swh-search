@@ -51,6 +51,8 @@ CONFIG_TEMPLATES = {
         -XX:HeapDumpPath={logs}
         -XX:ErrorFile={logs}/hs_err_pid%p.log
         -Xlog:gc*,gc+age=trace,safepoint:file={logs}/gc.log:utctime,level,pid,tags:filecount=32,filesize=64m
+        -Xms512m
+        -Xmx512m
     """,
     "log4j2.properties": """\
         status = error
