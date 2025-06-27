@@ -580,6 +580,7 @@ class ElasticSearch:
                 },
             },
             "sort": sorting_params,
+            "track_total_hits": True,
         }
 
         if page_token:
