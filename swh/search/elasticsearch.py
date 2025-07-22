@@ -19,7 +19,12 @@ from swh.model.hashutil import hash_to_hex
 from swh.search.interface import SORT_BY_OPTIONS, OriginDict, PagedResult
 from swh.search.metrics import send_metric, timed
 from swh.search.translator import Translator
-from swh.search.utils import escape, get_expansion, parse_and_format_date
+from swh.search.utils import (
+    EMPTY_SNAPSHOT_ID,
+    escape,
+    get_expansion,
+    parse_and_format_date,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -412,6 +417,7 @@ class ElasticSearch:
         url_pattern: Optional[str] = None,
         metadata_pattern: Optional[str] = None,
         with_visit: bool = False,
+        without_empty_snapshot: bool = False,
         visit_types: Optional[List[str]] = None,
         min_nb_visits: int = 0,
         min_last_visit_date: str = "",
@@ -568,13 +574,17 @@ class ElasticSearch:
                 }
             )
 
+        must_not_clauses: List = [{"term": {"blocklisted": True}}]
+        if without_empty_snapshot:
+            must_not_clauses.append({"term": {"snapshot_id": EMPTY_SNAPSHOT_ID}})
+
         body: Dict[str, Any] = {
             "query": {
                 "function_score": {
                     "query": {
                         "bool": {
                             "must": query_clauses,
-                            "must_not": [{"term": {"blocklisted": True}}],
+                            "must_not": must_not_clauses,
                         }
                     },
                     "functions": score_functions,

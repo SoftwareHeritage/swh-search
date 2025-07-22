@@ -12,6 +12,7 @@ from itertools import permutations
 import pytest
 
 from swh.core.api.classes import stream_results
+from swh.search.utils import EMPTY_SNAPSHOT_ID
 
 SNAPSHOT_1 = "9e78d7105c5e0f886487511e2a92377b4ee4c32a"
 SNAPSHOT_2 = "0e7f84ede9a254f2cd55649ad5240783f557e65f"
@@ -1574,3 +1575,26 @@ class CommonSearchTest:
         )
         assert len(page.results) == limit
         assert page.total_results == nb_svn_origins
+
+    def test_origin_search_without_empty_snapshot(self):
+        ORIGINS = [
+            {
+                "url": "http://foobar.baz",
+                "snapshot_id": "SNAPSHOT_1",
+            },
+            {
+                "url": "http://foo.baz",
+                "snapshot_id": EMPTY_SNAPSHOT_ID,
+            },
+            {
+                "url": "http://bar.baz",
+                "snapshot_id": EMPTY_SNAPSHOT_ID,
+            },
+        ]
+
+        self.search.origin_update(ORIGINS)
+        self.search.flush()
+
+        page = self.search.origin_search(url_pattern="baz", without_empty_snapshot=True)
+        assert len(page.results) == 1
+        assert page.results[0]["url"] == "http://foobar.baz"

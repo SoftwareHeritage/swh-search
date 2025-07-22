@@ -13,7 +13,7 @@ from swh.indexer import codemeta
 from swh.model import model
 from swh.model.hashutil import hash_to_hex
 from swh.search.interface import SORT_BY_OPTIONS, OriginDict, PagedResult
-from swh.search.utils import get_expansion, parse_and_format_date
+from swh.search.utils import EMPTY_SNAPSHOT_ID, get_expansion, parse_and_format_date
 
 _words_regexp = re.compile(r"\w+")
 
@@ -294,6 +294,7 @@ class InMemorySearch:
         url_pattern: Optional[str] = None,
         metadata_pattern: Optional[str] = None,
         with_visit: bool = False,
+        without_empty_snapshot: bool = False,
         visit_types: Optional[List[str]] = None,
         min_nb_visits: int = 0,
         min_last_visit_date: str = "",
@@ -359,6 +360,8 @@ class InMemorySearch:
 
         if with_visit:
             hits = filter(lambda o: o.get("has_visits"), hits)
+        if without_empty_snapshot:
+            hits = filter(lambda o: o.get("snapshot_id", "") != EMPTY_SNAPSHOT_ID, hits)
         if min_nb_visits:
             hits = filter(lambda o: o.get("nb_visits", 0) >= min_nb_visits, hits)
         if min_last_visit_date:

@@ -70,6 +70,7 @@ class SearchInterface(Protocol):
         url_pattern: Optional[str] = None,
         metadata_pattern: Optional[str] = None,
         with_visit: bool = False,
+        without_empty_snapshot: bool = False,
         visit_types: Optional[List[str]] = None,
         min_nb_visits: int = 0,
         min_last_visit_date: str = "",
@@ -97,6 +98,8 @@ class SearchInterface(Protocol):
             metadata_pattern: Keywords to look for (across all the fields of
                 "jsonld")
             with_visit: Whether origins with no visits are to be filtered out
+            without_empty_snapshot: If :const:`True`, filter out visits where
+                latest snapshot is empty
             visit_types: Only origins having any of the provided visit types
                 (e.g. git, svn, pypi) will be returned
             min_nb_visits: Filter origins that have number of visits >=
