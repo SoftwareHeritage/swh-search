@@ -2,7 +2,7 @@
 # should match https://pypi.python.org/pypi names. For the full spec or
 # dependency lines, see https://pip.readthedocs.org/en/1.1/requirements.html
 click
-elasticsearch>=7.0.0,<8.0.0
+elasticsearch>=8.0.0,<9.0.0
 typing-extensions
 tree_sitter<0.22.0  # TODO: stop using removed Language.build_language API https://github.com/tree-sitter/py-tree-sitter/commit/681fc558dabdad8717f92eb2ccc0b33c5ce25c96#diff-b335630551682c19a781afebcf4d07bf978fb1f8ac04c6bf87428ed5106870f5
 iso8601

@@ -18,7 +18,7 @@ SEARCH_IMPLEMENTATIONS_KWARGS = [
     (
         "elasticsearch",
         ElasticSearch,
-        {"hosts": ["localhost"], "indexes": {"origin": {"index": "test"}}},
+        {"hosts": ["http://localhost:9200"], "indexes": {"origin": {"index": "test"}}},
     ),
 ]
 

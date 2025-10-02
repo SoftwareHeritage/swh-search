@@ -142,7 +142,7 @@ def _run_elasticsearch(
             sock.close()
             break
 
-    host = f"127.0.0.1:{http_port}"
+    host = f"http://127.0.0.1:{http_port}"
     client = elasticsearch.Elasticsearch([host])
     assert client.ping()
 
@@ -166,7 +166,7 @@ def elasticsearch_session(tmpdir_factory):
         libffi_tmpdir=str(tmpdir.mkdir("libffi")),
     )
 
-    yield "127.0.0.1:{}".format(http_port)
+    yield f"http://127.0.0.1:{http_port}"
 
     # Check ES didn't stop
     assert proc.returncode is None, proc.returncode
