@@ -566,7 +566,7 @@ class ElasticSearch:
                 }
             )
 
-        body = {
+        body: Dict[str, Any] = {
             "query": {
                 "function_score": {
                     "query": {
@@ -596,7 +596,9 @@ class ElasticSearch:
             logger.debug("Search query body: %s", formatted_body)
 
         res = self._backend.search(
-            index=self._get_origin_read_alias(), body=body, size=limit
+            index=self._get_origin_read_alias(),
+            **body,
+            size=limit,
         )
 
         hits = res["hits"]["hits"]
@@ -629,7 +631,7 @@ class ElasticSearch:
         )
 
     def visit_types_count(self) -> Counter:
-        body = {
+        body: Dict[str, Any] = {
             "aggs": {
                 "not_blocklisted": {
                     "filter": {"bool": {"must_not": [{"term": {"blocklisted": True}}]}},
@@ -640,9 +642,7 @@ class ElasticSearch:
             }
         }
 
-        res = self._backend.search(
-            index=self._get_origin_read_alias(), body=body, size=0
-        )
+        res = self._backend.search(index=self._get_origin_read_alias(), **body, size=0)
 
         buckets = (
             res.get("aggregations", {})
