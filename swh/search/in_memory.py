@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2024  The Software Heritage developers
+# Copyright (C) 2019-2026  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -168,7 +168,7 @@ class InMemorySearch:
         for source_document in documents:
             id_ = hash_to_hex(model.Origin(url=source_document["url"]).id)
             document: Dict[str, Any] = {
-                **source_document,
+                **{k: v for k, v in source_document.items() if v is not None},
                 "sha1": id_,
             }
             if "url" in document:
@@ -185,7 +185,7 @@ class InMemorySearch:
                 document["nb_visits"] = max(
                     document["nb_visits"], self._origins[id_].get("nb_visits", 0)
                 )
-            if "last_visit_date" in document:
+            if document.get("last_visit_date") is not None:
                 document["last_visit_date"] = max(
                     datetime.fromisoformat(document["last_visit_date"]),
                     datetime.fromisoformat(
@@ -198,7 +198,10 @@ class InMemorySearch:
                     ),
                 ).isoformat()
 
-            if "snapshot_id" in document and "last_eventful_visit_date" in document:
+            if (
+                document.get("snapshot_id") is not None
+                and document.get("last_eventful_visit_date") is not None
+            ):
                 incoming_date = datetime.fromisoformat(
                     document["last_eventful_visit_date"]
                 )
@@ -221,7 +224,7 @@ class InMemorySearch:
                     document["snapshot_id"] = current_snapshot_id
                     document["last_eventful_visit_date"] = current_date.isoformat()
 
-            if "last_revision_date" in document:
+            if document.get("last_revision_date") is not None:
                 document["last_revision_date"] = max(
                     datetime.fromisoformat(document["last_revision_date"]),
                     datetime.fromisoformat(
@@ -233,7 +236,8 @@ class InMemorySearch:
                         .replace("Z", "+00:00")
                     ),
                 ).isoformat()
-            if "last_release_date" in document:
+
+            if document.get("last_release_date") is not None:
                 document["last_release_date"] = max(
                     datetime.fromisoformat(document["last_release_date"]),
                     datetime.fromisoformat(
@@ -245,6 +249,7 @@ class InMemorySearch:
                         .replace("Z", "+00:00")
                     ),
                 ).isoformat()
+
             if "jsonld" in document:
                 jsonld = document["jsonld"]
 
@@ -529,6 +534,10 @@ class InMemorySearch:
                 url=hit.get("url", ""),
                 visit_types=hit.get("visit_types", []),
                 has_visits=hit.get("has_visits", False),
+                nb_visits=hit.get("nb_visits", 0),
+                snapshot_id=hit.get("snapshot_id"),
+                last_visit_date=hit.get("last_visit_date"),
+                last_eventful_visit_date=hit.get("last_eventful_visit_date"),
             )
             for hit in hits_list[start_at_index : start_at_index + limit]
         ]

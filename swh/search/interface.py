@@ -1,4 +1,4 @@
-# Copyright (C) 2020-2022  The Software Heritage developers
+# Copyright (C) 2020-2026  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -37,6 +37,10 @@ class OriginDict(MinimalOriginDict, total=False):
 
     visit_types: List[str]
     has_visits: bool
+    nb_visits: int
+    snapshot_id: Optional[str]
+    last_visit_date: Optional[str]
+    last_eventful_visit_date: Optional[str]
 
 
 class SearchInterface(Protocol):

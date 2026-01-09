@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2020  The Software Heritage developers
+# Copyright (C) 2019-2026  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -107,7 +107,8 @@ def test_journal_client_origin(
     actual_page = swh_search.origin_search(url_pattern="foobar")
     # We find it
     assert actual_page.next_page_token is None
-    assert actual_page.results == [origin_foobar_baz]
+    assert actual_page.results
+    assert origin_foobar_baz.items() <= actual_page.results[0].items()
 
     # It's an origin with no visit, searching for it with visit
     actual_page = swh_search.origin_search(url_pattern="foobar", with_visit=True)
@@ -175,11 +176,13 @@ def test_journal_client_origin_visit_status(
     # Both search returns the visit
     actual_page = swh_search.origin_search(url_pattern="foobar", with_visit=False)
     assert actual_page.next_page_token is None
-    assert actual_page.results == [origin_foobar]
+    assert actual_page.results
+    assert origin_foobar.items() <= actual_page.results[0].items()
 
     actual_page = swh_search.origin_search(url_pattern="foobar", with_visit=True)
     assert actual_page.next_page_token is None
-    assert actual_page.results == [origin_foobar]
+    assert actual_page.results
+    assert origin_foobar.items() <= actual_page.results[0].items()
 
 
 @pytest.mark.parametrize("metadata_source", ["intrinsic", "extrinsic"])
@@ -271,7 +274,8 @@ def test_journal_client_origin_metadata(
     # search without visit returns the metadata
     actual_page = swh_search.origin_search(url_pattern="clojure", with_visit=False)
     assert actual_page.next_page_token is None
-    assert actual_page.results == [origin_foobar]
+    assert actual_page.results
+    assert origin_foobar.items() <= actual_page.results[0].items()
 
     # no visit associated so it does not return anything
     actual_page = swh_search.origin_search(url_pattern="clojure", with_visit=True)

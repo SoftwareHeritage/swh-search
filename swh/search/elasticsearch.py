@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2024  The Software Heritage developers
+# Copyright (C) 2019-2026  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -251,7 +251,9 @@ def _sanitize_origin(origin):
         "last_release_date",
     ):
         if field_name in origin:
-            res[field_name] = origin.pop(field_name)
+            field = origin.pop(field_name)
+            if field is not None:
+                res[field_name] = field
 
     # Run the JSON-LD expansion algorithm
     # <https://www.w3.org/TR/json-ld-api/#expansion>
@@ -623,6 +625,12 @@ class ElasticSearch:
                     url=hit["_source"].get("url", ""),
                     visit_types=hit["_source"].get("visit_types", []),
                     has_visits=hit["_source"].get("has_visits", False),
+                    nb_visits=hit["_source"].get("nb_visits", 0),
+                    snapshot_id=hit["_source"].get("snapshot_id"),
+                    last_visit_date=hit["_source"].get("last_visit_date"),
+                    last_eventful_visit_date=hit["_source"].get(
+                        "last_eventful_visit_date"
+                    ),
                 )
                 for hit in hits
             ],
