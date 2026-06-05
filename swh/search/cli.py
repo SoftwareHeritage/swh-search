@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2024  The Software Heritage developers
+# Copyright (C) 2019-2026  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -124,13 +124,11 @@ def journal_client_objects(ctx, stop_after_objects, object_type, prefix):
     on these new objects.
 
     """
-    import functools
 
-    from swh.journal.client import get_journal_client
     from swh.storage import get_storage
 
     from . import get_search
-    from .journal_client import process_journal_objects
+    from .journal_client import SearchJournalClient
 
     config = ctx.obj["config"]
     journal_cfg = config["journal"]
@@ -147,20 +145,14 @@ def journal_client_objects(ctx, stop_after_objects, object_type, prefix):
     if journal_cfg["prefix"] is None:
         raise ValueError("'prefix' must be specified by cli or configuration")
 
-    client = get_journal_client(
-        cls="kafka",
-        **journal_cfg,
-    )
     search = get_search(**config["search"])
     storage = get_storage(**config["storage"])
+    client = SearchJournalClient(search, storage, **journal_cfg)
 
-    worker_fn = functools.partial(
-        process_journal_objects, search=search, storage=storage
-    )
     nb_messages = 0
     try:
-        nb_messages = client.process(worker_fn)
-        print("Processed %d messages." % nb_messages)
+        nb_messages = client.process_messages()
+        print(f"Processed {nb_messages} messages.")
     except KeyboardInterrupt:
         ctx.exit(0)
     else:

@@ -1,13 +1,15 @@
-# Copyright (C) 2018-2022  The Software Heritage developers
+# Copyright (C) 2018-2026  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
 import logging
 import sys
-from typing import Dict, Optional
+from typing import Callable, Dict, Optional
 
+from swh.journal.client import JournalClientBase
 from swh.model.model import SnapshotTargetType
+from swh.search.interface import SearchInterface
 from swh.storage.algos.snapshot import snapshot_get_all_branches
 from swh.storage.interface import StorageInterface
 
@@ -67,97 +69,106 @@ def fetch_last_revision_release_date(
     return ret
 
 
-def process_journal_objects(messages, *, search, storage=None):
-    """Worker function for `JournalClient.process(worker_fn)`, after
-    currification of `scheduler` and `task_names`."""
-    assert set(messages) <= EXPECTED_MESSAGE_TYPES, set(messages)
+def convert_origin(origin, storage: StorageInterface):
+    logging.debug("Converting origins %r", origin)
 
-    if "origin" in messages:
-        process_origins(messages["origin"], search)
-
-    if "origin_visit_status" in messages:
-        process_origin_visit_statuses(messages["origin_visit_status"], search, storage)
-
-    if "origin_intrinsic_metadata" in messages:
-        process_origin_intrinsic_metadata(messages["origin_intrinsic_metadata"], search)
-
-    if "origin_extrinsic_metadata" in messages:
-        process_origin_extrinsic_metadata(messages["origin_extrinsic_metadata"], search)
+    return origin
 
 
-def process_origins(origins, search):
-    logging.debug("processing origins %r", origins)
-
-    search.origin_update(origins)
-
-
-def process_origin_visit_statuses(visit_statuses, search, storage):
-    logging.debug("processing origin visit statuses %r", visit_statuses)
-
-    def hexify(b: Optional[bytes]) -> Optional[str]:
-        if b is None:
-            return None
-        return b.hex()
-
-    processed_visit_statuses = []
-    for visit_status in visit_statuses:
-        visit_types = []
-        visit_type = visit_status.get("type")
-        if visit_type is None:
-            visit = storage.origin_visit_get_by(
-                origin=visit_status["origin"], visit=visit_status["visit"]
-            )
-            if visit is not None:
-                visit_types.append(visit.type)
-        else:
-            visit_types.append(visit_type)
-
-        processed_status = {
-            "url": visit_status["origin"],
-            "visit_types": visit_types,
-        }
-        if visit_status["status"] == "full":
-            processed_status.update(
-                {
-                    "has_visits": True,
-                    "nb_visits": visit_status["visit"],
-                    "snapshot_id": hexify(visit_status.get("snapshot")),
-                    "last_visit_date": visit_status["date"].isoformat(),
-                    "last_eventful_visit_date": visit_status["date"].isoformat(),
-                    **fetch_last_revision_release_date(
-                        visit_status.get("snapshot"), storage
-                    ),
-                }
-            )
-        processed_visit_statuses.append(processed_status)
-
-    if processed_visit_statuses:
-        search.origin_update(processed_visit_statuses)
+def _hexify(b: Optional[bytes]) -> Optional[str]:
+    if b is None:
+        return None
+    return b.hex()
 
 
-def process_origin_intrinsic_metadata(origin_metadata, search):
-    logging.debug("processing origin intrinsic_metadata %r", origin_metadata)
+def convert_origin_visit_status(visit_status, storage: StorageInterface):
+    logging.debug("Converting origin visit statuses %r", visit_status)
 
-    origin_metadata = [
-        {
-            "url": item["id"],
-            "jsonld": item["metadata"],
-        }
-        for item in origin_metadata
-    ]
+    visit_types = []
+    visit_type = visit_status.get("type")
+    if visit_type is None:
+        visit = storage.origin_visit_get_by(
+            origin=visit_status["origin"], visit=visit_status["visit"]
+        )
+        if visit is not None:
+            visit_types.append(visit.type)
+    else:
+        visit_types.append(visit_type)
 
-    search.origin_update(origin_metadata)
+    processed_status = {
+        "url": visit_status["origin"],
+        "visit_types": visit_types,
+    }
+    if visit_status["status"] == "full":
+        processed_status.update(
+            {
+                "has_visits": True,
+                "nb_visits": visit_status["visit"],
+                "snapshot_id": _hexify(visit_status.get("snapshot")),
+                "last_visit_date": visit_status["date"].isoformat(),
+                "last_eventful_visit_date": visit_status["date"].isoformat(),
+                **fetch_last_revision_release_date(
+                    visit_status.get("snapshot"), storage
+                ),
+            }
+        )
+
+    return processed_status
 
 
-def process_origin_extrinsic_metadata(origin_metadata, search):
-    logging.debug("processing origin extrinsic_metadata %r", origin_metadata)
+def convert_from_origin_metadata_dict(
+    origin_dict: Dict, storage: StorageInterface
+) -> Dict:
+    logging.debug("Converting origin (intrinsic|extrinsic) metadata %r", origin_dict)
+    return {
+        "url": origin_dict["id"],
+        "jsonld": origin_dict["metadata"],
+    }
 
-    origin_metadata = [
-        {
-            "url": item["id"],
-            "jsonld": item["metadata"],
-        }
-        for item in origin_metadata
-    ]
 
-    search.origin_update(origin_metadata)
+# A dictionary to ease the conversion of different objects into ready to be indexed
+# object in elasticsearch
+map_convert_fn: Dict[str, Callable] = {
+    "origin": convert_origin,
+    "origin_visit_status": convert_origin_visit_status,
+    "origin_intrinsic_metadata": convert_from_origin_metadata_dict,
+    "origin_extrinsic_metadata": convert_from_origin_metadata_dict,
+}
+
+
+def convert_journal_object(
+    object_type: str, object_data: Dict, storage: StorageInterface
+) -> Optional[Dict]:
+    """Convert object_data of type object_type into a ready dict of data to be pushed to
+    elasticsearch."""
+
+    convert_fn: Callable[[Dict, StorageInterface], Dict] | None = map_convert_fn.get(
+        object_type
+    )
+    if not convert_fn:
+        return None
+
+    return convert_fn(object_data, storage)
+
+
+class SearchJournalClient(JournalClientBase):
+    """Journal Client implementation"""
+
+    object_types = EXPECTED_MESSAGE_TYPES
+
+    def __init__(
+        self, search: SearchInterface, storage: StorageInterface, *args, **kwargs
+    ):
+        super().__init__(*args, **kwargs)
+        self.storage = storage
+        self.search = search
+
+    def process_one_object(self, decoded_object, decoded_object_type, raw_message):
+        assert decoded_object_type in self.object_types
+
+        convert_obj = convert_journal_object(
+            decoded_object_type, decoded_object, self.storage
+        )
+
+        if convert_obj:
+            self.search.origin_update([convert_obj])
