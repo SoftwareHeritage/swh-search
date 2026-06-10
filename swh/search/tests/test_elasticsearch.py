@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2024  The Software Heritage developers
+# Copyright (C) 2019-2026  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
@@ -260,15 +260,13 @@ class TestElasticsearchSearch(CommonElasticsearchSearchTest):
                 error = e.errors[0].get("update", {}).get("error", {}).get("caused_by")
                 if error and "script_stack" in error:
                     script_error = True
-                    error_detail = dedent(
-                        f"""
+                    error_detail = dedent(f"""
                         Painless update script failed ({error.get('reason')}).
                         error type: {error.get('caused_by', {}).get('type')}
                         error reason: {error.get('caused_by', {}).get('reason')}
                         script stack:
 
-                        """
-                    )
+                        """)
                     error_detail += "\n".join(error["script_stack"])
                 else:
                     raise e

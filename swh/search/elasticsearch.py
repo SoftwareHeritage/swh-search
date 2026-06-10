@@ -145,8 +145,7 @@ ORIGIN_MAPPING = {
 }
 
 # painless script that will be executed when updating an origin document
-ORIGIN_UPDATE_SCRIPT = dedent(
-    """
+ORIGIN_UPDATE_SCRIPT = dedent("""
     // utility function to get and parse date
     ZonedDateTime getDate(def ctx, String date_field) {
         String default_date = "0001-01-01T00:00:00Z";
@@ -234,8 +233,7 @@ ORIGIN_UPDATE_SCRIPT = dedent(
             ctx._source.last_release_date = last_release_date;
         }
     }
-    """
-)
+    """)
 
 
 def _sanitize_origin(origin):

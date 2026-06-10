@@ -48,7 +48,7 @@ def get_search(cls: str, **kwargs: Dict[str, Any]) -> "SearchInterface":
             % (cls, ", ".join(SEARCH_IMPLEMENTATIONS))
         )
 
-    (module_path, class_name) = class_path.rsplit(".", 1)
+    module_path, class_name = class_path.rsplit(".", 1)
     module = importlib.import_module(module_path, package=__package__)
     Search = getattr(module, class_name)
     return Search(**kwargs)
