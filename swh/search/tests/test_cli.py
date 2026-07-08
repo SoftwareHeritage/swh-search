@@ -6,11 +6,11 @@
 import copy
 from datetime import datetime, timezone
 import tempfile
+from typing import Literal
 
 from click.testing import CliRunner
 from confluent_kafka import Producer
 import pytest
-from typing_extensions import Literal
 import yaml
 
 from swh.journal.serializers import value_to_kafka

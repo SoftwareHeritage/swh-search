@@ -4,9 +4,7 @@
 # See top-level LICENSE file for more information
 
 from collections import Counter
-from typing import Any, Dict, Iterable, List, Optional, TypeVar
-
-from typing_extensions import Protocol, TypedDict
+from typing import Any, Dict, Iterable, List, Optional, Protocol, TypedDict, TypeVar
 
 from swh.core.api import remote_api_endpoint
 from swh.core.api.classes import PagedResult as CorePagedResult
