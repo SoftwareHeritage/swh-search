@@ -15,3 +15,4 @@ docs/README.md
 # without using tox, generally created by the swh-env/bin/update script
 docs/Makefile.sphinx
 node_modules/
+swh/search/static

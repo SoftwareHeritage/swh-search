@@ -16,22 +16,6 @@ classifiers = [
 ]
 dynamic = ["version", "dependencies", "optional-dependencies"]
 
-[tool.setuptools]
-zip-safe = false
-
-[tool.setuptools.packages.find]
-include = ["swh.*"]
-
-[tool.setuptools.dynamic]
-dependencies = { file = ["requirements.txt", "requirements-swh.txt"] }
-
-[tool.setuptools.dynamic.optional-dependencies]
-testing = { file = [
-    "requirements.txt",
-    "requirements-swh.txt",
-    "requirements-test.txt",
-] }
-
 [project.entry-points."swh.cli.subcommands"]
 "swh.search" = "swh.search.cli"
 
@@ -43,11 +27,43 @@ testing = { file = [
 "Source" = "https://gitlab.softwareheritage.org/swh/devel/swh-search.git"
 
 [build-system]
-requires = ["setuptools", "setuptools-scm", "wheel", "tree_sitter<0.22.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling", "hatch-requirements-txt", "hatch-vcs", "hatch-cpp"]
+build-backend = "hatchling.build"
 
-[tool.setuptools_scm]
-fallback_version = "0.0.1"
+[tool.hatch.metadata.hooks.requirements_txt]
+files = ["requirements.txt", "requirements-swh.txt"]
+
+[tool.hatch.metadata.hooks.requirements_txt.optional-dependencies]
+testing = ["requirements-test.txt"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["swh"]
+
+[tool.hatch.build.hooks.custom]
+
+[tool.hatch.build.hooks.hatch-cpp]
+libraries = [
+    { name = "swh/search/static/swh_ql", sources = [
+        "swh/search/query_language/src/parser.c",
+    ], include_dirs = [
+        "swh/search/query_language/src",
+    ], binding = "generic", language = "c", std = "c11" },
+]
+
+[tool.hatch.build.targets.sdist]
+exclude = ["swh/search/static"]
+
+[tool.hatch.version]
+source = "vcs"
+fallback-version = "0.0.1"
+
+[tool.cibuildwheel]
+build = "*manylinux*"
+skip = "cp*t-*"
+
+[[tool.cibuildwheel.overrides]]
+select = "*manylinux*"
+before-build = "until yum -y install yarnpkg; do sleep 1; done"
 
 [tool.black]
 target-version = ['py311', 'py312', 'py313']
