@@ -43,7 +43,6 @@ def generate_parser(dest_path):
 class CustomBuildHook(BuildHookInterface):
 
     def initialize(self, version: str, build_data: dict[str, Any]) -> None:
-        os.makedirs(os.path.join(self.root, "swh/search/static"), exist_ok=True)
         ql_dir = os.path.join(self.root, "swh/search/query_language")
         if needs_regen(
             os.path.join(ql_dir, "src/parser.c"),
