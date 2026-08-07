@@ -9,7 +9,7 @@ import logging
 
 import click
 
-from swh.core.cli import CONTEXT_SETTINGS
+from swh.core.cli import CONTEXT_SETTINGS, setup_config
 from swh.core.cli import swh as swh_cli_group
 
 
@@ -22,6 +22,7 @@ from swh.core.cli import swh as swh_cli_group
         exists=True,
         dir_okay=False,
     ),
+    deprecated=True,
     help=(
         "Configuration file. This has a higher priority than SWH_CONFIG_FILENAME "
         "environment variable if set."
@@ -30,19 +31,7 @@ from swh.core.cli import swh as swh_cli_group
 @click.pass_context
 def search_cli_group(ctx, config_file):
     """Software Heritage Search tools."""
-    from os import environ
-
-    from swh.core import config
-
-    ctx.ensure_object(dict)
-    if config_file:
-        conf = config.read(config_file)
-    elif "SWH_CONFIG_FILENAME" in environ:
-        conf = config.load_from_envvar()
-    else:
-        raise ValueError("No configuration file set.")
-
-    ctx.obj["config"] = conf
+    setup_config(ctx, config_file)
 
 
 @search_cli_group.command("initialize")

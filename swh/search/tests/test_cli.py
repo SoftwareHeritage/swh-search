@@ -48,7 +48,9 @@ def invoke(catch_exceptions, args, config="", *, elasticsearch_host):
             (CLI_CONFIG + config) % {"elasticsearch_host": elasticsearch_host}
         )
         config_fd.seek(0)
-        result = runner.invoke(search_cli_group, ["-C" + config_fd.name] + args)
+        result = runner.invoke(
+            search_cli_group, args, env={"SWH_CONFIG_FILENAME": config_fd.name}
+        )
     if not catch_exceptions and result.exception:
         print(result.output)
         raise result.exception
