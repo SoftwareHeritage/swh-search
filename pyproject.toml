@@ -38,6 +38,14 @@ testing = ["requirements-test.txt"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["swh"]
+# pypi.org rejects `linux_x86_64` wheel [1]. We are hit by this problem when
+# uploading the latest wheel 0.25: `swh_search-0.25.0-cp311-abi3-linux_x86_64.whl'
+# has an unsupported platform tag 'linux_x86_64'.
+# [1] https://discuss.python.org/t/pypi-rejecting-linux-x86-64-platform-wheels-now/68276
+# Using manylinux2014 sounds like the sensible tag for our most recent
+# releases [2]
+# [2] https://packaging.python.org/en/latest/specifications/platform-compatibility-tags/#manylinux
+manylinux = "2014"
 
 [tool.hatch.build.hooks.custom]
 
