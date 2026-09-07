@@ -3,5 +3,5 @@
 # dependency lines, see https://pip.readthedocs.org/en/1.1/requirements.html
 click
 elasticsearch>=8.0.0,<9.0.0
-tree-sitter
+tree-sitter>=0.23.0
 iso8601
