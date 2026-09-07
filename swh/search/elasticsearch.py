@@ -79,15 +79,14 @@ ORIGIN_MAPPING = {
         # as a response to queries
         "url": {
             "type": "text",
-            # To split URLs into token on any character
-            # that is not alphanumerical
-            "analyzer": "simple",
+            # To split URLs using the Unicode Text Segmentation algorithm
+            "analyzer": "standard",
             # 2-gram and partial-3-gram search (ie. with the end of the
             # third word potentially missing)
             "fields": {
                 "as_you_type": {
                     "type": "search_as_you_type",
-                    "analyzer": "simple",
+                    "analyzer": "standard",
                 }
             },
         },
