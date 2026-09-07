@@ -38,6 +38,27 @@ ORIGIN_DEFAULT_CONFIG = {
     WRITE_ALIAS_PARAM: "origin-write",
 }
 
+ORIGIN_SETTINGS = {
+    "analysis": {
+        "analyzer": {
+            "url_analyzer": {
+                "type": "custom",
+                "tokenizer": "url_tokenizer",
+                "filter": ["lowercase"],
+            }
+        },
+        "tokenizer": {
+            "url_tokenizer": {
+                "type": "pattern",
+                # Split URLs on any character that is not a letter or a digit,
+                # so that e.g. "http://foo.bar/12345" is tokenized as
+                # ["http", "foo", "bar", "12345"].
+                "pattern": r"[^a-zA-Z0-9]+",
+            }
+        },
+    }
+}
+
 ORIGIN_MAPPING = {
     "dynamic_templates": [
         {
@@ -79,14 +100,15 @@ ORIGIN_MAPPING = {
         # as a response to queries
         "url": {
             "type": "text",
-            # To split URLs using the Unicode Text Segmentation algorithm
-            "analyzer": "standard",
+            # To split URLs on any character that is not alphanumerical,
+            # while keeping digits
+            "analyzer": "url_analyzer",
             # 2-gram and partial-3-gram search (ie. with the end of the
             # third word potentially missing)
             "fields": {
                 "as_you_type": {
                     "type": "search_as_you_type",
-                    "analyzer": "standard",
+                    "analyzer": "url_analyzer",
                 }
             },
         },
@@ -330,7 +352,9 @@ class ElasticSearch:
         """Declare Elasticsearch indices, aliases and mappings"""
 
         if not self._backend.indices.exists(index=self._get_origin_index()):
-            self._backend.indices.create(index=self._get_origin_index())
+            self._backend.indices.create(
+                index=self._get_origin_index(), body={"settings": ORIGIN_SETTINGS}
+            )
 
         if not self._backend.indices.exists_alias(name=self._get_origin_read_alias()):
             self._backend.indices.put_alias(
