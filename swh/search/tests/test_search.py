@@ -156,6 +156,23 @@ class CommonSearchTest:
         assert actual_page.next_page_token is None
         check_origin_search_results(actual_page.results, [origin_54321])
 
+    def test_origin_url_all_terms_only_digits(self):
+        origin_12345 = origin_dict(origin_url="http://foo.bar/12345")
+        origin_54321 = origin_dict(origin_url="http://foo.bar/54321")
+        origins = [origin_12345, origin_54321]
+
+        self.search.origin_update(origins)
+        self.search.flush()
+
+        # Only results containing all terms should be returned.
+        actual_page = self.search.origin_search(url_pattern="12345")
+        assert actual_page.next_page_token is None
+        check_origin_search_results(actual_page.results, [origin_12345])
+
+        actual_page = self.search.origin_search(url_pattern="54321")
+        assert actual_page.next_page_token is None
+        check_origin_search_results(actual_page.results, [origin_54321])
+
     def test_origin_with_visit(self):
         origin_foobar_baz = origin_dict(origin_url="http://foobar/baz")
 
