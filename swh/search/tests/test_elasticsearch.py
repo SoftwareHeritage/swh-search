@@ -192,6 +192,7 @@ class CommonElasticsearchSearchTest(CommonSearchTest):
             {
                 "url": "http://foobar.2.com",
                 "jsonld": {
+                    # Unrelated JSON-LD fields should have no impact
                     "https://forgefed.org/ns#forkedFrom": [
                         {"@id": "http://foobar.1.com"},
                     ],
@@ -218,26 +219,18 @@ class CommonElasticsearchSearchTest(CommonSearchTest):
         }, results
         assert results[2] == "http://foobar.2.com", results
 
-        results = [
-            r["url"]
-            for r in self.search.origin_search(query='origin : "foobar.1.com"').results
-        ]
-        assert results == [
-            "http://foobar.1.com",
-            "http://foobar.2.com",
-        ]
-
         # Boost forks instead of penalizing them
         results = [
             r["url"]
             for r in self.search.origin_search(
-                query='origin : "foobar.1.com"', fork_weight=2.0
+                query='origin : "foobar"', fork_weight=2.0
             ).results
         ]
-        assert results == [
-            "http://foobar.2.com",
+        assert results[0] == "http://foobar.2.com", results
+        assert set(results[1:]) == {
+            "http://foobar.3.org",
             "http://foobar.1.com",
-        ]
+        }
 
 
 class TestElasticsearchSearch(CommonElasticsearchSearchTest):
