@@ -5,6 +5,7 @@
 
 import base64
 from collections import Counter
+import datetime
 import logging
 import pprint
 from textwrap import dedent
@@ -326,6 +327,14 @@ class ElasticSearch:
         self._backend = Elasticsearch(hosts=hosts)
         self._translator = Translator()
 
+        # List of indexes targeted by the read alias; opportunistically
+        # updated by _get_origin_read_alias_targets when `_read_targets_last_update`
+        # is older than 60 minutes.
+        self._read_targets: Optional[List[str]] = None
+        self._read_targets_last_update = datetime.datetime(
+            1970, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc
+        )
+
         # Merge current configuration with default values
         origin_config = indexes.get("origin", {})
         self.origin_config = {**ORIGIN_DEFAULT_CONFIG, **origin_config}
@@ -335,6 +344,24 @@ class ElasticSearch:
 
     def _get_origin_read_alias(self) -> str:
         return self.origin_config[READ_ALIAS_PARAM]
+
+    def _get_origin_read_alias_targets(self) -> List[str]:
+        """Get the list of indices pointed at by the read alias, for use by
+        `get` requests. The list is only requested if it's older than 60
+        minutes."""
+        now = datetime.datetime.now(tz=datetime.timezone.utc)
+        if (
+            self._read_targets
+            # Last update older than 60 minutes
+            and now - self._read_targets_last_update > datetime.timedelta(minutes=60)
+        ):
+            return self._read_targets
+        read_alias = self.origin_config[READ_ALIAS_PARAM]
+        self._read_targets = list(
+            self._backend.indices.get_alias(name=read_alias, expand_wildcards="open")
+        )
+        self._read_targets_last_update = now
+        return self._read_targets
 
     def _get_origin_write_alias(self) -> str:
         return self.origin_config[WRITE_ALIAS_PARAM]
@@ -368,6 +395,12 @@ class ElasticSearch:
 
         self._backend.indices.put_mapping(
             index=self._get_origin_index(), body=ORIGIN_MAPPING
+        )
+
+        # Reset read index targets
+        self._read_targets = None
+        self._read_targets_last_update = datetime.datetime(
+            1970, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc
         )
 
     @timed
@@ -413,14 +446,18 @@ class ElasticSearch:
 
     def origin_get(self, url: str) -> Optional[Dict[str, Any]]:
         origin_id = hash_to_hex(model.Origin(url=url).id)
-        try:
-            document = self._backend.get(
-                index=self._get_origin_read_alias(), id=origin_id
-            )
-        except NotFoundError:
-            return None
+        # This iterates over the potentially multiple indices of the read alias, returning
+        # the first document found.
+        for index in self._get_origin_read_alias_targets():
+            try:
+                document = self._backend.get(index=index, id=origin_id)
+            except NotFoundError:
+                continue
+            else:
+                return document["_source"]
         else:
-            return document["_source"]
+            # All indices returned a NotFoundError
+            return None
 
     def origin_delete(self, url: str) -> bool:
         origin_id = hash_to_hex(model.Origin(url=url).id)

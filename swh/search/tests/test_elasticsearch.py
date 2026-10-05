@@ -7,13 +7,15 @@ from datetime import datetime, timedelta, timezone
 from textwrap import dedent
 import types
 
+from elasticsearch import NotFoundError
 from elasticsearch.helpers.errors import BulkIndexError
 import pytest
 
+from swh.model import model
 from swh.search.exc import SearchQuerySyntaxError
 from swh.search.metrics import OPERATIONS_METRIC
 
-from .test_search import CommonSearchTest
+from .test_search import CommonSearchTest, origin_dict
 
 now = datetime.now(tz=timezone.utc).isoformat()
 now_minus_5_days = (datetime.now(tz=timezone.utc) - timedelta(days=5)).isoformat()
@@ -331,3 +333,64 @@ class TestElasticsearchSearch(CommonElasticsearchSearchTest):
         self.search.origin_search(url_pattern="foobar.baz")
 
         assert mock.call_args[1]["index"] == "test-read"
+
+    def test_read_alias_multiple(self):
+        ORIGINS_BEFORE = [
+            origin_dict("https://123.example.com"),
+        ]
+
+        ORIGINS_AFTER = [
+            origin_dict("https://456.example.com"),
+        ]
+
+        self.search.origin_update(ORIGINS_BEFORE)
+        self.search.flush()
+        assert self.search.origin_get(ORIGINS_BEFORE[0]["url"]) is not None
+
+        # Create a new index and initialize it for search
+        old_index = self.search.origin_config["index"]
+        new_index = old_index + "-2"
+        self.search.origin_config["index"] = new_index
+        self.search.initialize()
+
+        # Update aliases to add the new index for searches
+        self.search._backend.indices.update_aliases(
+            actions=[
+                {
+                    "add": {
+                        "index": new_index,
+                        "alias": self.search.origin_config["read_alias"],
+                    }
+                },
+                {
+                    "add": {
+                        "index": new_index,
+                        "alias": self.search.origin_config["write_alias"],
+                    }
+                },
+                {
+                    "remove": {
+                        "index": old_index,
+                        "alias": self.search.origin_config["write_alias"],
+                    }
+                },
+            ]
+        )
+
+        self.search.origin_update(ORIGINS_AFTER)
+        self.search.flush()
+
+        # Check that the "after" origin was written to the new index
+        with pytest.raises(NotFoundError):
+            self.search._backend.get(
+                index=old_index, id=model.Origin(url=ORIGINS_AFTER[0]["url"]).id.hex()
+            )
+
+        # Check that we can pull both origins through the read index
+        assert self.search.origin_get(ORIGINS_BEFORE[0]["url"]) is not None
+        assert self.search.origin_get(ORIGINS_AFTER[0]["url"]) is not None
+
+        # Check that we can find both origins
+        assert self.search.origin_search(query="origin : example").total_results == 2
+        assert self.search.origin_search(query="origin : 123").total_results == 1
+        assert self.search.origin_search(query="origin : 456").total_results == 1
