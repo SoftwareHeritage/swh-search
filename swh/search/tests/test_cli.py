@@ -33,7 +33,8 @@ storage:
 """
 
 JOURNAL_OBJECTS_CONFIG_TEMPLATE = """
-journal:
+journal_client:
+    cls: kafka
     brokers:
         - {broker}
     prefix: {prefix}
@@ -287,7 +288,7 @@ def test_journal_client_origin_metadata(
 
 def test_journal_client_missing_main_journal_config_key(elasticsearch_host):
     """Missing configuration on journal should raise"""
-    with pytest.raises(KeyError, match="journal"):
+    with pytest.raises(KeyError, match="journal_client"):
         invoke(
             catch_exceptions=False,
             args=[
@@ -309,13 +310,12 @@ def test_journal_client_missing_journal_config_keys(elasticsearch_host):
     )
     journal_config = yaml.safe_load(journal_objects_config)
 
-    for key in journal_config["journal"].keys():
+    for key in journal_config["journal_client"].keys():
         if key == "prefix":  # optional
             continue
         cfg = copy.deepcopy(journal_config)
-        del cfg["journal"][key]  # make config incomplete
+        del cfg["journal_client"][key]  # make config incomplete
         yaml_cfg = yaml.dump(cfg)
-
         with pytest.raises(TypeError, match=f"{key}"):
             invoke(
                 catch_exceptions=False,

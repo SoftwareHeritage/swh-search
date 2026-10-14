@@ -6,6 +6,7 @@
 # WARNING: do not import unnecessary things here to keep cli startup time under
 # control
 import logging
+import warnings
 
 import click
 
@@ -120,7 +121,17 @@ def journal_client_objects(ctx, stop_after_objects, object_type, prefix):
     from .journal_client import SearchJournalClient
 
     config = ctx.obj["config"]
-    journal_cfg = config["journal"]
+    if "journal" in config:
+        warnings.warn(
+            "The 'journal' config section has been renamed as 'journal_client'. "
+            "Please update your configuration file.",
+            DeprecationWarning,
+        )
+        journal_cfg = config["journal"]
+        # 'cls' is now expected in the config section
+        journal_cfg["cls"] = "kafka"
+    else:
+        journal_cfg = config["journal_client"]
 
     journal_cfg["object_types"] = object_type or journal_cfg.get("object_types", [])
     journal_cfg["prefix"] = prefix or journal_cfg.get("prefix")
@@ -133,6 +144,11 @@ def journal_client_objects(ctx, stop_after_objects, object_type, prefix):
 
     if journal_cfg["prefix"] is None:
         raise ValueError("'prefix' must be specified by cli or configuration")
+
+    if (cls := journal_cfg.pop("cls", None)) is None:
+        raise TypeError("Missing 'cls' configuration entry")
+    if cls != "kafka":
+        raise ValueError("Unknown journal client class `%s`" % cls)
 
     search = get_search(**config["search"])
     storage = get_storage(**config["storage"])
