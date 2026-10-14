@@ -15,9 +15,15 @@ from swh.model import model
 from swh.search.exc import SearchQuerySyntaxError
 from swh.search.metrics import OPERATIONS_METRIC
 
-from .test_search import CommonSearchTest, origin_dict
+from .test_search import (
+    SNAPSHOT_2,
+    CommonSearchTest,
+    check_origin_search_results,
+    iso_utc_now,
+    origin_dict,
+)
 
-now = datetime.now(tz=timezone.utc).isoformat()
+now = iso_utc_now()
 now_minus_5_days = (datetime.now(tz=timezone.utc) - timedelta(days=5)).isoformat()
 now_plus_5_days = (datetime.now(tz=timezone.utc) + timedelta(days=5)).isoformat()
 
@@ -391,6 +397,30 @@ class TestElasticsearchSearch(CommonElasticsearchSearchTest):
         assert self.search.origin_get(ORIGINS_AFTER[0]["url"]) is not None
 
         # Check that we can find both origins
-        assert self.search.origin_search(query="origin : example").total_results == 2
-        assert self.search.origin_search(query="origin : 123").total_results == 1
-        assert self.search.origin_search(query="origin : 456").total_results == 1
+        assert len(self.search.origin_search(query="origin : example").results) == 2
+        assert len(self.search.origin_search(query="origin : 123").results) == 1
+        assert len(self.search.origin_search(query="origin : 456").results) == 1
+
+        # Record an update of an old origin
+        update_time = iso_utc_now()
+        ORIGINS_UPDATE = [
+            {
+                **ORIGINS_BEFORE[0],
+                "nb_visits": 2,
+                "snapshot_id": SNAPSHOT_2,
+                "last_visit_date": update_time,
+                "last_eventful_visit_date": update_time,
+            }
+        ]
+        self.search.origin_update(ORIGINS_UPDATE)
+        self.search.flush()
+
+        # Check that we still get 2 results for the origin search
+        assert len(self.search.origin_search(query="origin : example").results) == 2
+
+        document = self.search.origin_get(ORIGINS_UPDATE[0]["url"])
+        del document["sha1"]
+        check_origin_search_results([document], ORIGINS_UPDATE)
+
+        res = self.search.origin_search(query="origin : 123")
+        check_origin_search_results(res.results, ORIGINS_UPDATE)

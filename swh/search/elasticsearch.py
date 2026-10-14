@@ -24,6 +24,7 @@ from swh.search.utils import (
     EMPTY_SNAPSHOT_ID,
     escape,
     get_expansion,
+    merge_documents,
     parse_and_format_date,
 )
 
@@ -322,6 +323,19 @@ def token_decode(page_token: str) -> Dict[bytes, Any]:
     return msgpack.loads(base64.b64decode(page_token.encode()), raw=True)
 
 
+def origin_dict_from_es_hit(hit: Dict[str, Any]) -> OriginDict:
+    """Create an OriginDict from an ElasticSearch hit"""
+    return OriginDict(
+        url=hit["_source"].get("url", ""),
+        visit_types=hit["_source"].get("visit_types", []),
+        has_visits=hit["_source"].get("has_visits", False),
+        nb_visits=hit["_source"].get("nb_visits", 0),
+        snapshot_id=hit["_source"].get("snapshot_id"),
+        last_visit_date=hit["_source"].get("last_visit_date"),
+        last_eventful_visit_date=hit["_source"].get("last_eventful_visit_date"),
+    )
+
+
 class ElasticSearch:
     def __init__(self, hosts: List[str], indexes: Dict[str, Dict[str, str]] = {}):
         self._backend = Elasticsearch(hosts=hosts)
@@ -446,17 +460,21 @@ class ElasticSearch:
 
     def origin_get(self, url: str) -> Optional[Dict[str, Any]]:
         origin_id = hash_to_hex(model.Origin(url=url).id)
-        # This iterates over the potentially multiple indices of the read alias, returning
-        # the first document found.
+        # This iterates over the potentially multiple indices of the read alias, and
+        # merges all results into a full document, as there's no guarantees in the
+        # order the alias targets are returned.
+        document: Dict[str, Any] = {}
         for index in self._get_origin_read_alias_targets():
             try:
-                document = self._backend.get(index=index, id=origin_id)
+                from_es = self._backend.get(index=index, id=origin_id)
             except NotFoundError:
                 continue
             else:
-                return document["_source"]
+                document = merge_documents(document, from_es["_source"])
+
+        if document:
+            return document
         else:
-            # All indices returned a NotFoundError
             return None
 
     def origin_delete(self, url: str) -> bool:
@@ -687,21 +705,19 @@ class ElasticSearch:
 
         assert len(hits) <= limit
 
-        return PagedResult(
-            results=[
-                OriginDict(
-                    url=hit["_source"].get("url", ""),
-                    visit_types=hit["_source"].get("visit_types", []),
-                    has_visits=hit["_source"].get("has_visits", False),
-                    nb_visits=hit["_source"].get("nb_visits", 0),
-                    snapshot_id=hit["_source"].get("snapshot_id"),
-                    last_visit_date=hit["_source"].get("last_visit_date"),
-                    last_eventful_visit_date=hit["_source"].get(
-                        "last_eventful_visit_date"
-                    ),
+        results: Dict[str, OriginDict] = {}
+        for hit in hits:
+            cleaned_hit = origin_dict_from_es_hit(hit)
+            if hit["_id"] not in results:
+                results[hit["_id"]] = cleaned_hit
+            else:
+                results[hit["_id"]] = cast(
+                    OriginDict,
+                    merge_documents(dict(results[hit["_id"]]), dict(cleaned_hit)),
                 )
-                for hit in hits
-            ],
+
+        return PagedResult(
+            results=list(results.values()),
             next_page_token=next_page_token,
             total_results=res["hits"].get("total", {}).get("value", 0),
         )

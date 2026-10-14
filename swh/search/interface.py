@@ -38,6 +38,8 @@ class OriginDict(MinimalOriginDict, total=False):
     nb_visits: int
     snapshot_id: Optional[str]
     last_visit_date: Optional[str]
+    last_revision_date: Optional[str]
+    last_release_date: Optional[str]
     last_eventful_visit_date: Optional[str]
 
 

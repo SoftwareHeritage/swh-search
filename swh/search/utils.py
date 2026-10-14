@@ -1,11 +1,11 @@
-# Copyright (C) 2021-2025  The Software Heritage developers
+# Copyright (C) 2021-2026  The Software Heritage developers
 # See the AUTHORS file at the top-level directory of this distribution
 # License: GNU General Public License version 3, or any later version
 # See top-level LICENSE file for more information
 
 import codecs
 from datetime import datetime
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import iso8601
 
@@ -121,3 +121,48 @@ def unescape(string):
     True
     """
     return codecs.escape_decode(string.encode())[0].decode()
+
+
+def clean_optional_date(date: Optional[str]) -> datetime:
+    return datetime.fromisoformat(
+        (date or "0001-01-01T00:00:00.000000Z").replace("Z", "+00:00")
+    )
+
+
+def merge_documents(left: Dict[str, Any], right: Dict[str, Any]) -> Dict[str, Any]:
+    """Merge two documents into the right document"""
+    if "visit_types" in left:
+        right["visit_types"] = list(
+            set(right.get("visit_types", []) + left["visit_types"])
+        )
+
+    if "nb_visits" in left:
+        right["nb_visits"] = max(right.get("nb_visits", 0), left["nb_visits"])
+
+    for date in ("last_visit_date", "last_revision_date", "last_release_date"):
+        if date in left or date in right:
+            right[date] = max(
+                clean_optional_date(left.get(date)),
+                clean_optional_date(right.get(date)),
+            ).isoformat()
+
+    if (
+        right.get("snapshot_id") is not None
+        and (right_date := right.get("last_eventful_visit_date")) is not None
+    ):
+        incoming_date = datetime.fromisoformat(right_date)
+        current_date = clean_optional_date(left.get("last_eventful_visit_date"))
+        incoming_snapshot_id = right["snapshot_id"]
+        current_snapshot_id = left.get("snapshot_id", "")
+
+        if incoming_snapshot_id == current_snapshot_id or incoming_date < current_date:
+            # update not required so override the incoming_values
+            right["snapshot_id"] = current_snapshot_id
+            right["last_eventful_visit_date"] = current_date.isoformat()
+    else:
+        if "snapshot_id" in left:
+            right["snapshot_id"] = left["snapshot_id"]
+        if "last_eventful_visit_date" in left:
+            right["last_eventful_visit_date"] = left["last_eventful_visit_date"]
+
+    return right

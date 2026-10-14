@@ -13,7 +13,12 @@ from swh.indexer import codemeta
 from swh.model import model
 from swh.model.hashutil import hash_to_hex
 from swh.search.interface import SORT_BY_OPTIONS, OriginDict, PagedResult
-from swh.search.utils import EMPTY_SNAPSHOT_ID, get_expansion, parse_and_format_date
+from swh.search.utils import (
+    EMPTY_SNAPSHOT_ID,
+    get_expansion,
+    merge_documents,
+    parse_and_format_date,
+)
 
 _words_regexp = re.compile(r"\w+")
 
@@ -167,88 +172,19 @@ class InMemorySearch:
     def origin_update(self, documents: Iterable[OriginDict]) -> None:
         for source_document in documents:
             id_ = hash_to_hex(model.Origin(url=source_document["url"]).id)
-            document: Dict[str, Any] = {
-                **{k: v for k, v in source_document.items() if v is not None},
-                "sha1": id_,
-            }
+
+            document = merge_documents(
+                self._origins.get(id_) or {"sha1": id_},
+                {
+                    **{k: v for k, v in source_document.items() if v is not None},
+                    "sha1": id_,
+                },
+            )
+
             if "url" in document:
                 document["_url_tokens"] = set(
                     self._url_splitter.split(source_document["url"])
                 )
-            if "visit_types" in document:
-                document["visit_types"] = source_document["visit_types"]
-                if "visit_types" in self._origins[id_]:
-                    document["visit_types"] = list(
-                        set(document["visit_types"] + self._origins[id_]["visit_types"])
-                    )
-            if "nb_visits" in document:
-                document["nb_visits"] = max(
-                    document["nb_visits"], self._origins[id_].get("nb_visits", 0)
-                )
-            if document.get("last_visit_date") is not None:
-                document["last_visit_date"] = max(
-                    datetime.fromisoformat(document["last_visit_date"]),
-                    datetime.fromisoformat(
-                        self._origins[id_]
-                        .get(
-                            "last_visit_date",
-                            "0001-01-01T00:00:00.000000Z",
-                        )
-                        .replace("Z", "+00:00")
-                    ),
-                ).isoformat()
-
-            if (
-                document.get("snapshot_id") is not None
-                and document.get("last_eventful_visit_date") is not None
-            ):
-                incoming_date = datetime.fromisoformat(
-                    document["last_eventful_visit_date"]
-                )
-                current_date = datetime.fromisoformat(
-                    self._origins[id_]
-                    .get(
-                        "last_eventful_visit_date",
-                        "0001-01-01T00:00:00Z",
-                    )
-                    .replace("Z", "+00:00")
-                )
-                incoming_snapshot_id = document["snapshot_id"]
-                current_snapshot_id = self._origins[id_].get("snapshot_id", "")
-
-                if (
-                    incoming_snapshot_id == current_snapshot_id
-                    or incoming_date < current_date
-                ):
-                    # update not required so override the incoming_values
-                    document["snapshot_id"] = current_snapshot_id
-                    document["last_eventful_visit_date"] = current_date.isoformat()
-
-            if document.get("last_revision_date") is not None:
-                document["last_revision_date"] = max(
-                    datetime.fromisoformat(document["last_revision_date"]),
-                    datetime.fromisoformat(
-                        self._origins[id_]
-                        .get(
-                            "last_revision_date",
-                            "0001-01-01T00:00:00Z",
-                        )
-                        .replace("Z", "+00:00")
-                    ),
-                ).isoformat()
-
-            if document.get("last_release_date") is not None:
-                document["last_release_date"] = max(
-                    datetime.fromisoformat(document["last_release_date"]),
-                    datetime.fromisoformat(
-                        self._origins[id_]
-                        .get(
-                            "last_release_date",
-                            "0001-01-01T00:00:00Z",
-                        )
-                        .replace("Z", "+00:00")
-                    ),
-                ).isoformat()
 
             if "jsonld" in document:
                 jsonld = document["jsonld"]
@@ -282,7 +218,7 @@ class InMemorySearch:
                         for license in metadata["http://schema.org/programmingLanguage"]
                     ]
 
-            self._origins[id_].update(document)
+            self._origins[id_] = document
 
             if id_ not in self._origin_ids:
                 self._origin_ids.append(id_)
