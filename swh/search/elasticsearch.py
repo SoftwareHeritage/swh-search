@@ -12,6 +12,7 @@ from textwrap import dedent
 from typing import Any, Dict, Iterable, List, Optional, cast
 
 from elasticsearch import Elasticsearch, NotFoundError, helpers
+from elasticsearch.helpers.errors import BulkIndexError
 import msgpack
 
 from swh.indexer import codemeta
@@ -450,7 +451,14 @@ class ElasticSearch:
             for (sha1, document) in documents_with_sha1
         ]
 
-        indexed_count, errors = helpers.bulk(self._backend, actions, index=write_index)
+        try:
+            indexed_count, errors = helpers.bulk(
+                self._backend, actions, index=write_index
+            )
+        except BulkIndexError as e:
+            for error in e.errors:
+                logger.error("Bulk index error: %s", error)
+            raise
         assert isinstance(errors, List)  # Make mypy happy
 
         send_metric("document:index", count=indexed_count, method_name="origin_update")
