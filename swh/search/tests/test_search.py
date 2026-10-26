@@ -1419,6 +1419,22 @@ class CommonSearchTest:
         assert result_page.next_page_token is None
         assert result_page.results == []
 
+    def test_origin_update_should_merge_with_stored_data(self):
+        """Checks new origin update is merged with current stored data and do not
+        replace them."""
+        origin1_url = "http://origin1"
+        origin1_first_update = {
+            "url": origin1_url,
+            "visit_types": ["git"],
+            "has_visits": True,
+        }
+        origin1_second_update = {"url": origin1_url, "visit_types": ["git"]}
+
+        self.search.origin_update([origin1_first_update, origin1_second_update])
+        self.search.flush()
+
+        assert "has_visits" in self.search.origin_get(origin1_url)
+
     def test_origin_get(self):
         """Checks the same field can have a concrete value, an object, or an array
         in different documents."""

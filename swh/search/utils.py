@@ -131,17 +131,20 @@ def clean_optional_date(date: Optional[str]) -> datetime:
 
 def merge_documents(left: Dict[str, Any], right: Dict[str, Any]) -> Dict[str, Any]:
     """Merge two documents into the right document"""
+    merged = dict(left)
+    merged.update(right)
+
     if "visit_types" in left:
-        right["visit_types"] = list(
+        merged["visit_types"] = list(
             set(right.get("visit_types", []) + left["visit_types"])
         )
 
     if "nb_visits" in left:
-        right["nb_visits"] = max(right.get("nb_visits", 0), left["nb_visits"])
+        merged["nb_visits"] = max(right.get("nb_visits", 0), left["nb_visits"])
 
     for date in ("last_visit_date", "last_revision_date", "last_release_date"):
         if date in left or date in right:
-            right[date] = max(
+            merged[date] = max(
                 clean_optional_date(left.get(date)),
                 clean_optional_date(right.get(date)),
             ).isoformat()
@@ -157,12 +160,12 @@ def merge_documents(left: Dict[str, Any], right: Dict[str, Any]) -> Dict[str, An
 
         if incoming_snapshot_id == current_snapshot_id or incoming_date < current_date:
             # update not required so override the incoming_values
-            right["snapshot_id"] = current_snapshot_id
-            right["last_eventful_visit_date"] = current_date.isoformat()
+            merged["snapshot_id"] = current_snapshot_id
+            merged["last_eventful_visit_date"] = current_date.isoformat()
     else:
         if "snapshot_id" in left:
-            right["snapshot_id"] = left["snapshot_id"]
+            merged["snapshot_id"] = left["snapshot_id"]
         if "last_eventful_visit_date" in left:
-            right["last_eventful_visit_date"] = left["last_eventful_visit_date"]
+            merged["last_eventful_visit_date"] = left["last_eventful_visit_date"]
 
-    return right
+    return merged
