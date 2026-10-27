@@ -398,13 +398,17 @@ class ElasticSearch:
         if self._backend.indices.exists(index=self._get_origin_index()):
             self._backend.indices.delete(index=self._get_origin_index())
 
-    def initialize(self) -> None:
+    def initialize(self, extra_settings: Dict[str, Any] | None = None) -> None:
         """Declare Elasticsearch indices, aliases and mappings"""
 
         if not self._backend.indices.exists(index=self._get_origin_index()):
             self._backend.indices.create(
                 index=self._get_origin_index(), body={"settings": ORIGIN_SETTINGS}
             )
+            if extra_settings is not None:
+                self._backend.indices.put_settings(
+                    index=self._get_origin_index(), settings=extra_settings
+                )
 
         if not self._backend.indices.exists_alias(name=self._get_origin_read_alias()):
             self._backend.indices.put_alias(

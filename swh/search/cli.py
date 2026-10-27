@@ -36,13 +36,29 @@ def search_cli_group(ctx, config_file):
 
 
 @search_cli_group.command("initialize")
+@click.argument(
+    "settings",
+    help=(
+        "Extra settings for the created index, as key=value pairs. "
+        "Values are parsed as YAML."
+    ),
+    required=False,
+    default=None,
+)
 @click.pass_context
-def initialize(ctx):
+def initialize(ctx, settings):
     """Creates Elasticsearch indices."""
+    import yaml
+
     from . import get_search
 
+    if settings:
+        parsed_settings = yaml.safe_load(settings)
+    else:
+        parsed_settings = None
+
     search = get_search(**ctx.obj["config"]["search"])
-    search.initialize()
+    search.initialize(extra_settings=parsed_settings)
     print("Done.")
 
 

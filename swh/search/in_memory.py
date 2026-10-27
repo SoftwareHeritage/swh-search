@@ -6,6 +6,7 @@
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from itertools import chain
+import logging
 import re
 from typing import Any, Dict, Iterable, Iterator, List, Optional
 
@@ -21,6 +22,9 @@ from swh.search.utils import (
 )
 
 _words_regexp = re.compile(r"\w+")
+
+
+logger = logging.getLogger(__name__)
 
 
 def _dict_words_set(d):
@@ -160,9 +164,11 @@ class InMemorySearch:
             del self._origins
             del self._origin_ids
 
-    def initialize(self) -> None:
+    def initialize(self, extra_settings: Dict[str, Any] | None = None) -> None:
         self._origins: Dict[str, Dict[str, Any]] = defaultdict(dict)
         self._origin_ids: List[str] = []
+        if extra_settings:
+            logger.warn("In-memory backend does not support extra settings for indices")
 
     def flush(self) -> None:
         pass
