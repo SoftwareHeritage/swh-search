@@ -338,8 +338,15 @@ def origin_dict_from_es_hit(hit: Dict[str, Any]) -> OriginDict:
 
 
 class ElasticSearch:
-    def __init__(self, hosts: List[str], indexes: Dict[str, Dict[str, str]] = {}):
-        self._backend = Elasticsearch(hosts=hosts)
+    def __init__(
+        self,
+        hosts: List[str],
+        indexes: Dict[str, Dict[str, str]] = {},
+        client_settings: Dict[str, Any] | None = None,
+    ):
+        if not client_settings:
+            client_settings = {}
+        self._backend = Elasticsearch(hosts=hosts, **client_settings)
         self._translator = Translator()
 
         # List of indexes targeted by the read alias; opportunistically
