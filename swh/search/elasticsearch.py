@@ -367,13 +367,14 @@ class ElasticSearch:
     def _get_origin_read_alias(self) -> str:
         return self.origin_config[READ_ALIAS_PARAM]
 
-    def _get_origin_read_alias_targets(self) -> List[str]:
+    def _get_origin_read_alias_targets(self, force_update: bool = False) -> List[str]:
         """Get the list of indices pointed at by the read alias, for use by
         `get` requests. The list is only requested if it's older than 60
         minutes."""
         now = datetime.datetime.now(tz=datetime.timezone.utc)
         if (
-            self._read_targets
+            not force_update
+            and self._read_targets
             # Last update older than 60 minutes
             and now - self._read_targets_last_update > datetime.timedelta(minutes=60)
         ):
@@ -494,11 +495,19 @@ class ElasticSearch:
 
     def origin_delete(self, url: str) -> bool:
         origin_id = hash_to_hex(model.Origin(url=url).id)
-        try:
-            self._backend.delete(index=self._get_origin_read_alias(), id=origin_id)
-        except NotFoundError:
-            return False
-        return True
+        indices = set(
+            self._get_origin_read_alias_targets(force_update=True)
+            + [self._get_origin_write_alias()]
+        )
+        deleted = False
+        for index in indices:
+            try:
+                self._backend.delete(index=index, id=origin_id)
+            except NotFoundError:
+                pass
+            else:
+                deleted = True
+        return deleted
 
     @timed
     def origin_search(

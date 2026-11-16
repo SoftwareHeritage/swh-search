@@ -424,3 +424,7 @@ class TestElasticsearchSearch(CommonElasticsearchSearchTest):
 
         res = self.search.origin_search(query="origin : 123")
         check_origin_search_results(res.results, ORIGINS_UPDATE)
+
+        self.search.origin_delete(ORIGINS_BEFORE[0]["url"])
+        document = self.search.origin_get(ORIGINS_UPDATE[0]["url"])
+        assert document is None
